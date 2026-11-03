@@ -30,6 +30,9 @@ To roll back: `tools/saves.sh list`, then `tools/saves.sh restore <backup>`. Res
   (procedure, results table, conclusions, open questions).
 - Experiment runs write JSON logs to `reframework/data/Retinue/experiments/`; the procedure is in
   `tools/experiments/README.md`.
+- `tools/experiments/Retinue_Exp_Lifecycle.lua` (M2) is log-only and may be linked together with the mod via
+  `./deploy.sh --lifecycle`; it still needs a backup per run, because its test actions (grant exp, dismiss, lost)
+  change state.
 
 ## Checklists
 

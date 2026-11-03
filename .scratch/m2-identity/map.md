@@ -48,6 +48,9 @@ Settled while charting (2026-11-03):
   CharacterIDs are reused (observed), dismiss likely deletes the whole record, the Rift keeps only generation data
   (offline ID, look, skills, job, `Level`): progress is not kept, so the mod's backup is required. Lost path inferred.
   Branch `research/m2-dismiss-lost-rehire`.
+- [Build the dismiss / lost / re-hire experiment script](issues/03-build-lifecycle-experiment.md): built
+  `tools/experiments/Retinue_Exp_Lifecycle.lua` (log-only hooks, snapshots, test actions), linked with the mod via
+  `./deploy.sh --lifecycle`; procedure with fixture saves in `tools/experiments/README.md`.
 
 ## Not yet specified
 

@@ -76,3 +76,139 @@ now**):
   collapsed), and `override` when a rewrite fired (original and rewritten values).
 - `dropped` (entries lost after the 20000-entry cap), `errors` (caught hook errors; empty is the goal),
   `hooks` (installed and missing hooks).
+
+## `Retinue_Exp_Lifecycle.lua`: what does the game do to a hired pawn on dismiss, lost, re-hire and save/load?
+
+Question (M2): when a hired pawn is dismissed or lost, is its ContextDBMS record deleted (and when), what does the
+Rift's dismissed list keep (`Level`: generation or current?), and when the same pawn is hired again, does it come
+back with the same OfflineID and CharacterID, and in what state (level, exp, discipline, ranks, equipment, skills,
+`IsRestore`)? Research and the six open questions: `docs/findings/research-m2-dismiss-lost-rehire.md` (branch
+`research/m2-dismiss-lost-rehire`).
+
+Menu: **Retinue Lifecycle (EXPERIMENT)**. Nothing is persisted between sessions.
+
+Unlike `Retinue_Exp_Hooks.lua` this script **can run together with the mod** (`./deploy.sh --lifecycle`): its hooks
+are log-only (they never change an argument or a return value) and none of them is a method the mod hooks.
+The **Test actions** panel is the part that changes state: it calls `addExpAndJobPoint`, `dismissPawn` and `lost`,
+so every run still needs a backup first.
+
+### What it hooks (pre, and post where it matters)
+
+| Group | Methods |
+|---|---|
+| Dismiss | `PawnManager.dismissPawn` (3 overloads; pre records the pawn's full state), `SoundVoiceManager.onDismissUnloadPawnEvent`, `NPCManager.addStrayPawn_DisMissList` (decodes the `StrayPawnFactoryDataOffline`: CharaID, OfflineID, Level, Job, name), `ItemManager.returnSubPawnItems` |
+| Record and store | `ContextDBMS.deleteRecord` (2 overloads), `ContextDatabase.deleteContexts` (2), `Human.setDisableContextStoreOnDissmissPawn`, `Human.setEnableContextStoreOnHirePawn`, `ContextDBMS.restoreContextsToHolder` (2), `ContextDBMS.createNewRecordIfNotExist` |
+| Lost | `PawnManager.setPawnLostTimer`, `resetPawnLostTimer` (2), `lost(CharacterID, bool, bool)` (both bools logged; pre records full state), `pawnLost` (2), `lostDeadPawns`, `lostAllPawns`, `NPCManager.eventStrayPawnLost`, `NPCManager.addStrayPawn_HireTime_DismissNotInstance` |
+| Hire and re-hire | `PawnManager.hirePawn` (pre + post), `ItemManager.onHirePawn`, `StrayPawnManager.getUnusedOfflineCharacterID` (2; args and return), `StrayPawnFactoryProductOffline.restorePastInformation`, `StrayPawnFactory.preOrderFromRecord`, `StrayPawnFactory.makeRimSearchedOfflineProduct`, `PawnManager.registPawn` / `unregistPawn` |
+| Rift | `FacilityManager.startRim`, `endInteractRimAction` (2 overloads) |
+
+The status line says `all N hooks installed` or lists the missing ones. Consecutive identical entries of the chatty
+hooks (`deleteContexts`, `createNewRecordIfNotExist`, `restoreContextsToHolder`, the lost-timer calls) collapse into
+one with a `count`.
+
+### Snapshots
+
+`{label, kind, time, t, seq, pawns, world}`. Taken by the **Snapshot** button (type a label first), and
+automatically, a couple of frames after the event and never inside the hook: dismiss, lost, hire (post), Rift start
+and end. Every test action takes one immediately (`before`) and one about 1 s later (`after`). Untick *Auto snapshots
+on events* to keep only the manual and action ones.
+
+- `pawns`: the current party plus every CharacterID/OfflineID seen since the session started (so a dismissed pawn is
+  still looked up): CharacterID, OfflineID, `owner` (`capcom` when `_UserId` is all zeros, else `user`; to be confirmed),
+  name, level, exp, discipline, current job, `job_ranks` (index = JobEnum 1..10), `culmative_exp` (whole array, index
+  not mapped), `is_restore`, `weapons`, `equipment` (`item_ids` plus `slots`, index = position in the equip list),
+  `skills`, `owner_offline_data` (the `PawnOwnerContext._OfflineData`), `record` (`by_charid` from
+  `CharacterID2Keys:ContainsKey`, `by_uniqid` from `ContextDBMS.hasRecord`), `in_dismissed_list`, `source`
+  (`actor`, or `record` when only the ContextDBMS record could be read, or `none`).
+- `world`: `party` (CharacterIDs in slot order), `saved_party` (`_SavedPartyPawnList`), `lost_timers`
+  (`_PawnLostTimers`), `lost_disabled`, `pawn_lost_time`, `dismissed_list` (`getStrayPawn_DisMissList()`: CharaID,
+  OfflineID, Level, Job, name).
+
+### Test actions
+
+Party slot N (1-based, the live table shows who sits where). The main pawn (`ch100000_00`, 2283028347), the player and
+non-hired pawns are always refused (the refusal is logged as an action with `ok = false`).
+
+| Action | Call |
+|---|---|
+| Grant exp | `app.ExpDispenser.addExpAndJobPoint(CharacterID, exp, jobPoint, Character)`, defaults 10000 / 233 (as UDD2P). It goes through the mod's hooks, so a hired pawn levels. |
+| Dismiss slot N | `PawnManager.dismissPawn(CharacterID)`. Two clicks: the first arms (10 s), the second runs. |
+| Force lost slot N | `PawnManager.lost(CharacterID, bool1, bool2)`, the two checkboxes (default false/false). Two clicks. |
+
+Calls are queued by the button and run in the next game update (`re.on_pre_application_entry("UpdateBehavior")`, as
+the mod does), not in the UI callback; the same callback runs the deferred snapshots, the refresh and the flush. A direct call skips whatever the game's UI or death flow does
+around it: use it to iterate, and do the real flow (steps b and e) at least once per checklist run.
+
+### Procedure
+
+Needs a save with two hired (CAPCOM) pawns in the party and a Rift stone within reach (Nick's Devtools *Warp*, or Content
+Editor bookmarks). Optional but useful: the REFramework log (`re2_framework_log.txt` in the game folder).
+
+0. Quit the game. `tools/saves.sh backup m2-lifecycle-start`.
+   `./deploy.sh --remove && ./deploy.sh --probe --lifecycle`. Launch, load. Open **Retinue Lifecycle (EXPERIMENT)**:
+   the status line must say all hooks are installed (if some are missing, note which). Check that Retinue is also
+   active (progression on) and note other mods touching pawns, exp or items.
+1. **(a) Fixture.** Pick a hired pawn. In *Test actions* set its party slot and press **Grant exp** until its level is
+   past the level it was hired at (`owner_offline_data.Level` in a snapshot; the live table shows `Lv`). Fight a bit if you
+   also want discipline and rank. Snapshot `a-levelled`. Rest/save at an inn, quit, then
+   `tools/saves.sh backup fixture-levelled-pawn`. Other fixtures worth keeping: `fixture-2hired-at-rift` (two fresh
+   hired pawns beside a Rift stone), `fixture-1hired-1slot-free`. Backups are named `<timestamp>-<label>`: restore with
+   the name `tools/saves.sh list` shows (e.g. `<timestamp>-fixture-levelled-pawn`). Before each cycle below: quit,
+   `tools/saves.sh backup m2-lifecycle-<step>` (so the cycle itself is undoable), then
+   `tools/saves.sh restore <timestamp>-fixture-levelled-pawn`, launch, load. Each launch writes its own run file.
+   **Restore wipes `reframework/data/Retinue`, run files included**: at the end of each cycle, with the game closed, copy
+   its `lifecycle_*.json` to `docs/findings/data/<date>-m2-lifecycle/<step>/` (step = `b`, `c`, `d`, ...) before the
+   next restore.
+2. **(b) Real dismiss at a Rift stone.** Warp to a Rift stone. Snapshot `b0-before-dismiss`. Open the Rift and dismiss
+   the levelled pawn through the dialogue. Wait until the pawn has walked off, then Snapshot `b1-after-dismiss` (the
+   automatic `auto:rift-start`, `auto:dismiss`, `auto:rift-end` snapshots are in the file too). On screen note: item
+   return messages, the farewell talk. Save (inn/rest), Snapshot `b2-saved`, go back to the title, load, Snapshot
+   `b3-after-reload`. Answers: is the record gone and when (order of `deleteRecord`/`deleteContexts` against
+   `dismissPawn` pre/post in `calls`; `record.by_charid` per snapshot), what `Level` the dismissed-list entry holds
+   (`world.dismissed_list` and the `addStrayPawn_DisMissList` call against the pawn's level before), whether the list
+   survives save and reload (`b3`). Then quit, copy the run file (see step 1), and
+   `tools/saves.sh backup m2-after-dismiss`: step (c) restores that.
+3. **(c) Re-hire from the Rift's dismissed list.** Restore `<timestamp>-m2-after-dismiss` (the state after (b)'s save), launch, load:
+   at a Rift stone open the list of previously dismissed pawns (the "recently dismissed" tab of the search) and hire the
+   same pawn. Snapshot `c1-after-rehire` once it stands next to you, and again after ~10 s. Compare against `b0`: same
+   OfflineID? same CharacterID (`getUnusedOfflineCharacterID` return against the old id)? level, exp, discipline,
+   ranks, equipment, skills, `is_restore`? Did `restorePastInformation`, `preOrderFromRecord`,
+   `restoreContextsToHolder` fire, with which arguments? Save, reload, Snapshot `c2-after-reload`.
+4. **(d) Test-action dismiss.** Quit (copy the run file), restore `<timestamp>-fixture-levelled-pawn`, launch, load. Snapshot `d0`. *Test actions*:
+   slot N, **Dismiss slot N**, confirm. Wait ~10 s, Snapshot `d1`. Compare `calls` and the snapshots with (b): same
+   hooks in the same order? Is the dismissed-list entry the same? What is missing (Rift events, item return)? Then
+   re-hire it at a Rift as in (c) and compare.
+5. **(e) Real lost.** Restore the fixture (`<timestamp>-fixture-levelled-pawn`), launch, load. Snapshot `e0`. Down the pawn with Nick's Devtools *Kill pawns*
+   and record whether `setPawnLostTimer` and `lost` fire (this is what the hooks are for; the Nexus text says the pawns
+   return to the Rift immediately, unverified). Snapshot `e1-killed` (note `world.lost_timers`). Then both paths:
+   *timer*: let it run out or skip time (Devtools *Time & weather*), Snapshot `e2-timer`; *rest sweep*: rest at an inn or
+   camp with the pawn still down (`lostDeadPawns`), Snapshot `e3-rest`. Do the two paths in separate cycles (restore
+   between them) so each result is clean. Then go to a Rift: is the pawn in the dismissed list (`world.dismissed_list`,
+   `in_dismissed_list`), the hire-time list, or anywhere? Are its items back in your inventory? Which Booleans did `lost`
+   get (`args.b1`, `args.b2`)?
+6. **(f) Test-action lost.** Restore the fixture (as in (e)). Snapshot `f0`. *Test actions*: both lost checkboxes unticked, **Force
+   lost slot N**, confirm. Snapshot `f1`. Compare with (e). Repeat in a fresh cycle with `b1` ticked (and then `b2`) to
+   see what the Booleans select (`PawnManager.lost` and `eventStrayPawnLost` in `calls`, whether the record survives).
+7. **(g) Collect.** Quit the game. Copy the last cycle's `reframework/data/Retinue/experiments/lifecycle_*.json` (game
+   folder) and the REFramework log into `docs/findings/data/<date>-m2-lifecycle/<step>/`, next to the earlier cycles'. The
+   limit values for open question 6 are in `constants`. Then `./deploy.sh --remove`, and restore a backup if you do not
+   want to keep the changes. Where to look in the file: `calls` filtered by `method` and `phase`, `snapshots[].pawns`
+   by `character_id`/`offline_id`, `actions[].snapshot_before/after` (indices into `snapshots`).
+
+A forgotten script is harmless to saves while you do not press a test action, but the hooks keep logging; remove it
+with `./deploy.sh --remove`.
+
+### What the run file contains
+
+`lifecycle_<YYYYmmdd_HHMMSS>.json`, one per script session, flushed every 2 s when changed (also via **Flush log now**):
+
+- `snapshots`: as above (capped at 400; `dropped_snapshots` counts the rest).
+- `calls`: one entry per hooked call phase: `seq`, `t` (`os.clock()`), `depth` (nesting of in-flight hooked calls), `method`,
+  `phase` (`pre`/`post`), `id` (CharacterID), `offline_id` (when readable from the actor's `PawnOwnerContext` or from
+  what was seen earlier), `name`, decoded `args`, `ret` (post), `pre_seq` (post), `state` (the pawn's full state, in the
+  pre of `dismissPawn`/`lost`/`pawnLost`; `{same_as_seq}` when a nested overload of the same moment already recorded it),
+  `count`/`last_seq`/`last_t` for collapsed entries.
+- `actions`: one entry per test action: `kind`, `slot`, `args`, `id`, `name`, `offline_id`, `ok`, `result` or `error`,
+  `seq_before`/`seq_after` (the range of `calls` it produced), `snapshot_before`/`snapshot_after` (indices into `snapshots`).
+- `errors` (caught hook errors; empty is the goal), `hooks` (installed and missing), `dropped` (call entries lost after
+  the 20000 cap or a chatty hook's own 2000-entry cap; `dropped_by_spec` has the second part per hook), `constants` (`main_id`, caps, `StrayPawnPastInformationMax`, `RelationPawnDismissNum`).
