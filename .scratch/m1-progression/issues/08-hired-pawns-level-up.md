@@ -36,3 +36,5 @@ ticket builds on.
   pawn levels up after a fight and gets the level-up notification, which still names the main pawn (expected
   until 09). Still to confirm: discipline gained, and the main pawn unchanged. Deferred by the user until the menu status
   line ([11](11-menu-status-line.md)) shows those numbers; not checked with the probe.
+- 2026-11-03: with the status line from 11, the user confirmed in game that hired pawns gain discipline after a
+  fight. Remaining: the main pawn unchanged.
