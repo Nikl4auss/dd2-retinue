@@ -26,3 +26,7 @@ never silently overwritten.
 
 - 2026-11-03: implemented in `645f410`. In game the user confirmed: no file on a fresh start, `config.json` written
   on untick, and still off after *Reset scripts*. The malformed-file check is left to the M1 checklist (check 10).
+- 2026-11-03: malformed-file check. NickCore (`aaaNickCore.lua`) sets the global log level to `error`, which hid
+  `log.warn`; fixed in `e9c5a9a` (warnings in the menu and logged with `log.error`). In game the user confirmed
+  with `not json`: warning in the menu and the log, progression on, file untouched until the toggle, and the
+  warning gone after it.
