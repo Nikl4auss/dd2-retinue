@@ -34,3 +34,52 @@ To roll back: `tools/saves.sh list`, then `tools/saves.sh restore <backup>`. Res
 ## Checklists
 
 One section per milestone, written before its implementation starts.
+
+## M1 — Progression
+
+Spec: [.scratch/m1-progression/spec.md](../.scratch/m1-progression/spec.md). Record results in a findings note with
+the probe's snapshots. Items marked *(opportunistic)* pass when the situation comes up during play; record each one as
+passed or not reached.
+
+### Setup
+
+1. Quit the game and back up: `tools/saves.sh backup m1-checklist`.
+2. `./deploy.sh --remove`, then `./deploy.sh --probe`. The experiment script must **not** be linked.
+3. Delete `reframework/data/Retinue/config.json` if present (fresh-install state).
+4. Use a save with two hired pawns in the party, at least one of them hired long enough to have banked exp.
+   Note the other active mods that touch exp or skills (SimpleDifficultyTweaks multipliers, Bestiary, UDD2P,
+   SkillCreator).
+
+### Checks
+
+1. **Menu, fresh install**: the *Retinue* section shows the checkbox ticked, no `Progression unavailable` notice,
+   and `Applies to:` listing both hired pawns with level, vocation and rank. No `config.json` was created.
+2. **Banked exp**: on the first fight, the long-hired pawn gains its banked levels (possibly several at once). One
+   level-up notification, with its own name.
+3. **Normal fight**: hired pawns gain exp and discipline (probe snapshot before and after), and level up when exp
+   allows. Each notification names the right pawn, once. The main pawn's numbers move only by its own gains, and its
+   own level-up notification names the main pawn.
+4. **Rank-up**: a hired pawn's vocation rank goes up, and the rank-up notification shows its own name.
+   *(opportunistic: needs a pawn close to its next rank)*
+5. **Save → title → load right after a hired-pawn level-up**: no freeze, and level, discipline and rank are kept.
+   Repeat once.
+6. **Full relaunch**: quit, relaunch and load. Gains are kept and the menu state matches.
+7. **Toggle off**: untick mid-session. `config.json` now exists with `"progression": false`. In the next fight hired
+   pawns gain exp but no level and no discipline, and nothing gained earlier is lost. *Reset scripts*: still off.
+8. **Toggle on again**: the next grant applies the exp banked while off, as in check 2.
+9. **Party change**: swap a hired pawn at the Rift. The status line follows without *Reset scripts*, and the new
+   pawn progresses on its next fight.
+10. **Malformed config**: quit, write `not json` into `config.json`, and launch. Progression is on (default), the
+    REFramework log has a warning, and the file is unchanged until you toggle. Then put
+    `{ "version": 1, "progression": "yes", "extra": 1 }`: progression is on, there is a warning for `progression`,
+    and after a toggle the file keeps `"extra": 1`.
+11. **Main pawn untouched**: across all of the above, nothing about the main pawn differs from vanilla.
+12. **Mod-originated grant**: UDD2P's Sphinx reward (or any mod that grants exp) levels hired pawns. This verifies
+    that `sdk.hook` fires for Lua `method:call`. *(opportunistic)*
+13. **Player rank-up from SkillCreator's refund**: the notification still names the player. *(opportunistic)*
+14. **SimpleDifficultyTweaks multiplier ≠ 1**: the main pawn is scaled and hired pawns are not (known difference).
+    *(opportunistic: only if the user changes the preset)*
+15. **Uninstall**: `./deploy.sh --remove`, then launch and load. The save loads, and hired pawns keep their levels as
+    ordinary hired pawns.
+
+Afterwards: restore `m1-checklist` only if you do not want to keep the gains.

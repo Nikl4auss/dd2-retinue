@@ -21,7 +21,8 @@ spec and tickets. The sketch is then replaced by a link to that folder, and the 
 ## M1 — Progression · in progress
 
 Adopted pawns gain levels and discipline like the main pawn.
-Work tracked in the wayfinder map [.scratch/m1-progression/map.md](../.scratch/m1-progression/map.md).
+Spec: [.scratch/m1-progression/spec.md](../.scratch/m1-progression/spec.md) (from the wayfinder map
+[map.md](../.scratch/m1-progression/map.md)); in-game checklist in [testing.md](testing.md#m1--progression).
 
 ## M2 — Identity and persistence
 

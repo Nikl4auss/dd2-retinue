@@ -4,6 +4,8 @@ Label: wayfinder:map
 
 ## Destination
 
+**Reached 2026-11-03**: [spec.md](spec.md) and the M1 checklist in `docs/testing.md`. Next: `/to-tickets`.
+
 A spec for M1, ready for `/to-tickets`, plus the M1 in-game checklist in `docs/testing.md`.
 Implementation is past the destination (it goes through `/to-tickets` → `/ship`).
 
