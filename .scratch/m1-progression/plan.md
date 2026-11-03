@@ -129,3 +129,71 @@ CHANGELOG / roadmap (12), anything in `tools/`.
 ## Cross-review
 
 Plan stage: Sol attempted, failed (`gpt-6-sol` not supported with a ChatGPT account, HTTP 400). Proceeding with the Opus reviewer alone.
+
+# Ticket 11 (Menu status line)
+
+Source: [issues/11-menu-status-line.md](issues/11-menu-status-line.md), spec § Menu. Base commit: `6d33bd0`.
+Tier: **Sonnet** (`implementer`). Cross-review: skipped (Sol unavailable; no Astra trigger).
+
+- [x] Slice 2: Menu status line
+
+## Slice 2: Menu status line
+
+**Goal**: the *Retinue* menu shows, under the checkbox and whatever its state, which party pawns progression applies
+to right now: `Applies to: <name> (Lv <level>, <vocation> R<rank>), ...`, or `No hired pawns in party`, or
+`Load a save`. It follows party changes without *Reset scripts*. It also lets the user finish ticket 08's in-game
+check (level and rank visible per hired pawn).
+
+**Context**: `src/autorun/Retinue.lua` (refresh_targets, draw), `src/autorun/Retinue/targets.lua`, the test style in
+`tests/*_test.lua` and `tests/run.sh`. Reads to copy from `tools/experiments/Retinue_Exp_Hooks.lua`: `read_progress`
+(~line 569: `chara:call("get_Human")`, `human:call("get_StatusContext")` → `get_Level`, `human:call("get_JobContext")`
+→ `get_Job`, `calcJobRank(job)`) and `m_gui_name` (~line 75: `app.GUIBase` `getName(app.Character)`, called as
+`m_gui_name:call(nil, chara)`). Vocation names from `CONTEXT.md` § Progression.
+
+**Design**:
+1. New pure module `src/autorun/Retinue/status.lua` (no REFramework globals):
+   ```lua
+   local M = {}
+   M.VOCATIONS = { [1]="Fighter", [2]="Archer", [3]="Mage", [4]="Thief", [5]="Warrior", [6]="Sorcerer",
+                   [7]="Mystic Spearhand", [8]="Magick Archer", [9]="Trickster", [10]="Warfarer" }
+   -- job: number or nil. Known → its name; other number → "Vocation <n>"; nil → "?".
+   function M.vocation_name(job) end
+   -- rows: nil when no save is loaded; otherwise an array (party order) of
+   --   { name = string|nil, level = number|nil, job = number|nil, rank = number|nil }.
+   -- nil → "Load a save"; {} → "No hired pawns in party";
+   -- else "Applies to: " .. rows joined with ", ", each "%s (Lv %s, %s R%s)".
+   -- A nil or empty name, and a nil level or rank, print as "?". Integral floats print without ".0".
+   function M.format(rows) end
+   return M
+   ```
+2. `Retinue.lua`:
+   - `refresh_targets` additionally keeps, in a file-local, `party_loaded` (true once PawnManager and
+     `_PartyPawnList` are both non-nil this frame, else false) and `target_charas`: an array, in party order, of the
+     `app.Character` of each party pawn whose ID is in the new `state.targets` set. Reset both on every early return
+     and on refresh error (`party_loaded = false`, `target_charas = {}`). Do not put these in `state`
+     (`progression.rewrite_id` only needs `state.targets`).
+   - `m_gui_name` resolved once at load like `m_is_sub` (may be nil → name nil).
+   - New `local function read_row(chara)`: returns `{ name, level, job, rank }`, each field read under its own
+     `pcall` (nil on failure or when the context is nil). Name = `tostring` of the `getName` result when non-nil.
+   - Rows are read in `draw` only (so the reads cost nothing while the menu is closed):
+     `rows = party_loaded and map(target_charas, read_row) or nil`, then `imgui.text(status.format(rows))`.
+   - Draw order: checkbox, status line, then the `Progression unavailable` lines. The status line is shown whether
+     the checkbox is on or off and whether hooks are available.
+   - Update the header comment to mention the status line and `Retinue/status.lua` among the pure modules.
+3. `tests/status_test.lua`: nil → `Load a save`; `{}` → `No hired pawns in party`; one row
+   `{name="Ana", level=12, job=1, rank=3}` → `Applies to: Ana (Lv 12, Fighter R3)`; two rows joined with `", "` in
+   order; job 11 → `Vocation 11`; nil job → `?`; nil/empty name, nil level, nil rank → `?`; `level = 12.0` → `Lv 12`;
+   all ten `VOCATIONS` entries match CONTEXT.md.
+
+**Acceptance criteria**:
+- [ ] The three line variants appear exactly as specified, with glossary vocation names.
+- [ ] The line follows party changes (built from per-frame state, nothing cached across frames beyond one refresh).
+- [ ] A read failure for one field shows `?` and never hides the line or the checkbox.
+- [ ] Shown regardless of the checkbox and of the unavailable notice.
+- [ ] `status.lua` has no REFramework globals. `tests/run.sh` passes.
+- [ ] No change to hooks, progression or targets behaviour.
+
+**Verify**: `tests/run.sh`; `luac5.4 -p src/autorun/Retinue.lua src/autorun/Retinue/*.lua tests/*.lua`;
+`grep -nE '\b(sdk|re|imgui|log|json)\.' src/autorun/Retinue/{ids,targets,progression,errlog,status}.lua` (no hits).
+
+**Out of scope**: config.json (10), notifications (09), discipline in the line (not in the spec), any change in `tools/`.
