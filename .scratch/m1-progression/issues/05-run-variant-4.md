@@ -1,7 +1,7 @@
 # Run variant 4: notification swap-back and rank-up
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: 04
 
 ## Question
@@ -18,3 +18,18 @@ vocation rank-up is reached in one or two fights. With the user playing (`tools/
 
 Write `docs/findings/0003-<slug>.md` with data under `docs/findings/data/<date>-<topic>/`. If swap-back fails, the
 answer records that M1 falls back to the silent notification.
+
+## Answer
+
+Run 2026-11-03 with the user (three sessions). Full write-up: `docs/findings/0003-notification-swap-back.md`, data in
+`docs/findings/data/2026-11-03-exp-hooks-v4/`. Script extended with variant 4 plus debug jobPoint and exp multipliers.
+
+- **Swap-back works**: rank-up and level-up notifications show each hired pawn's own name, once. The GUI accepts a
+  hired pawn's ID. The silent fallback is not needed.
+- **Vocation rank-up works** under the `addJobPoint` rewrite (rank 4 → 5) and persists.
+- Downstream of `dispLevelUpUI`, `reqLevelUp` and pawn chatter's `setLevelUp` get the hired pawn's ID; no visible
+  chatter reaction. A multi-level jump (20 → 24) shows one notification for the whole range.
+- Main pawn unaffected; gains persist through save → title → load, also at variant 0.
+- One unexplained freeze on a load after a level-up; not reproduced on an identical repeat, and the exception burst
+  in the log comes from other mods at every title transition. Not attributed; the M1 checklist should cover a
+  save → title → load right after a hired-pawn level-up.

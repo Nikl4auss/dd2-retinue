@@ -1,0 +1,6461 @@
+{
+    "calls": [
+        {
+            "args": {
+                "chara": "Shaira",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 2283028347,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "name": "Shaira",
+            "seq": 10,
+            "t": 322.836,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Shaira",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 2283028347,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "name": "Shaira",
+            "seq": 11,
+            "t": 322.836,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 2,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 3289,
+                    "level": 19
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 3289,
+                    "level": 19
+                }
+            },
+            "depth": 2,
+            "id": 2283028347,
+            "method": "checkLevelUp",
+            "name": "Shaira",
+            "seq": 12,
+            "t": 322.836,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "11044",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4044,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "10987",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 3987,
+                    "rank": 6
+                }
+            },
+            "depth": 2,
+            "id": 2283028347,
+            "method": "addJobPoint",
+            "name": "Shaira",
+            "seq": 13,
+            "t": 322.836,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 2,
+                "jobPoint": 57,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "11044",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4044,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "10987",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 3987,
+                    "rank": 6
+                }
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "addJobPointInternal",
+            "name": "Shaira",
+            "seq": 14,
+            "t": 322.836,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Alder",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 1601809365,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "name": "Alder",
+            "seq": 15,
+            "t": 322.837,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "chara": "Alder",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 1601809365,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "name": "Alder",
+            "override": {
+                "exp_from": 340,
+                "exp_to": 6800
+            },
+            "seq": 16,
+            "t": 322.837,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 1,
+                "job_name": "Fighter"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 2786,
+                    "level": 20
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 14216,
+                    "level": 19
+                }
+            },
+            "depth": 2,
+            "id": 1601809365,
+            "method": "checkLevelUp",
+            "name": "Alder",
+            "override": {
+                "id_from": 1601809365,
+                "id_to": 2283028347
+            },
+            "seq": 17,
+            "t": 322.837,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "nextLv": 19,
+                "prevLv": 20
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "dispLevelUpUI",
+            "name": "Shaira",
+            "override": {
+                "swap_from": 2283028347,
+                "swap_to": 1601809365,
+                "via": "checkLevelUp"
+            },
+            "seq": 18,
+            "t": 322.837,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "nextLv": 20,
+                "prevLv": 19
+            },
+            "depth": 4,
+            "id": 1601809365,
+            "method": "GuiManager.reqLevelUp",
+            "name": "Alder",
+            "seq": 19,
+            "t": 322.837,
+            "tag": "hired"
+        },
+        {
+            "args": null,
+            "depth": 4,
+            "id": 1601809365,
+            "method": "PawnPartyCombatInfo.setLevelUp",
+            "name": "Alder",
+            "seq": 20,
+            "t": 322.837,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4359,
+                    "rank": 5
+                }
+            },
+            "depth": 2,
+            "id": 1601809365,
+            "method": "addJobPoint",
+            "name": "Alder",
+            "override": {
+                "id_from": 1601809365,
+                "id_to": 2283028347
+            },
+            "seq": 21,
+            "t": 322.837,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 1,
+                "jobPoint": 57,
+                "job_name": "Fighter"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4359,
+                    "rank": 5
+                }
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "addJobPointInternal",
+            "name": "Shaira",
+            "seq": 22,
+            "t": 322.837,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Clothilde",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 1306736823,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "name": "Clothilde",
+            "seq": 23,
+            "t": 322.838,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "chara": "Clothilde",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 1306736823,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "name": "Clothilde",
+            "override": {
+                "exp_from": 340,
+                "exp_to": 6800
+            },
+            "seq": 24,
+            "t": 322.838,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 2,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 2786,
+                    "level": 20
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 14216,
+                    "level": 19
+                }
+            },
+            "depth": 2,
+            "id": 1306736823,
+            "method": "checkLevelUp",
+            "name": "Clothilde",
+            "override": {
+                "id_from": 1306736823,
+                "id_to": 2283028347
+            },
+            "seq": 25,
+            "t": 322.838,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "nextLv": 19,
+                "prevLv": 20
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "dispLevelUpUI",
+            "name": "Shaira",
+            "override": {
+                "swap_from": 2283028347,
+                "swap_to": 1306736823,
+                "via": "checkLevelUp"
+            },
+            "seq": 26,
+            "t": 322.838,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "nextLv": 20,
+                "prevLv": 19
+            },
+            "depth": 4,
+            "id": 1306736823,
+            "method": "GuiManager.reqLevelUp",
+            "name": "Clothilde",
+            "seq": 27,
+            "t": 322.838,
+            "tag": "hired"
+        },
+        {
+            "args": null,
+            "depth": 4,
+            "id": 1306736823,
+            "method": "PawnPartyCombatInfo.setLevelUp",
+            "name": "Clothilde",
+            "seq": 28,
+            "t": 322.838,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4359,
+                    "rank": 5
+                }
+            },
+            "depth": 2,
+            "id": 1306736823,
+            "method": "addJobPoint",
+            "name": "Clothilde",
+            "override": {
+                "id_from": 1306736823,
+                "id_to": 2283028347
+            },
+            "seq": 29,
+            "t": 322.838,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 2,
+                "jobPoint": 57,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4359,
+                    "rank": 5
+                }
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "addJobPointInternal",
+            "name": "Shaira",
+            "seq": 30,
+            "t": 322.839,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Klauss",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 2891076981,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "seq": 31,
+            "t": 322.84,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "chara": "Klauss",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 2891076981,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "seq": 32,
+            "t": 322.84,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 4,
+                "job_name": "Thief"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 5303,
+                    "level": 19
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 5303,
+                    "level": 19
+                }
+            },
+            "depth": 2,
+            "id": 2891076981,
+            "method": "checkLevelUp",
+            "seq": 33,
+            "t": 322.84,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11376",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4826,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11319",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4769,
+                    "rank": 6
+                }
+            },
+            "depth": 2,
+            "id": 2891076981,
+            "method": "addJobPoint",
+            "seq": 34,
+            "t": 322.84,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 4,
+                "jobPoint": 57,
+                "job_name": "Thief"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11376",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4826,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11319",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4769,
+                    "rank": 6
+                }
+            },
+            "depth": 3,
+            "id": 2891076981,
+            "method": "addJobPointInternal",
+            "seq": 35,
+            "t": 322.841,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "chara": "Shaira",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 2283028347,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "name": "Shaira",
+            "seq": 36,
+            "t": 333.487,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Shaira",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 2283028347,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "name": "Shaira",
+            "seq": 37,
+            "t": 333.487,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 2,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 3629,
+                    "level": 19
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 3629,
+                    "level": 19
+                }
+            },
+            "depth": 2,
+            "id": 2283028347,
+            "method": "checkLevelUp",
+            "name": "Shaira",
+            "seq": 38,
+            "t": 333.487,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "11101",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4101,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "11044",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4044,
+                    "rank": 6
+                }
+            },
+            "depth": 2,
+            "id": 2283028347,
+            "method": "addJobPoint",
+            "name": "Shaira",
+            "seq": 39,
+            "t": 333.487,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 2,
+                "jobPoint": 57,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "11101",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4101,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "11044",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4044,
+                    "rank": 6
+                }
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "addJobPointInternal",
+            "name": "Shaira",
+            "seq": 40,
+            "t": 333.487,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Alder",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 1601809365,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "name": "Alder",
+            "seq": 41,
+            "t": 333.488,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "chara": "Alder",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 1601809365,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "name": "Alder",
+            "override": {
+                "exp_from": 340,
+                "exp_to": 6800
+            },
+            "seq": 42,
+            "t": 333.488,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 1,
+                "job_name": "Fighter"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 9586,
+                    "level": 20
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 9586,
+                    "level": 20
+                }
+            },
+            "depth": 2,
+            "id": 1601809365,
+            "method": "checkLevelUp",
+            "name": "Alder",
+            "override": {
+                "id_from": 1601809365,
+                "id_to": 2283028347
+            },
+            "seq": 43,
+            "t": 333.488,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4473,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "depth": 2,
+            "id": 1601809365,
+            "method": "addJobPoint",
+            "name": "Alder",
+            "override": {
+                "id_from": 1601809365,
+                "id_to": 2283028347
+            },
+            "seq": 44,
+            "t": 333.488,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 1,
+                "jobPoint": 57,
+                "job_name": "Fighter"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4473,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 1,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "addJobPointInternal",
+            "name": "Shaira",
+            "seq": 45,
+            "t": 333.489,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Clothilde",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 1306736823,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "name": "Clothilde",
+            "seq": 46,
+            "t": 333.489,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "chara": "Clothilde",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 1306736823,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "name": "Clothilde",
+            "override": {
+                "exp_from": 340,
+                "exp_to": 6800
+            },
+            "seq": 47,
+            "t": 333.49,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 2,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 9586,
+                    "level": 20
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 9586,
+                    "level": 20
+                }
+            },
+            "depth": 2,
+            "id": 1306736823,
+            "method": "checkLevelUp",
+            "name": "Clothilde",
+            "override": {
+                "id_from": 1306736823,
+                "id_to": 2283028347
+            },
+            "seq": 48,
+            "t": 333.49,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4473,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "depth": 2,
+            "id": 1306736823,
+            "method": "addJobPoint",
+            "name": "Clothilde",
+            "override": {
+                "id_from": 1306736823,
+                "id_to": 2283028347
+            },
+            "seq": 49,
+            "t": 333.49,
+            "tag": "hired"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 2,
+                "jobPoint": 57,
+                "job_name": "Archer"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4473,
+                    "rank": 5
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "7216",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 2,
+                    "discipline": 4416,
+                    "rank": 5
+                }
+            },
+            "depth": 3,
+            "id": 2283028347,
+            "method": "addJobPointInternal",
+            "name": "Shaira",
+            "seq": 50,
+            "t": 333.49,
+            "tag": "main"
+        },
+        {
+            "args": {
+                "chara": "Klauss",
+                "damage_nonnull": true,
+                "i1": 340
+            },
+            "depth": 0,
+            "id": 2891076981,
+            "method": "addExpAndJobPoint[id,i,chara,dmg]",
+            "seq": 51,
+            "t": 333.491,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "chara": "Klauss",
+                "i1": 340,
+                "i2": 57
+            },
+            "depth": 1,
+            "id": 2891076981,
+            "method": "addExpAndJobPoint[id,i,i,chara]",
+            "seq": 52,
+            "t": 333.491,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "dragonHermit_nonnull": true,
+                "flag": true,
+                "hs": true,
+                "job": 4,
+                "job_name": "Thief"
+            },
+            "ctx_after": {
+                "hs": {
+                    "exp": 5643,
+                    "level": 19
+                }
+            },
+            "ctx_before": {
+                "hs": {
+                    "exp": 5643,
+                    "level": 19
+                }
+            },
+            "depth": 2,
+            "id": 2891076981,
+            "method": "checkLevelUp",
+            "seq": 53,
+            "t": 333.491,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "jobPoint": 57
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11433",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4883,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11376",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4826,
+                    "rank": 6
+                }
+            },
+            "depth": 2,
+            "id": 2891076981,
+            "method": "addJobPoint",
+            "seq": 54,
+            "t": 333.491,
+            "tag": "other"
+        },
+        {
+            "args": {
+                "flag": true,
+                "jc": true,
+                "job": 4,
+                "jobPoint": 57,
+                "job_name": "Thief"
+            },
+            "ctx_after": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11433",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4883,
+                    "rank": 6
+                }
+            },
+            "ctx_before": {
+                "jc": {
+                    "culmative_exp": [
+                        "0",
+                        "0",
+                        "0",
+                        "11376",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "current_job": 4,
+                    "discipline": 4826,
+                    "rank": 6
+                }
+            },
+            "depth": 3,
+            "id": 2891076981,
+            "method": "addJobPointInternal",
+            "seq": 55,
+            "t": 333.491,
+            "tag": "other"
+        }
+    ],
+    "dropped": 0,
+    "errors": null,
+    "hooks": {
+        "installed": [
+            "isSubPawn",
+            "addExpAndJobPoint[id,i,i]",
+            "addExpAndJobPoint[id,i,chara,dmg]",
+            "addExpAndJobPoint[id,i,i,chara]",
+            "addExpAndJobPoint[7arg]",
+            "addJobPoint",
+            "addJobPointInternal",
+            "checkLevelUp",
+            "dispLevelUpUI",
+            "GuiManager.reqLevelUp",
+            "GuiManager.reqJobRankUp",
+            "PawnPartyCombatInfo.setLevelUp"
+        ],
+        "missing": null
+    },
+    "lvup_params": [
+        {
+            "Level": 2,
+            "RequiredEXP": 200
+        },
+        {
+            "Level": 3,
+            "RequiredEXP": 400
+        },
+        {
+            "Level": 4,
+            "RequiredEXP": 650
+        },
+        {
+            "Level": 5,
+            "RequiredEXP": 950
+        },
+        {
+            "Level": 6,
+            "RequiredEXP": 1300
+        },
+        {
+            "Level": 7,
+            "RequiredEXP": 1700
+        },
+        {
+            "Level": 8,
+            "RequiredEXP": 2150
+        },
+        {
+            "Level": 9,
+            "RequiredEXP": 2650
+        },
+        {
+            "Level": 10,
+            "RequiredEXP": 3200
+        },
+        {
+            "Level": 11,
+            "RequiredEXP": 3800
+        },
+        {
+            "Level": 12,
+            "RequiredEXP": 4450
+        },
+        {
+            "Level": 13,
+            "RequiredEXP": 5150
+        },
+        {
+            "Level": 14,
+            "RequiredEXP": 5900
+        },
+        {
+            "Level": 15,
+            "RequiredEXP": 6700
+        },
+        {
+            "Level": 16,
+            "RequiredEXP": 7550
+        },
+        {
+            "Level": 17,
+            "RequiredEXP": 8450
+        },
+        {
+            "Level": 18,
+            "RequiredEXP": 9400
+        },
+        {
+            "Level": 19,
+            "RequiredEXP": 10400
+        },
+        {
+            "Level": 20,
+            "RequiredEXP": 11430
+        },
+        {
+            "Level": 21,
+            "RequiredEXP": 12490
+        },
+        {
+            "Level": 22,
+            "RequiredEXP": 13580
+        },
+        {
+            "Level": 23,
+            "RequiredEXP": 14700
+        },
+        {
+            "Level": 24,
+            "RequiredEXP": 15850
+        },
+        {
+            "Level": 25,
+            "RequiredEXP": 17030
+        },
+        {
+            "Level": 26,
+            "RequiredEXP": 18240
+        },
+        {
+            "Level": 27,
+            "RequiredEXP": 19480
+        },
+        {
+            "Level": 28,
+            "RequiredEXP": 20750
+        },
+        {
+            "Level": 29,
+            "RequiredEXP": 22050
+        },
+        {
+            "Level": 30,
+            "RequiredEXP": 23380
+        },
+        {
+            "Level": 31,
+            "RequiredEXP": 24740
+        },
+        {
+            "Level": 32,
+            "RequiredEXP": 26130
+        },
+        {
+            "Level": 33,
+            "RequiredEXP": 27550
+        },
+        {
+            "Level": 34,
+            "RequiredEXP": 29000
+        },
+        {
+            "Level": 35,
+            "RequiredEXP": 30480
+        },
+        {
+            "Level": 36,
+            "RequiredEXP": 31980
+        },
+        {
+            "Level": 37,
+            "RequiredEXP": 33500
+        },
+        {
+            "Level": 38,
+            "RequiredEXP": 35040
+        },
+        {
+            "Level": 39,
+            "RequiredEXP": 36600
+        },
+        {
+            "Level": 40,
+            "RequiredEXP": 38180
+        },
+        {
+            "Level": 41,
+            "RequiredEXP": 39780
+        },
+        {
+            "Level": 42,
+            "RequiredEXP": 41400
+        },
+        {
+            "Level": 43,
+            "RequiredEXP": 43040
+        },
+        {
+            "Level": 44,
+            "RequiredEXP": 44700
+        },
+        {
+            "Level": 45,
+            "RequiredEXP": 46380
+        },
+        {
+            "Level": 46,
+            "RequiredEXP": 48080
+        },
+        {
+            "Level": 47,
+            "RequiredEXP": 49800
+        },
+        {
+            "Level": 48,
+            "RequiredEXP": 51540
+        },
+        {
+            "Level": 49,
+            "RequiredEXP": 53300
+        },
+        {
+            "Level": 50,
+            "RequiredEXP": 55080
+        },
+        {
+            "Level": 51,
+            "RequiredEXP": 56880
+        },
+        {
+            "Level": 52,
+            "RequiredEXP": 58700
+        },
+        {
+            "Level": 53,
+            "RequiredEXP": 60540
+        },
+        {
+            "Level": 54,
+            "RequiredEXP": 62400
+        },
+        {
+            "Level": 55,
+            "RequiredEXP": 64280
+        },
+        {
+            "Level": 56,
+            "RequiredEXP": 66180
+        },
+        {
+            "Level": 57,
+            "RequiredEXP": 68100
+        },
+        {
+            "Level": 58,
+            "RequiredEXP": 70040
+        },
+        {
+            "Level": 59,
+            "RequiredEXP": 72000
+        },
+        {
+            "Level": 60,
+            "RequiredEXP": 73980
+        },
+        {
+            "Level": 61,
+            "RequiredEXP": 75980
+        },
+        {
+            "Level": 62,
+            "RequiredEXP": 77980
+        },
+        {
+            "Level": 63,
+            "RequiredEXP": 79980
+        },
+        {
+            "Level": 64,
+            "RequiredEXP": 81980
+        },
+        {
+            "Level": 65,
+            "RequiredEXP": 83980
+        },
+        {
+            "Level": 66,
+            "RequiredEXP": 85980
+        },
+        {
+            "Level": 67,
+            "RequiredEXP": 87980
+        },
+        {
+            "Level": 68,
+            "RequiredEXP": 89980
+        },
+        {
+            "Level": 69,
+            "RequiredEXP": 91980
+        },
+        {
+            "Level": 70,
+            "RequiredEXP": 93980
+        },
+        {
+            "Level": 71,
+            "RequiredEXP": 95980
+        },
+        {
+            "Level": 72,
+            "RequiredEXP": 97980
+        },
+        {
+            "Level": 73,
+            "RequiredEXP": 99980
+        },
+        {
+            "Level": 74,
+            "RequiredEXP": 101980
+        },
+        {
+            "Level": 75,
+            "RequiredEXP": 103980
+        },
+        {
+            "Level": 76,
+            "RequiredEXP": 105980
+        },
+        {
+            "Level": 77,
+            "RequiredEXP": 107980
+        },
+        {
+            "Level": 78,
+            "RequiredEXP": 109980
+        },
+        {
+            "Level": 79,
+            "RequiredEXP": 111980
+        },
+        {
+            "Level": 80,
+            "RequiredEXP": 113980
+        },
+        {
+            "Level": 81,
+            "RequiredEXP": 115980
+        },
+        {
+            "Level": 82,
+            "RequiredEXP": 117980
+        },
+        {
+            "Level": 83,
+            "RequiredEXP": 119980
+        },
+        {
+            "Level": 84,
+            "RequiredEXP": 121980
+        },
+        {
+            "Level": 85,
+            "RequiredEXP": 123980
+        },
+        {
+            "Level": 86,
+            "RequiredEXP": 125980
+        },
+        {
+            "Level": 87,
+            "RequiredEXP": 127980
+        },
+        {
+            "Level": 88,
+            "RequiredEXP": 129980
+        },
+        {
+            "Level": 89,
+            "RequiredEXP": 131980
+        },
+        {
+            "Level": 90,
+            "RequiredEXP": 133980
+        },
+        {
+            "Level": 91,
+            "RequiredEXP": 135980
+        },
+        {
+            "Level": 92,
+            "RequiredEXP": 137980
+        },
+        {
+            "Level": 93,
+            "RequiredEXP": 139980
+        },
+        {
+            "Level": 94,
+            "RequiredEXP": 141980
+        },
+        {
+            "Level": 95,
+            "RequiredEXP": 143980
+        },
+        {
+            "Level": 96,
+            "RequiredEXP": 145980
+        },
+        {
+            "Level": 97,
+            "RequiredEXP": 147980
+        },
+        {
+            "Level": 98,
+            "RequiredEXP": 149980
+        },
+        {
+            "Level": 99,
+            "RequiredEXP": 151980
+        },
+        {
+            "Level": 100,
+            "RequiredEXP": 153980
+        },
+        {
+            "Level": 101,
+            "RequiredEXP": 154980
+        },
+        {
+            "Level": 102,
+            "RequiredEXP": 155980
+        },
+        {
+            "Level": 103,
+            "RequiredEXP": 156980
+        },
+        {
+            "Level": 104,
+            "RequiredEXP": 157980
+        },
+        {
+            "Level": 105,
+            "RequiredEXP": 158980
+        },
+        {
+            "Level": 106,
+            "RequiredEXP": 159980
+        },
+        {
+            "Level": 107,
+            "RequiredEXP": 160980
+        },
+        {
+            "Level": 108,
+            "RequiredEXP": 161980
+        },
+        {
+            "Level": 109,
+            "RequiredEXP": 162980
+        },
+        {
+            "Level": 110,
+            "RequiredEXP": 163980
+        },
+        {
+            "Level": 111,
+            "RequiredEXP": 164980
+        },
+        {
+            "Level": 112,
+            "RequiredEXP": 165980
+        },
+        {
+            "Level": 113,
+            "RequiredEXP": 166980
+        },
+        {
+            "Level": 114,
+            "RequiredEXP": 167980
+        },
+        {
+            "Level": 115,
+            "RequiredEXP": 168980
+        },
+        {
+            "Level": 116,
+            "RequiredEXP": 169980
+        },
+        {
+            "Level": 117,
+            "RequiredEXP": 170980
+        },
+        {
+            "Level": 118,
+            "RequiredEXP": 171980
+        },
+        {
+            "Level": 119,
+            "RequiredEXP": 172980
+        },
+        {
+            "Level": 120,
+            "RequiredEXP": 173980
+        },
+        {
+            "Level": 121,
+            "RequiredEXP": 174980
+        },
+        {
+            "Level": 122,
+            "RequiredEXP": 175980
+        },
+        {
+            "Level": 123,
+            "RequiredEXP": 176980
+        },
+        {
+            "Level": 124,
+            "RequiredEXP": 177980
+        },
+        {
+            "Level": 125,
+            "RequiredEXP": 178980
+        },
+        {
+            "Level": 126,
+            "RequiredEXP": 179980
+        },
+        {
+            "Level": 127,
+            "RequiredEXP": 180980
+        },
+        {
+            "Level": 128,
+            "RequiredEXP": 181980
+        },
+        {
+            "Level": 129,
+            "RequiredEXP": 182980
+        },
+        {
+            "Level": 130,
+            "RequiredEXP": 183980
+        },
+        {
+            "Level": 131,
+            "RequiredEXP": 184980
+        },
+        {
+            "Level": 132,
+            "RequiredEXP": 185980
+        },
+        {
+            "Level": 133,
+            "RequiredEXP": 186980
+        },
+        {
+            "Level": 134,
+            "RequiredEXP": 187980
+        },
+        {
+            "Level": 135,
+            "RequiredEXP": 188980
+        },
+        {
+            "Level": 136,
+            "RequiredEXP": 189980
+        },
+        {
+            "Level": 137,
+            "RequiredEXP": 190980
+        },
+        {
+            "Level": 138,
+            "RequiredEXP": 191980
+        },
+        {
+            "Level": 139,
+            "RequiredEXP": 192980
+        },
+        {
+            "Level": 140,
+            "RequiredEXP": 193980
+        },
+        {
+            "Level": 141,
+            "RequiredEXP": 194980
+        },
+        {
+            "Level": 142,
+            "RequiredEXP": 195980
+        },
+        {
+            "Level": 143,
+            "RequiredEXP": 196980
+        },
+        {
+            "Level": 144,
+            "RequiredEXP": 197980
+        },
+        {
+            "Level": 145,
+            "RequiredEXP": 198980
+        },
+        {
+            "Level": 146,
+            "RequiredEXP": 199980
+        },
+        {
+            "Level": 147,
+            "RequiredEXP": 200980
+        },
+        {
+            "Level": 148,
+            "RequiredEXP": 201980
+        },
+        {
+            "Level": 149,
+            "RequiredEXP": 202980
+        },
+        {
+            "Level": 150,
+            "RequiredEXP": 203980
+        },
+        {
+            "Level": 151,
+            "RequiredEXP": 204980
+        },
+        {
+            "Level": 152,
+            "RequiredEXP": 205980
+        },
+        {
+            "Level": 153,
+            "RequiredEXP": 206980
+        },
+        {
+            "Level": 154,
+            "RequiredEXP": 207980
+        },
+        {
+            "Level": 155,
+            "RequiredEXP": 208980
+        },
+        {
+            "Level": 156,
+            "RequiredEXP": 209980
+        },
+        {
+            "Level": 157,
+            "RequiredEXP": 210980
+        },
+        {
+            "Level": 158,
+            "RequiredEXP": 211980
+        },
+        {
+            "Level": 159,
+            "RequiredEXP": 212980
+        },
+        {
+            "Level": 160,
+            "RequiredEXP": 213980
+        },
+        {
+            "Level": 161,
+            "RequiredEXP": 214980
+        },
+        {
+            "Level": 162,
+            "RequiredEXP": 215980
+        },
+        {
+            "Level": 163,
+            "RequiredEXP": 216980
+        },
+        {
+            "Level": 164,
+            "RequiredEXP": 217980
+        },
+        {
+            "Level": 165,
+            "RequiredEXP": 218980
+        },
+        {
+            "Level": 166,
+            "RequiredEXP": 219980
+        },
+        {
+            "Level": 167,
+            "RequiredEXP": 220980
+        },
+        {
+            "Level": 168,
+            "RequiredEXP": 221980
+        },
+        {
+            "Level": 169,
+            "RequiredEXP": 222980
+        },
+        {
+            "Level": 170,
+            "RequiredEXP": 223980
+        },
+        {
+            "Level": 171,
+            "RequiredEXP": 224980
+        },
+        {
+            "Level": 172,
+            "RequiredEXP": 225980
+        },
+        {
+            "Level": 173,
+            "RequiredEXP": 226980
+        },
+        {
+            "Level": 174,
+            "RequiredEXP": 227980
+        },
+        {
+            "Level": 175,
+            "RequiredEXP": 228980
+        },
+        {
+            "Level": 176,
+            "RequiredEXP": 229980
+        },
+        {
+            "Level": 177,
+            "RequiredEXP": 230980
+        },
+        {
+            "Level": 178,
+            "RequiredEXP": 231980
+        },
+        {
+            "Level": 179,
+            "RequiredEXP": 232980
+        },
+        {
+            "Level": 180,
+            "RequiredEXP": 233980
+        },
+        {
+            "Level": 181,
+            "RequiredEXP": 234980
+        },
+        {
+            "Level": 182,
+            "RequiredEXP": 235980
+        },
+        {
+            "Level": 183,
+            "RequiredEXP": 236980
+        },
+        {
+            "Level": 184,
+            "RequiredEXP": 237980
+        },
+        {
+            "Level": 185,
+            "RequiredEXP": 238980
+        },
+        {
+            "Level": 186,
+            "RequiredEXP": 239980
+        },
+        {
+            "Level": 187,
+            "RequiredEXP": 240980
+        },
+        {
+            "Level": 188,
+            "RequiredEXP": 241980
+        },
+        {
+            "Level": 189,
+            "RequiredEXP": 242980
+        },
+        {
+            "Level": 190,
+            "RequiredEXP": 243980
+        },
+        {
+            "Level": 191,
+            "RequiredEXP": 244980
+        },
+        {
+            "Level": 192,
+            "RequiredEXP": 245980
+        },
+        {
+            "Level": 193,
+            "RequiredEXP": 246980
+        },
+        {
+            "Level": 194,
+            "RequiredEXP": 247980
+        },
+        {
+            "Level": 195,
+            "RequiredEXP": 248980
+        },
+        {
+            "Level": 196,
+            "RequiredEXP": 249980
+        },
+        {
+            "Level": 197,
+            "RequiredEXP": 250980
+        },
+        {
+            "Level": 198,
+            "RequiredEXP": 251980
+        },
+        {
+            "Level": 199,
+            "RequiredEXP": 252980
+        },
+        {
+            "Level": 200,
+            "RequiredEXP": 253980
+        },
+        {
+            "Level": 201,
+            "RequiredEXP": 254480
+        },
+        {
+            "Level": 202,
+            "RequiredEXP": 254980
+        },
+        {
+            "Level": 203,
+            "RequiredEXP": 255480
+        },
+        {
+            "Level": 204,
+            "RequiredEXP": 255980
+        },
+        {
+            "Level": 205,
+            "RequiredEXP": 256480
+        },
+        {
+            "Level": 206,
+            "RequiredEXP": 256980
+        },
+        {
+            "Level": 207,
+            "RequiredEXP": 257480
+        },
+        {
+            "Level": 208,
+            "RequiredEXP": 257980
+        },
+        {
+            "Level": 209,
+            "RequiredEXP": 258480
+        },
+        {
+            "Level": 210,
+            "RequiredEXP": 258980
+        },
+        {
+            "Level": 211,
+            "RequiredEXP": 259480
+        },
+        {
+            "Level": 212,
+            "RequiredEXP": 259980
+        },
+        {
+            "Level": 213,
+            "RequiredEXP": 260480
+        },
+        {
+            "Level": 214,
+            "RequiredEXP": 260980
+        },
+        {
+            "Level": 215,
+            "RequiredEXP": 261480
+        },
+        {
+            "Level": 216,
+            "RequiredEXP": 261980
+        },
+        {
+            "Level": 217,
+            "RequiredEXP": 262480
+        },
+        {
+            "Level": 218,
+            "RequiredEXP": 262980
+        },
+        {
+            "Level": 219,
+            "RequiredEXP": 263480
+        },
+        {
+            "Level": 220,
+            "RequiredEXP": 263980
+        },
+        {
+            "Level": 221,
+            "RequiredEXP": 264480
+        },
+        {
+            "Level": 222,
+            "RequiredEXP": 264980
+        },
+        {
+            "Level": 223,
+            "RequiredEXP": 265480
+        },
+        {
+            "Level": 224,
+            "RequiredEXP": 265980
+        },
+        {
+            "Level": 225,
+            "RequiredEXP": 266480
+        },
+        {
+            "Level": 226,
+            "RequiredEXP": 266980
+        },
+        {
+            "Level": 227,
+            "RequiredEXP": 267480
+        },
+        {
+            "Level": 228,
+            "RequiredEXP": 267980
+        },
+        {
+            "Level": 229,
+            "RequiredEXP": 268480
+        },
+        {
+            "Level": 230,
+            "RequiredEXP": 268980
+        },
+        {
+            "Level": 231,
+            "RequiredEXP": 269480
+        },
+        {
+            "Level": 232,
+            "RequiredEXP": 269980
+        },
+        {
+            "Level": 233,
+            "RequiredEXP": 270480
+        },
+        {
+            "Level": 234,
+            "RequiredEXP": 270980
+        },
+        {
+            "Level": 235,
+            "RequiredEXP": 271480
+        },
+        {
+            "Level": 236,
+            "RequiredEXP": 271980
+        },
+        {
+            "Level": 237,
+            "RequiredEXP": 272480
+        },
+        {
+            "Level": 238,
+            "RequiredEXP": 272980
+        },
+        {
+            "Level": 239,
+            "RequiredEXP": 273480
+        },
+        {
+            "Level": 240,
+            "RequiredEXP": 273980
+        },
+        {
+            "Level": 241,
+            "RequiredEXP": 274480
+        },
+        {
+            "Level": 242,
+            "RequiredEXP": 274980
+        },
+        {
+            "Level": 243,
+            "RequiredEXP": 275480
+        },
+        {
+            "Level": 244,
+            "RequiredEXP": 275980
+        },
+        {
+            "Level": 245,
+            "RequiredEXP": 276480
+        },
+        {
+            "Level": 246,
+            "RequiredEXP": 276980
+        },
+        {
+            "Level": 247,
+            "RequiredEXP": 277480
+        },
+        {
+            "Level": 248,
+            "RequiredEXP": 277980
+        },
+        {
+            "Level": 249,
+            "RequiredEXP": 278480
+        },
+        {
+            "Level": 250,
+            "RequiredEXP": 278980
+        },
+        {
+            "Level": 251,
+            "RequiredEXP": 279480
+        },
+        {
+            "Level": 252,
+            "RequiredEXP": 279980
+        },
+        {
+            "Level": 253,
+            "RequiredEXP": 280480
+        },
+        {
+            "Level": 254,
+            "RequiredEXP": 280980
+        },
+        {
+            "Level": 255,
+            "RequiredEXP": 281480
+        },
+        {
+            "Level": 256,
+            "RequiredEXP": 281980
+        },
+        {
+            "Level": 257,
+            "RequiredEXP": 282480
+        },
+        {
+            "Level": 258,
+            "RequiredEXP": 282980
+        },
+        {
+            "Level": 259,
+            "RequiredEXP": 283480
+        },
+        {
+            "Level": 260,
+            "RequiredEXP": 283980
+        },
+        {
+            "Level": 261,
+            "RequiredEXP": 284480
+        },
+        {
+            "Level": 262,
+            "RequiredEXP": 284980
+        },
+        {
+            "Level": 263,
+            "RequiredEXP": 285480
+        },
+        {
+            "Level": 264,
+            "RequiredEXP": 285980
+        },
+        {
+            "Level": 265,
+            "RequiredEXP": 286480
+        },
+        {
+            "Level": 266,
+            "RequiredEXP": 286980
+        },
+        {
+            "Level": 267,
+            "RequiredEXP": 287480
+        },
+        {
+            "Level": 268,
+            "RequiredEXP": 287980
+        },
+        {
+            "Level": 269,
+            "RequiredEXP": 288480
+        },
+        {
+            "Level": 270,
+            "RequiredEXP": 288980
+        },
+        {
+            "Level": 271,
+            "RequiredEXP": 289480
+        },
+        {
+            "Level": 272,
+            "RequiredEXP": 289980
+        },
+        {
+            "Level": 273,
+            "RequiredEXP": 290480
+        },
+        {
+            "Level": 274,
+            "RequiredEXP": 290980
+        },
+        {
+            "Level": 275,
+            "RequiredEXP": 291480
+        },
+        {
+            "Level": 276,
+            "RequiredEXP": 291980
+        },
+        {
+            "Level": 277,
+            "RequiredEXP": 292480
+        },
+        {
+            "Level": 278,
+            "RequiredEXP": 292980
+        },
+        {
+            "Level": 279,
+            "RequiredEXP": 293480
+        },
+        {
+            "Level": 280,
+            "RequiredEXP": 293980
+        },
+        {
+            "Level": 281,
+            "RequiredEXP": 294480
+        },
+        {
+            "Level": 282,
+            "RequiredEXP": 294980
+        },
+        {
+            "Level": 283,
+            "RequiredEXP": 295480
+        },
+        {
+            "Level": 284,
+            "RequiredEXP": 295980
+        },
+        {
+            "Level": 285,
+            "RequiredEXP": 296480
+        },
+        {
+            "Level": 286,
+            "RequiredEXP": 296980
+        },
+        {
+            "Level": 287,
+            "RequiredEXP": 297480
+        },
+        {
+            "Level": 288,
+            "RequiredEXP": 297980
+        },
+        {
+            "Level": 289,
+            "RequiredEXP": 298480
+        },
+        {
+            "Level": 290,
+            "RequiredEXP": 298980
+        },
+        {
+            "Level": 291,
+            "RequiredEXP": 299480
+        },
+        {
+            "Level": 292,
+            "RequiredEXP": 299980
+        },
+        {
+            "Level": 293,
+            "RequiredEXP": 300480
+        },
+        {
+            "Level": 294,
+            "RequiredEXP": 300980
+        },
+        {
+            "Level": 295,
+            "RequiredEXP": 301480
+        },
+        {
+            "Level": 296,
+            "RequiredEXP": 301980
+        },
+        {
+            "Level": 297,
+            "RequiredEXP": 302480
+        },
+        {
+            "Level": 298,
+            "RequiredEXP": 302980
+        },
+        {
+            "Level": 299,
+            "RequiredEXP": 303480
+        },
+        {
+            "Level": 300,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 301,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 302,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 303,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 304,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 305,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 306,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 307,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 308,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 309,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 310,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 311,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 312,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 313,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 314,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 315,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 316,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 317,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 318,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 319,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 320,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 321,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 322,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 323,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 324,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 325,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 326,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 327,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 328,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 329,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 330,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 331,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 332,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 333,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 334,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 335,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 336,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 337,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 338,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 339,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 340,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 341,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 342,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 343,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 344,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 345,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 346,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 347,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 348,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 349,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 350,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 351,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 352,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 353,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 354,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 355,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 356,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 357,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 358,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 359,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 360,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 361,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 362,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 363,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 364,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 365,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 366,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 367,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 368,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 369,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 370,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 371,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 372,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 373,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 374,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 375,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 376,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 377,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 378,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 379,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 380,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 381,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 382,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 383,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 384,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 385,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 386,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 387,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 388,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 389,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 390,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 391,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 392,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 393,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 394,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 395,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 396,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 397,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 398,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 399,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 400,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 401,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 402,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 403,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 404,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 405,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 406,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 407,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 408,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 409,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 410,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 411,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 412,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 413,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 414,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 415,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 416,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 417,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 418,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 419,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 420,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 421,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 422,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 423,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 424,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 425,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 426,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 427,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 428,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 429,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 430,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 431,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 432,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 433,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 434,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 435,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 436,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 437,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 438,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 439,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 440,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 441,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 442,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 443,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 444,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 445,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 446,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 447,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 448,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 449,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 450,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 451,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 452,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 453,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 454,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 455,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 456,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 457,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 458,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 459,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 460,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 461,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 462,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 463,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 464,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 465,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 466,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 467,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 468,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 469,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 470,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 471,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 472,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 473,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 474,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 475,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 476,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 477,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 478,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 479,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 480,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 481,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 482,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 483,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 484,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 485,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 486,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 487,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 488,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 489,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 490,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 491,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 492,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 493,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 494,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 495,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 496,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 497,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 498,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 499,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 500,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 501,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 502,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 503,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 504,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 505,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 506,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 507,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 508,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 509,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 510,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 511,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 512,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 513,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 514,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 515,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 516,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 517,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 518,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 519,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 520,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 521,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 522,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 523,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 524,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 525,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 526,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 527,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 528,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 529,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 530,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 531,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 532,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 533,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 534,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 535,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 536,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 537,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 538,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 539,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 540,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 541,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 542,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 543,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 544,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 545,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 546,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 547,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 548,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 549,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 550,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 551,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 552,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 553,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 554,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 555,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 556,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 557,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 558,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 559,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 560,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 561,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 562,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 563,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 564,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 565,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 566,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 567,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 568,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 569,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 570,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 571,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 572,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 573,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 574,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 575,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 576,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 577,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 578,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 579,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 580,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 581,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 582,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 583,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 584,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 585,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 586,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 587,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 588,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 589,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 590,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 591,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 592,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 593,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 594,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 595,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 596,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 597,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 598,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 599,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 600,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 601,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 602,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 603,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 604,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 605,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 606,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 607,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 608,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 609,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 610,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 611,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 612,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 613,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 614,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 615,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 616,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 617,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 618,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 619,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 620,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 621,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 622,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 623,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 624,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 625,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 626,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 627,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 628,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 629,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 630,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 631,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 632,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 633,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 634,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 635,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 636,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 637,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 638,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 639,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 640,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 641,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 642,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 643,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 644,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 645,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 646,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 647,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 648,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 649,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 650,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 651,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 652,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 653,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 654,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 655,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 656,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 657,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 658,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 659,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 660,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 661,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 662,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 663,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 664,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 665,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 666,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 667,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 668,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 669,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 670,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 671,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 672,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 673,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 674,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 675,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 676,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 677,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 678,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 679,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 680,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 681,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 682,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 683,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 684,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 685,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 686,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 687,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 688,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 689,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 690,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 691,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 692,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 693,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 694,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 695,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 696,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 697,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 698,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 699,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 700,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 701,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 702,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 703,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 704,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 705,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 706,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 707,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 708,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 709,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 710,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 711,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 712,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 713,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 714,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 715,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 716,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 717,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 718,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 719,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 720,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 721,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 722,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 723,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 724,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 725,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 726,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 727,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 728,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 729,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 730,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 731,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 732,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 733,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 734,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 735,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 736,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 737,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 738,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 739,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 740,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 741,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 742,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 743,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 744,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 745,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 746,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 747,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 748,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 749,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 750,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 751,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 752,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 753,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 754,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 755,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 756,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 757,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 758,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 759,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 760,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 761,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 762,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 763,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 764,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 765,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 766,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 767,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 768,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 769,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 770,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 771,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 772,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 773,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 774,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 775,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 776,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 777,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 778,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 779,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 780,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 781,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 782,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 783,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 784,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 785,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 786,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 787,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 788,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 789,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 790,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 791,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 792,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 793,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 794,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 795,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 796,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 797,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 798,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 799,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 800,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 801,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 802,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 803,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 804,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 805,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 806,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 807,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 808,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 809,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 810,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 811,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 812,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 813,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 814,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 815,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 816,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 817,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 818,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 819,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 820,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 821,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 822,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 823,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 824,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 825,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 826,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 827,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 828,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 829,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 830,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 831,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 832,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 833,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 834,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 835,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 836,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 837,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 838,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 839,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 840,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 841,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 842,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 843,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 844,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 845,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 846,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 847,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 848,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 849,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 850,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 851,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 852,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 853,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 854,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 855,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 856,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 857,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 858,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 859,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 860,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 861,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 862,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 863,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 864,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 865,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 866,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 867,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 868,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 869,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 870,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 871,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 872,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 873,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 874,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 875,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 876,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 877,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 878,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 879,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 880,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 881,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 882,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 883,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 884,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 885,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 886,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 887,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 888,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 889,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 890,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 891,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 892,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 893,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 894,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 895,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 896,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 897,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 898,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 899,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 900,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 901,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 902,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 903,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 904,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 905,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 906,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 907,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 908,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 909,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 910,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 911,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 912,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 913,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 914,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 915,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 916,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 917,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 918,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 919,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 920,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 921,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 922,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 923,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 924,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 925,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 926,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 927,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 928,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 929,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 930,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 931,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 932,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 933,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 934,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 935,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 936,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 937,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 938,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 939,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 940,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 941,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 942,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 943,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 944,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 945,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 946,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 947,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 948,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 949,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 950,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 951,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 952,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 953,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 954,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 955,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 956,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 957,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 958,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 959,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 960,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 961,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 962,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 963,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 964,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 965,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 966,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 967,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 968,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 969,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 970,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 971,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 972,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 973,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 974,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 975,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 976,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 977,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 978,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 979,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 980,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 981,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 982,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 983,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 984,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 985,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 986,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 987,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 988,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 989,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 990,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 991,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 992,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 993,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 994,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 995,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 996,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 997,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 998,
+            "RequiredEXP": 303980
+        },
+        {
+            "Level": 999,
+            "RequiredEXP": 303980
+        }
+    ],
+    "snapshots": [
+        {
+            "label": "auto:start",
+            "pawns": [
+                {
+                    "chara_id": 2283028347,
+                    "consumable_exp": 3987,
+                    "culmative_exp": [
+                        "0",
+                        "10987",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Shaira",
+                    "dead": false,
+                    "discipline": 3987,
+                    "exp": 2949,
+                    "exp_is_sub": false,
+                    "gui_name": "Shaira",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 6,
+                    "level": 19,
+                    "main_ctx_bound": true,
+                    "owner_job": "4 (Thief)",
+                    "owner_level": 19,
+                    "owner_name": "Klauss",
+                    "owner_offline_id": "00000000-0000-0000-0000-000000000000",
+                    "slot": 0,
+                    "sub_ctx": "none",
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_-2011938949",
+                    "util_is_sub": false
+                },
+                {
+                    "chara_id": 1601809365,
+                    "consumable_exp": 4359,
+                    "culmative_exp": [
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Alder",
+                    "dead": false,
+                    "discipline": 4359,
+                    "exp": 7416,
+                    "exp_is_sub": true,
+                    "gui_name": "Alder",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "1 (Fighter)",
+                    "job_rank": 5,
+                    "level": 19,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f19dde12-94ba-49df-bcfd-9e153f86ee7f",
+                    "slot": 1,
+                    "sub_hire_time": 26259.129337841645,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1601809365",
+                    "util_is_sub": true
+                },
+                {
+                    "chara_id": 1306736823,
+                    "consumable_exp": 4359,
+                    "culmative_exp": [
+                        "0",
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Clothilde",
+                    "dead": false,
+                    "discipline": 4359,
+                    "exp": 7416,
+                    "exp_is_sub": true,
+                    "gui_name": "Clothilde",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 5,
+                    "level": 19,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f7b3c704-1291-4d54-aad7-20054f7d9f84",
+                    "slot": 2,
+                    "sub_hire_time": 26279.563372496516,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1306736823",
+                    "util_is_sub": true
+                }
+            ],
+            "t": 175.341,
+            "time": "14:33:16"
+        },
+        {
+            "label": "auto:variant->4",
+            "pawns": [
+                {
+                    "chara_id": 2283028347,
+                    "consumable_exp": 3987,
+                    "culmative_exp": [
+                        "0",
+                        "10987",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Shaira",
+                    "dead": false,
+                    "discipline": 3987,
+                    "exp": 2949,
+                    "exp_is_sub": false,
+                    "gui_name": "Shaira",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 6,
+                    "level": 19,
+                    "main_ctx_bound": true,
+                    "owner_job": "4 (Thief)",
+                    "owner_level": 19,
+                    "owner_name": "Klauss",
+                    "owner_offline_id": "00000000-0000-0000-0000-000000000000",
+                    "slot": 0,
+                    "sub_ctx": "none",
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_-2011938949",
+                    "util_is_sub": false
+                },
+                {
+                    "chara_id": 1601809365,
+                    "consumable_exp": 4359,
+                    "culmative_exp": [
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Alder",
+                    "dead": false,
+                    "discipline": 4359,
+                    "exp": 7416,
+                    "exp_is_sub": false,
+                    "gui_name": "Alder",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "1 (Fighter)",
+                    "job_rank": 5,
+                    "level": 19,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f19dde12-94ba-49df-bcfd-9e153f86ee7f",
+                    "slot": 1,
+                    "sub_hire_time": 26259.129337841645,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1601809365",
+                    "util_is_sub": true
+                },
+                {
+                    "chara_id": 1306736823,
+                    "consumable_exp": 4359,
+                    "culmative_exp": [
+                        "0",
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Clothilde",
+                    "dead": false,
+                    "discipline": 4359,
+                    "exp": 7416,
+                    "exp_is_sub": false,
+                    "gui_name": "Clothilde",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 5,
+                    "level": 19,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f7b3c704-1291-4d54-aad7-20054f7d9f84",
+                    "slot": 2,
+                    "sub_hire_time": 26279.563372496516,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1306736823",
+                    "util_is_sub": true
+                }
+            ],
+            "t": 225.143,
+            "time": "14:34:06"
+        },
+        {
+            "label": "before-lvl",
+            "pawns": [
+                {
+                    "chara_id": 2283028347,
+                    "consumable_exp": 3987,
+                    "culmative_exp": [
+                        "0",
+                        "10987",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Shaira",
+                    "dead": false,
+                    "discipline": 3987,
+                    "exp": 2949,
+                    "exp_is_sub": false,
+                    "gui_name": "Shaira",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 6,
+                    "level": 19,
+                    "main_ctx_bound": true,
+                    "owner_job": "4 (Thief)",
+                    "owner_level": 19,
+                    "owner_name": "Klauss",
+                    "owner_offline_id": "00000000-0000-0000-0000-000000000000",
+                    "slot": 0,
+                    "sub_ctx": "none",
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_-2011938949",
+                    "util_is_sub": false
+                },
+                {
+                    "chara_id": 1601809365,
+                    "consumable_exp": 4359,
+                    "culmative_exp": [
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Alder",
+                    "dead": false,
+                    "discipline": 4359,
+                    "exp": 7416,
+                    "exp_is_sub": false,
+                    "gui_name": "Alder",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "1 (Fighter)",
+                    "job_rank": 5,
+                    "level": 19,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f19dde12-94ba-49df-bcfd-9e153f86ee7f",
+                    "slot": 1,
+                    "sub_hire_time": 26259.129337841645,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1601809365",
+                    "util_is_sub": true
+                },
+                {
+                    "chara_id": 1306736823,
+                    "consumable_exp": 4359,
+                    "culmative_exp": [
+                        "0",
+                        "7159",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Clothilde",
+                    "dead": false,
+                    "discipline": 4359,
+                    "exp": 7416,
+                    "exp_is_sub": false,
+                    "gui_name": "Clothilde",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 5,
+                    "level": 19,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f7b3c704-1291-4d54-aad7-20054f7d9f84",
+                    "slot": 2,
+                    "sub_hire_time": 26279.563372496516,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1306736823",
+                    "util_is_sub": true
+                }
+            ],
+            "t": 291.193,
+            "time": "14:35:12"
+        },
+        {
+            "label": "after-lvl",
+            "pawns": [
+                {
+                    "chara_id": 2283028347,
+                    "consumable_exp": 4101,
+                    "culmative_exp": [
+                        "0",
+                        "11101",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Shaira",
+                    "dead": false,
+                    "discipline": 4101,
+                    "exp": 3629,
+                    "exp_is_sub": false,
+                    "gui_name": "Shaira",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 6,
+                    "level": 19,
+                    "main_ctx_bound": true,
+                    "owner_job": "4 (Thief)",
+                    "owner_level": 19,
+                    "owner_name": "Klauss",
+                    "owner_offline_id": "00000000-0000-0000-0000-000000000000",
+                    "slot": 0,
+                    "sub_ctx": "none",
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_-2011938949",
+                    "util_is_sub": false
+                },
+                {
+                    "chara_id": 1601809365,
+                    "consumable_exp": 4473,
+                    "culmative_exp": [
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Alder",
+                    "dead": false,
+                    "discipline": 4473,
+                    "exp": 9586,
+                    "exp_is_sub": false,
+                    "gui_name": "Alder",
+                    "holder_level": 20,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "1 (Fighter)",
+                    "job_rank": 5,
+                    "level": 20,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f19dde12-94ba-49df-bcfd-9e153f86ee7f",
+                    "slot": 1,
+                    "sub_hire_time": 26259.129337841645,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1601809365",
+                    "util_is_sub": true
+                },
+                {
+                    "chara_id": 1306736823,
+                    "consumable_exp": 4473,
+                    "culmative_exp": [
+                        "0",
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Clothilde",
+                    "dead": false,
+                    "discipline": 4473,
+                    "exp": 9586,
+                    "exp_is_sub": false,
+                    "gui_name": "Clothilde",
+                    "holder_level": 20,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 5,
+                    "level": 20,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f7b3c704-1291-4d54-aad7-20054f7d9f84",
+                    "slot": 2,
+                    "sub_hire_time": 26279.563372496516,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1306736823",
+                    "util_is_sub": true
+                }
+            ],
+            "t": 398.271,
+            "time": "14:36:59"
+        },
+        {
+            "label": "pre-save",
+            "pawns": [
+                {
+                    "chara_id": 2283028347,
+                    "consumable_exp": 4101,
+                    "culmative_exp": [
+                        "0",
+                        "11101",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Shaira",
+                    "dead": false,
+                    "discipline": 4101,
+                    "exp": 3629,
+                    "exp_is_sub": false,
+                    "gui_name": "Shaira",
+                    "holder_level": 19,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 6,
+                    "level": 19,
+                    "main_ctx_bound": true,
+                    "owner_job": "4 (Thief)",
+                    "owner_level": 19,
+                    "owner_name": "Klauss",
+                    "owner_offline_id": "00000000-0000-0000-0000-000000000000",
+                    "slot": 0,
+                    "sub_ctx": "none",
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_-2011938949",
+                    "util_is_sub": false
+                },
+                {
+                    "chara_id": 1601809365,
+                    "consumable_exp": 4473,
+                    "culmative_exp": [
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Alder",
+                    "dead": false,
+                    "discipline": 4473,
+                    "exp": 9586,
+                    "exp_is_sub": false,
+                    "gui_name": "Alder",
+                    "holder_level": 20,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "1 (Fighter)",
+                    "job_rank": 5,
+                    "level": 20,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f19dde12-94ba-49df-bcfd-9e153f86ee7f",
+                    "slot": 1,
+                    "sub_hire_time": 26259.129337841645,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1601809365",
+                    "util_is_sub": true
+                },
+                {
+                    "chara_id": 1306736823,
+                    "consumable_exp": 4473,
+                    "culmative_exp": [
+                        "0",
+                        "7273",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "data_name": "Clothilde",
+                    "dead": false,
+                    "discipline": 4473,
+                    "exp": 9586,
+                    "exp_is_sub": false,
+                    "gui_name": "Clothilde",
+                    "holder_level": 20,
+                    "is_restore": true,
+                    "is_store": true,
+                    "job": "2 (Archer)",
+                    "job_rank": 5,
+                    "level": 20,
+                    "main_ctx_bound": false,
+                    "owner_job": "0 (?)",
+                    "owner_level": 1,
+                    "owner_name": "CAPCOM",
+                    "owner_offline_id": "f7b3c704-1291-4d54-aad7-20054f7d9f84",
+                    "slot": 2,
+                    "sub_hire_time": 26279.563372496516,
+                    "uniq_id": "00000000-0000-0000-0000-000000000000_1306736823",
+                    "util_is_sub": true
+                }
+            ],
+            "t": 412.411,
+            "time": "14:37:13"
+        }
+    ],
+    "started": "2026-11-03 14:30:47",
+    "started_clock": 25.967,
+    "variant_events": [
+        {
+            "exp_mult": 1,
+            "jp_mult": 1,
+            "kind": "start",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 25.971,
+            "variant": 0,
+            "wall": "14:30:47"
+        },
+        {
+            "exp_mult": 1,
+            "from": 0,
+            "jp_mult": 1,
+            "kind": "variant",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 225.142,
+            "to": 4,
+            "variant": 4,
+            "wall": "14:34:06"
+        },
+        {
+            "exp_mult": 2,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.534,
+            "value": 2,
+            "variant": 4,
+            "wall": "14:34:16"
+        },
+        {
+            "exp_mult": 3,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.653,
+            "value": 3,
+            "variant": 4,
+            "wall": "14:34:16"
+        },
+        {
+            "exp_mult": 4,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.706,
+            "value": 4,
+            "variant": 4,
+            "wall": "14:34:16"
+        },
+        {
+            "exp_mult": 5,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.733,
+            "value": 5,
+            "variant": 4,
+            "wall": "14:34:16"
+        },
+        {
+            "exp_mult": 6,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.759,
+            "value": 6,
+            "variant": 4,
+            "wall": "14:34:16"
+        },
+        {
+            "exp_mult": 7,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.786,
+            "value": 7,
+            "variant": 4,
+            "wall": "14:34:16"
+        },
+        {
+            "exp_mult": 8,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.813,
+            "value": 8,
+            "variant": 4,
+            "wall": "14:34:16"
+        },
+        {
+            "exp_mult": 10,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.839,
+            "value": 10,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 11,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.868,
+            "value": 11,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 12,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.893,
+            "value": 12,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 16,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.92,
+            "value": 16,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 19,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.946,
+            "value": 19,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 21,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.973,
+            "value": 21,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 22,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 235.991,
+            "value": 22,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 23,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.039,
+            "value": 23,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 24,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.08,
+            "value": 24,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 25,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.106,
+            "value": 25,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 26,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.133,
+            "value": 26,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 27,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.256,
+            "value": 27,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 28,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.306,
+            "value": 28,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 29,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.334,
+            "value": 29,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 30,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.573,
+            "value": 30,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 31,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.626,
+            "value": 31,
+            "variant": 4,
+            "wall": "14:34:17"
+        },
+        {
+            "exp_mult": 30,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 236.999,
+            "value": 30,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 29,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 237.213,
+            "value": 29,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 28,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 237.28,
+            "value": 28,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 27,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 237.507,
+            "value": 27,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 26,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 237.591,
+            "value": 26,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 25,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 237.639,
+            "value": 25,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 24,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 237.721,
+            "value": 24,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 23,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 237.774,
+            "value": 23,
+            "variant": 4,
+            "wall": "14:34:18"
+        },
+        {
+            "exp_mult": 22,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 238.255,
+            "value": 22,
+            "variant": 4,
+            "wall": "14:34:19"
+        },
+        {
+            "exp_mult": 21,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 238.44,
+            "value": 21,
+            "variant": 4,
+            "wall": "14:34:19"
+        },
+        {
+            "exp_mult": 20,
+            "jp_mult": 1,
+            "kind": "exp_mult",
+            "log_calls": true,
+            "rewrite_bool": true,
+            "rewrite_id": true,
+            "t": 241.189,
+            "value": 20,
+            "variant": 4,
+            "wall": "14:34:22"
+        }
+    ]
+}

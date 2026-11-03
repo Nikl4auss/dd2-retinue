@@ -46,11 +46,13 @@ Settled while charting (2026-11-03):
 - [Decide the M1 hook set](issues/04-decide-hook-set.md): rewrite the ID to `ch100000_00` in `checkLevelUp` +
   `addJobPoint` for hired party pawns; notification by swapping the real ID back in `dispLevelUpUI` /
   `reqJobRankUp`, silent as fallback; banked exp applies as-is.
+- [Run variant 4: notification swap-back and rank-up](issues/05-run-variant-4.md): swap-back gives the right name
+  on both notifications (no fallback needed); hired rank-up works and persists; one unexplained, unreproduced
+  freeze on load. Findings 0003.
 
 ## Not yet specified
 
-- Interaction with other active mods that touch experience or skills.
-- Exact shape of `config.json` and of the mod-menu section.
+(none: the remaining questions are open tickets)
 
 ## Out of scope
 

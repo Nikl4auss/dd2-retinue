@@ -233,7 +233,7 @@ local SPECS = {
       rewrite = { min_variant = 2, bool_param = 3 } },
     { key = "dispLevelUpUI", type = EXP, base = 2, swap = true,
       sig = "dispLevelUpUI(app.CharacterID, System.Int32, System.Int32)",
-      params = { P("prevLv", "i32"), P("nextLv", "i32") } },
+      params = { P("nextLv", "i32"), P("prevLv", "i32") } }, -- (newLv, oldLv), the reverse of reqLevelUp
     { key = "GuiManager.reqLevelUp", type = "app.GuiManager", base = 3,
       sig = "reqLevelUp(app.CharacterID, System.Int32, System.Int32)",
       params = { P("prevLv", "i32"), P("nextLv", "i32") } },
