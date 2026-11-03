@@ -1,7 +1,7 @@
 # Run variant 4: notification swap-back and rank-up
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 04
 
 ## Question

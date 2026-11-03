@@ -13,7 +13,11 @@
 --   1  ExpDispenser.isSubPawn returns false for hired pawns in the party
 --   2  + checkLevelUp: CharacterID rewritten to the main pawn's (and the Boolean to false, optionally)
 --   3  + addJobPoint: same rewrite
+--   4  3's rewrite with the Boolean left as passed (notification on), and the real hired-pawn ID swapped back
+--      into dispLevelUpUI and GuiManager.reqJobRankUp when they run inside a rewritten call
 --
+-- Debug: a jobPoint multiplier for hired pawns (variant >= 3) to reach a vocation rank-up quickly. It inflates
+-- discipline and rank, which are saved: restore the backup afterwards if you don't want to keep them.
 -- Everything is logged to reframework/data/Retinue/experiments/run_<timestamp>.json (one file per session).
 -- Hooks cannot be removed in REFramework, so all of them are installed at load; behaviour is gated on the
 -- Lua state below. Every hook body is wrapped in pcall: a bug here must never break a game call.
@@ -34,11 +38,14 @@ local JOB_NAMES = {
     [6] = "Sorcerer", [7] = "Mystic Spearhand", [8] = "Magick Archer", [9] = "Trickster", [10] = "Warfarer",
 }
 
-local VARIANT_ITEMS = { "0 Off (no overrides)", "1 isSubPawn", "2 + checkLevelUp ID rewrite", "3 + addJobPoint ID rewrite" }
+local VARIANT_ITEMS = { "0 Off (no overrides)", "1 isSubPawn", "2 + checkLevelUp ID rewrite", "3 + addJobPoint ID rewrite",
+    "4 3 + notification swap-back (Boolean as passed)" }
+local JP_MULT_MAX = 100
 
 -- Session state. Deliberately not persisted: every launch starts at variant 0.
 local variant, rewrite_bool, log_calls = 0, true, true
-local rewrite_id = true -- variants 2-3: rewrite the CharacterID to the main pawn's
+local rewrite_id = true -- variants 2-4: rewrite the CharacterID to the main pawn's
+local jp_mult = 1 -- debug: hired pawns' jobPoint multiplier in addJobPoint (variant >= 3)
 local suppress_log = false -- true while the script itself calls hooked methods (snapshots)
 local targets, names, party_rows = {}, {}, {} -- targets: hired party CharacterIDs -> true
 local party_status, hook_status, flush_status = "no data yet", "hooks not installed yet", ""
@@ -190,7 +197,9 @@ end
 -- Hook specs. `base` is the args index of the first parameter (the CharacterID): static methods start at
 -- args[2] (args[1] is the thread context); instance methods have `this` at args[2], parameters from args[3].
 -- `params` lists the parameters after the CharacterID; parameter k sits at args[base + k].
--- `rewrite`: variant gate and the 1-based position (counting from the CharacterID as 0) of the Boolean.
+-- `rewrite`: variant gate and the 1-based position (counting from the CharacterID as 0) of the Boolean
+-- (and of jobPoint, `jp_param`, for the debug multiplier).
+-- `swap`: variant 4 puts the real hired-pawn ID back when this runs nested inside a rewritten call.
 
 local function P(name, kind) return { name, kind } end
 
@@ -213,7 +222,7 @@ local SPECS = {
     { key = "addJobPoint", type = EXP, base = 2, snap = true,
       sig = "addJobPoint(app.CharacterID, app.JobContext, System.Int32, System.Boolean)",
       params = { P("jc", "jc"), P("jobPoint", "i32"), P("flag", "bool") },
-      rewrite = { min_variant = 3, bool_param = 3 } },
+      rewrite = { min_variant = 3, bool_param = 3, jp_param = 2 } },
     { key = "addJobPointInternal", type = EXP, base = 2, snap = true,
       sig = "addJobPointInternal(app.CharacterID, app.Character.JobEnum, app.JobContext, System.Int32, System.Boolean)",
       params = { P("job", "job"), P("jc", "jc"), P("jobPoint", "i32"), P("flag", "bool") } },
@@ -221,15 +230,18 @@ local SPECS = {
       sig = "checkLevelUp(app.CharacterID, app.HumanStatusContext, app.Character.JobEnum, System.Boolean, app.DragonHermitContext)",
       params = { P("hs", "hs"), P("job", "job"), P("flag", "bool"), P("dragonHermit_nonnull", "ptr") },
       rewrite = { min_variant = 2, bool_param = 3 } },
-    { key = "dispLevelUpUI", type = EXP, base = 2,
+    { key = "dispLevelUpUI", type = EXP, base = 2, swap = true,
       sig = "dispLevelUpUI(app.CharacterID, System.Int32, System.Int32)",
       params = { P("prevLv", "i32"), P("nextLv", "i32") } },
     { key = "GuiManager.reqLevelUp", type = "app.GuiManager", base = 3,
       sig = "reqLevelUp(app.CharacterID, System.Int32, System.Int32)",
       params = { P("prevLv", "i32"), P("nextLv", "i32") } },
-    { key = "GuiManager.reqJobRankUp", type = "app.GuiManager", base = 3,
+    { key = "GuiManager.reqJobRankUp", type = "app.GuiManager", base = 3, swap = true,
       sig = "reqJobRankUp(app.CharacterID, app.Character.JobEnum, System.Int32, System.Int32)",
       params = { P("job", "job"), P("i1", "i32"), P("i2", "i32") } },
+    -- Log only: pawn chatter keyed on the ID (does it get the main pawn's under the rewrite?).
+    { key = "PawnPartyCombatInfo.setLevelUp", type = "app.PawnPartyCombatInfo", base = 3,
+      sig = "setLevelUp(app.CharacterID)", params = {} },
 }
 local SPEC_BY_KEY = {}
 for _, s in ipairs(SPECS) do SPEC_BY_KEY[s.key] = s end
@@ -330,14 +342,38 @@ local function pre_body(spec, args)
     if rw and variant >= rw.min_variant and targets[id] then
         local ov = { id_from = id, id_to = rewrite_id and MAIN_ID or id }
         local bi = spec.base + rw.bool_param
-        if rewrite_bool then
+        local bool_rw = rewrite_bool and variant < 4 -- variant 4 keeps the notification flag as passed
+        if bool_rw then
             ov.bool_from = arg_bool(args[bi])
             ov.bool_to = false
         end
+        local ji, jp_new
+        if rw.jp_param and jp_mult > 1 then
+            ji = spec.base + rw.jp_param
+            ov.jobpoint_from = arg_i32(args[ji])
+            jp_new = ov.jobpoint_from * jp_mult
+            ov.jobpoint_to = jp_new
+        end
         -- Reads done: now write. Arisen's Own does the same (ID to the main pawn's, Boolean to 0).
-        if rewrite_bool then args[bi] = sdk.to_ptr(0) end
-        if rewrite_id then args[spec.base] = sdk.to_ptr(MAIN_ID) end
+        if bool_rw then args[bi] = sdk.to_ptr(0) end
+        if jp_new then args[ji] = sdk.to_ptr(jp_new) end
+        if rewrite_id then
+            args[spec.base] = sdk.to_ptr(MAIN_ID)
+            frame.swap_id = id
+        end
         if entry then entry.override = ov end
+    end
+
+    if spec.swap and variant >= 4 and id == MAIN_ID then
+        -- Nearest enclosing rewritten call (the current frame is stack[depth + 1]).
+        for i = depth, 1, -1 do
+            local real = stack[i].swap_id
+            if real then
+                args[spec.base] = sdk.to_ptr(real)
+                if entry then entry.override = { swap_from = id, swap_to = real, via = stack[i].key } end
+                break
+            end
+        end
     end
 
     if entry then
@@ -640,7 +676,7 @@ local function flush()
 end
 
 local function add_event(kind, extra)
-    local ev = { kind = kind, t = os.clock(), wall = wall(), variant = variant, rewrite_bool = rewrite_bool, rewrite_id = rewrite_id, log_calls = log_calls }
+    local ev = { kind = kind, t = os.clock(), wall = wall(), variant = variant, rewrite_bool = rewrite_bool, rewrite_id = rewrite_id, jp_mult = jp_mult, log_calls = log_calls }
     for k, v in pairs(extra or {}) do ev[k] = v end
     run.variant_events[#run.variant_events + 1] = ev
     dirty = true
@@ -695,10 +731,15 @@ local function draw_body()
         rewrite_id = rid
         add_event("rewrite_id", { value = rid })
     end
-    local ch_rw, rw = imgui.checkbox("Rewrite Boolean to false (as Arisen's Own)", rewrite_bool)
+    local ch_rw, rw = imgui.checkbox("Rewrite Boolean to false (as Arisen's Own; ignored at variant 4)", rewrite_bool)
     if ch_rw then
         rewrite_bool = rw
         add_event("rewrite_bool", { value = rw })
+    end
+    local ch_jp, jp = imgui.slider_int("Debug: hired jobPoint x (variant >= 3)", jp_mult, 1, JP_MULT_MAX)
+    if ch_jp then
+        jp_mult = jp
+        add_event("jp_mult", { value = jp })
     end
     local ch_log, lg = imgui.checkbox("Log calls", log_calls)
     if ch_log then
