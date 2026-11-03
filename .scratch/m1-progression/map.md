@@ -33,6 +33,10 @@ Settled while charting (2026-11-03):
 
 <!-- one line per resolved ticket: - [<title>](issues/NN-slug.md): <gist> -->
 
+- [How does the game compute level-up, and what is `HumanStatusContext.Exp`?](issues/01-level-up-internals.md):
+  Exp is per-level progress; the ID only gates and labels, so `isSubPawn` alone likely suffices for real hired-pawn
+  IDs; rank follows `CulmativeExp`. Inferred from signatures; the experiment confirms.
+
 ## Not yet specified
 
 - Does the level-up notification name the right pawn, and what to do if it doesn't? (Observed in the variant 1 run.)
