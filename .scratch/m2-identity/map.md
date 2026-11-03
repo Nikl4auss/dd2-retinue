@@ -38,6 +38,10 @@ Settled while charting (2026-11-03):
 
 <!-- one line per resolved ticket: - [<title>](issues/NN-slug.md): <gist> -->
 
+- [What tools can speed up in-game testing?](issues/01-test-tooling.md): use the installed Nick's Devtools /
+  Content Editor (teleport, time skip, spawn, kill pawns) + our own test-actions script (exp, dismiss, lost) + fixture
+  saves; save editors read-only at most. Branch `research/m2-test-tooling`.
+
 ## Not yet specified
 
 - **What the backup holds, and when it is taken and restored**: hangs on what the game discards on dismiss/lost and

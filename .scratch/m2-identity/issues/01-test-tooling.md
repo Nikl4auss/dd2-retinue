@@ -1,7 +1,7 @@
 # What tools can speed up in-game testing?
 
 Type: research
-Status: open
+Status: resolved
 
 ## Question
 
@@ -18,3 +18,19 @@ hire / dismiss / lost / re-hire / save-load cycles. Find tools that shorten thes
 
 Output: a recommendation (what to adopt, what to build), with risks (save corruption, version mismatch, conflicts
 with the mod's hooks). Adopting or building a tool may become a task ticket.
+
+## Answer
+
+Findings: `docs/findings/research-m2-test-tooling.md` on branch `research/m2-test-tooling` (commit `70dd0cf`, never merged).
+
+- Use what is installed: Nick's Devtools and the Content Editor devtools give teleport (`TimeSkipManager.requestPlayerWarp`),
+  time skip, enemy spawn/kill for exp, and "Kill pawns" (lost setup). To verify in the first experiment: does "Kill
+  pawns" fire `PawnManager.lost`/`onLost`; does a spawned Big Riftstone open the hire screen.
+- Build a small test-actions script in `tools/experiments/` (not the probe, which stays read-only): grant exp via
+  `ExpDispenser.addExpAndJobPoint`, dismiss via `PawnManager.dismissPawn`, force lost via `PawnManager.lost(id, bool, bool)`
+  (bool meaning unknown). Hooks nothing, so it can be linked alongside the mod. Folded into the experiment-build ticket.
+- Fixture saves via `tools/saves.sh backup fixture-<state>`, restored before each cycle.
+- Save editors: not for editing (DD2 Save Manager is Windows/main-pawn only); ree-save-editor optional as a read-only
+  inspector of a copied backup. Never write a save. Cheat Engine tables and WeMod rejected.
+- Risks: direct dismiss/lost calls may skip the game's own flow, so every checklist run still does one real Rift
+  dismiss and one real death; granted exp is not scaled by Bestiary; LeovvayGore hooks `setPawnLostTimer`/`pawnLost`.
