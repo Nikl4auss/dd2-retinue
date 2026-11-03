@@ -9,7 +9,7 @@ glance that the mod is acting, and for whom.
 
 **Status:** ready-for-agent
 
-- [ ] `Applies to: <name> (Lv <level>, <vocation> R<rank>), ...` for current targets. `No hired pawns in party` when
+- [ ] `Applies to: <name> (Lv <level>, <vocation> R<rank>, Disc <discipline>), ...` for current targets. `No hired pawns in party` when
       there are none, and `Load a save` when the pawn manager is not available.
 - [ ] Vocation names follow the glossary. Names come from the game's GUI name lookup, as in the experiment script.
 - [ ] The line follows party changes (a pawn swapped at the Rift) without *Reset scripts*.

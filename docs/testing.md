@@ -53,7 +53,7 @@ passed or not reached.
 ### Checks
 
 1. **Menu, fresh install**: the *Retinue* section shows the checkbox ticked, no `Progression unavailable` notice,
-   and `Applies to:` listing both hired pawns with level, vocation and rank. No `config.json` was created.
+   and `Applies to:` listing both hired pawns with level, vocation, rank and discipline. No `config.json` was created.
 2. **Banked exp**: on the first fight, the long-hired pawn gains its banked levels (possibly several at once). One
    level-up notification, with its own name.
 3. **Normal fight**: hired pawns gain exp and discipline (probe snapshot before and after), and level up when exp

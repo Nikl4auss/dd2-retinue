@@ -119,6 +119,7 @@ local function read_row(chara)
         level = st and try(function() return st:call("get_Level") end) or nil,
         job = job,
         rank = jc and job and try(function() return jc:call("calcJobRank", job) end) or nil,
+        discipline = jc and try(function() return jc:call("get_ConsumableExpProp") end) or nil,
     }
 end
 

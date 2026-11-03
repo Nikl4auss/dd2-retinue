@@ -110,7 +110,7 @@ One `imgui.tree_node("Retinue")` in `re.on_draw_ui`. All text is in English.
 
 - Checkbox `Hired pawns gain levels and vocation ranks`, bound to `progression`.
 - A read-only status line with the targets currently in the party:
-  `Applies to: <name> (Lv <level>, <vocation> R<rank>), ...`, or `No hired pawns in party`, or `Load a save` when
+  `Applies to: <name> (Lv <level>, <vocation> R<rank>, Disc <discipline>), ...`, or `No hired pawns in party`, or `Load a save` when
   `PawnManager` is not available. Vocation names follow `CONTEXT.md`. Names come from `GUIBase.getName(app.Character)`
   as in the experiment.
 - When hooks are missing: `Progression unavailable: <method> not found (game update?)`, listing each missing method.

@@ -23,11 +23,12 @@ end
 local function row_text(row)
     local name = row.name
     if name == nil or name == "" then name = "?" end
-    return string.format("%s (Lv %s, %s R%s)", name, num(row.level), M.vocation_name(row.job), num(row.rank))
+    return string.format("%s (Lv %s, %s R%s, Disc %s)", name, num(row.level), M.vocation_name(row.job), num(row.rank),
+        num(row.discipline))
 end
 
 -- rows: nil when no save is loaded; otherwise an array (party order) of
---   { name = string|nil, level = number|nil, job = number|nil, rank = number|nil }.
+--   { name = string|nil, level = number|nil, job = number|nil, rank = number|nil, discipline = number|nil }.
 function M.format(rows)
     if rows == nil then return "Load a save" end
     if #rows == 0 then return "No hired pawns in party" end
