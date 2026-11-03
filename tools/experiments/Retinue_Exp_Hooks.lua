@@ -16,8 +16,8 @@
 --   4  3's rewrite with the Boolean left as passed (notification on), and the real hired-pawn ID swapped back
 --      into dispLevelUpUI and GuiManager.reqJobRankUp when they run inside a rewritten call
 --
--- Debug: a jobPoint multiplier for hired pawns (variant >= 3) to reach a vocation rank-up quickly. It inflates
--- discipline and rank, which are saved: restore the backup afterwards if you don't want to keep them.
+-- Debug: jobPoint and exp multipliers for hired pawns (variant >= 3) to reach a rank-up or level-up quickly.
+-- They inflate discipline, rank and level, which are saved: restore the backup afterwards if you don't want them.
 -- Everything is logged to reframework/data/Retinue/experiments/run_<timestamp>.json (one file per session).
 -- Hooks cannot be removed in REFramework, so all of them are installed at load; behaviour is gated on the
 -- Lua state below. Every hook body is wrapped in pcall: a bug here must never break a game call.
@@ -39,13 +39,14 @@ local JOB_NAMES = {
 }
 
 local VARIANT_ITEMS = { "0 Off (no overrides)", "1 isSubPawn", "2 + checkLevelUp ID rewrite", "3 + addJobPoint ID rewrite",
-    "4 3 + notification swap-back (Boolean as passed)" }
+    "4 swap-back (as 3, Boolean as passed, real ID in the notification)" }
 local JP_MULT_MAX = 100
 
 -- Session state. Deliberately not persisted: every launch starts at variant 0.
 local variant, rewrite_bool, log_calls = 0, true, true
 local rewrite_id = true -- variants 2-4: rewrite the CharacterID to the main pawn's
 local jp_mult = 1 -- debug: hired pawns' jobPoint multiplier in addJobPoint (variant >= 3)
+local exp_mult = 1 -- debug: hired pawns' exp multiplier in addExpAndJobPoint[id,i,i,chara] (variant >= 3)
 local suppress_log = false -- true while the script itself calls hooked methods (snapshots)
 local targets, names, party_rows = {}, {}, {} -- targets: hired party CharacterIDs -> true
 local party_status, hook_status, flush_status = "no data yet", "hooks not installed yet", ""
@@ -198,7 +199,7 @@ end
 -- args[2] (args[1] is the thread context); instance methods have `this` at args[2], parameters from args[3].
 -- `params` lists the parameters after the CharacterID; parameter k sits at args[base + k].
 -- `rewrite`: variant gate and the 1-based position (counting from the CharacterID as 0) of the Boolean
--- (and of jobPoint, `jp_param`, for the debug multiplier).
+-- (and of jobPoint, `jp_param`, for the debug multiplier). `exp_param`: position of exp, for the exp multiplier.
 -- `swap`: variant 4 puts the real hired-pawn ID back when this runs nested inside a rewritten call.
 
 local function P(name, kind) return { name, kind } end
@@ -212,7 +213,7 @@ local SPECS = {
     { key = "addExpAndJobPoint[id,i,chara,dmg]", type = EXP, base = 2,
       sig = "addExpAndJobPoint(app.CharacterID, System.Int32, app.Character, app.HitController.DamageInfo)",
       params = { P("i1", "i32"), P("chara", "chara"), P("damage_nonnull", "ptr") } },
-    { key = "addExpAndJobPoint[id,i,i,chara]", type = EXP, base = 2,
+    { key = "addExpAndJobPoint[id,i,i,chara]", type = EXP, base = 2, exp_param = 1, -- i1 = exp
       sig = "addExpAndJobPoint(app.CharacterID, System.Int32, System.Int32, app.Character)",
       params = { P("i1", "i32"), P("i2", "i32"), P("chara", "chara") } },
     { key = "addExpAndJobPoint[7arg]", type = EXP, base = 2, snap = true,
@@ -362,6 +363,13 @@ local function pre_body(spec, args)
             frame.swap_id = id
         end
         if entry then entry.override = ov end
+    end
+
+    if spec.exp_param and variant >= 3 and exp_mult > 1 and targets[id] then
+        local ei = spec.base + spec.exp_param
+        local from = arg_i32(args[ei])
+        args[ei] = sdk.to_ptr(from * exp_mult)
+        if entry then entry.override = { exp_from = from, exp_to = from * exp_mult } end
     end
 
     if spec.swap and variant >= 4 and id == MAIN_ID then
@@ -676,7 +684,7 @@ local function flush()
 end
 
 local function add_event(kind, extra)
-    local ev = { kind = kind, t = os.clock(), wall = wall(), variant = variant, rewrite_bool = rewrite_bool, rewrite_id = rewrite_id, jp_mult = jp_mult, log_calls = log_calls }
+    local ev = { kind = kind, t = os.clock(), wall = wall(), variant = variant, rewrite_bool = rewrite_bool, rewrite_id = rewrite_id, jp_mult = jp_mult, exp_mult = exp_mult, log_calls = log_calls }
     for k, v in pairs(extra or {}) do ev[k] = v end
     run.variant_events[#run.variant_events + 1] = ev
     dirty = true
@@ -740,6 +748,11 @@ local function draw_body()
     if ch_jp then
         jp_mult = jp
         add_event("jp_mult", { value = jp })
+    end
+    local ch_ex, ex = imgui.slider_int("Debug: hired exp x (variant >= 3)", exp_mult, 1, JP_MULT_MAX)
+    if ch_ex then
+        exp_mult = ex
+        add_event("exp_mult", { value = ex })
     end
     local ch_log, lg = imgui.checkbox("Log calls", log_calls)
     if ch_log then

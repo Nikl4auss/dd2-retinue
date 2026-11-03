@@ -18,8 +18,9 @@ Variants (menu: **Retinue Exp Hooks (EXPERIMENT)**; it always starts at 0, nothi
 | 3 + addJobPoint ID rewrite | also `addJobPoint` gets the same rewrite |
 | 4 + notification swap-back | 3's rewrite with the Boolean left as passed; the real hired-pawn ID is put back into `dispLevelUpUI` and `GuiManager.reqJobRankUp` when they run inside a rewritten call |
 
-Debug slider **hired jobPoint x** (variant ≥ 3): multiplies the hired pawns' jobPoint in `addJobPoint`, to reach a
-vocation rank-up in a fight or two. Discipline and rank gained this way are saved: restore the backup after the
+Debug sliders (variant ≥ 3): **hired jobPoint x** multiplies the hired pawns' jobPoint in `addJobPoint`, **hired exp x**
+their exp in `addExpAndJobPoint(id, exp, jobPoint, chara)`, to reach a rank-up or level-up in a fight or two.
+Discipline, rank and levels gained this way are saved: restore the backup after the
 run if you don't want to keep them. `PawnPartyCombatInfo.setLevelUp` (pawn chatter) is hooked log-only.
 
 Baseline to compare against: in the same fight the main pawn gained +1891 exp and +479 discipline
