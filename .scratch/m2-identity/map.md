@@ -41,18 +41,22 @@ Settled while charting (2026-11-03):
 - [What tools can speed up in-game testing?](issues/01-test-tooling.md): use the installed Nick's Devtools /
   Content Editor (teleport, time skip, spawn, kill pawns) + our own test-actions script (exp, dismiss, lost) + fixture
   saves; save editors read-only at most. Branch `research/m2-test-tooling`.
+- [Which native UI entry points could host adopt and release?](issues/05-native-ui-entry-points.md): the mod menu
+  stays the complete surface (away pawns are unreachable in world); best native spot is the hired pawn's talk menu
+  (reuse a slot), fallback a Status-page button; release confirms via the game's own dialog. Branch `research/m2-native-ui`.
 
 ## Not yet specified
 
 - **What the backup holds, and when it is taken and restored**: hangs on what the game discards on dismiss/lost and
   whether a re-hired pawn comes back as the same character. Also whether restoring (writing level/exp/vocation into
   a re-hired pawn's contexts) stays within ADR 0001, or needs a new ADR.
-- **How an away pawn comes back**: via the Rift as the game offers it, or a mod-driven re-hire; and for a lost
+- **How an away pawn comes back**: via the Rift as the game offers it (Rift search `ui041401` is a candidate surface), or a mod-driven re-hire; and for a lost
   pawn, whether the game ever offers it again.
 - **Roster vs. save drift**: restoring an older save (or `tools/saves.sh restore`) while the roster says otherwise;
   how the roster is validated against the loaded save.
 - **The uninstall guarantee**: how it is verified for adopted and away pawns (checklist shape).
-- **Menu / status for the roster**: present and away entries, release confirmation; shape follows the native-UI decision.
+- **Mod-menu section for the roster**: present and away entries, release; the mod menu is the complete surface
+  whatever native option the UX ticket picks.
 
 ## Out of scope
 
