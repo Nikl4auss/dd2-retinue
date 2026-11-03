@@ -10,14 +10,19 @@ never silently overwritten.
 
 **Blocked by:** [08: Hired pawns level up](08-hired-pawns-level-up.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Read once at script load, written immediately on every change from the menu. `re.on_config_save` is not used.
-- [ ] Missing file: defaults (progression on), and no file is created until a change.
-- [ ] Per-key resolution: a valid key is used; a missing or wrongly typed key gets its default and a log warning. An
+- [x] Read once at script load, written immediately on every change from the menu. `re.on_config_save` is not used.
+- [x] Missing file: defaults (progression on), and no file is created until a change.
+- [x] Per-key resolution: a valid key is used; a missing or wrongly typed key gets its default and a log warning. An
       unparseable file or a non-object top level means all defaults plus a warning, and the file is not overwritten
       until a change.
-- [ ] A higher `version` is read for the known keys. On rewrite, unknown keys are kept and `version` is not lowered.
-- [ ] The parse and merge logic is pure and tested: missing, valid, wrongly typed key, garbage, higher version, unknown
+- [x] A higher `version` is read for the known keys. On rewrite, unknown keys are kept and `version` is not lowered.
+- [x] The parse and merge logic is pure and tested: missing, valid, wrongly typed key, garbage, higher version, unknown
       keys kept.
-- [ ] Verified in game by the user: untick, then *Reset scripts*, and the checkbox is still off.
+- [x] Verified in game by the user: untick, then *Reset scripts*, and the checkbox is still off.
+
+## Comments
+
+- 2026-11-03: implemented in `645f410`. In game the user confirmed: no file on a fresh start, `config.json` written
+  on untick, and still off after *Reset scripts*. The malformed-file check is left to the M1 checklist (check 10).
