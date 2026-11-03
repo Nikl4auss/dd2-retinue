@@ -5,16 +5,18 @@
 -- they gain levels, discipline and vocation rank from any exp source. Pre-hooks on
 -- app.ExpDispenser.dispLevelUpUI and app.GuiManager.reqJobRankUp put the real ID back, so the level-up and
 -- rank-up notifications name the hired pawn. The REFramework menu has a "Retinue" section with one checkbox
--- (in memory only, on at load) and a status line naming the party pawns progression applies to (name, level,
--- vocation, rank), read only while the menu is drawn. The four hooks install all or nothing: if any hooked
--- method cannot be found after a game update, no hook is installed and the menu says so.
+-- (saved in reframework/data/Retinue/config.json, on when there is no file) and a status line naming the
+-- party pawns progression applies to (name, level, vocation, rank), read only while the menu is drawn. The
+-- four hooks install all or nothing: if any hooked method cannot be found after a game update, no hook is
+-- installed and the menu says so.
 --
 -- Do NOT deploy tools/experiments/Retinue_Exp_Hooks.lua alongside this script: both would hook the same
 -- methods and rewrite the same arguments.
 --
--- The decisions live in Retinue/{targets,progression,errlog,status,opencalls}.lua (pure, tested by
+-- The decisions live in Retinue/{targets,progression,errlog,status,opencalls,config}.lua (pure, tested by
 -- tests/run.sh); this file and Retinue/hooks.lua are the REFramework glue. Every hook body runs under pcall.
 
+local config = require("Retinue.config")
 local errlog = require("Retinue.errlog")
 local hooks = require("Retinue.hooks")
 local opencalls = require("Retinue.opencalls")
@@ -28,6 +30,59 @@ local missing = {}
 local report = errlog.new(function(msg) log.error(msg) end)
 
 local calls = opencalls.new()
+
+-- config.json is read once, here, and written only when the checkbox changes (never at load, never by
+-- the config-save callback). Returns status, data for config.resolve. fs.read returns "" for a missing and
+-- for an empty file alike, so an empty file counts as missing (no warning).
+local function read_config()
+    if fs and fs.read then
+        local ok, text = pcall(fs.read, config.PATH)
+        if not ok or text == nil or text == "" then return "missing" end
+        local okd, data = pcall(json.load_string, text)
+        if not okd or data == nil then return "unparseable" end
+        return "ok", data
+    end
+    -- Without fs.read, an unparseable file reads as missing (json.load_file returns nil for both).
+    local ok, data = pcall(json.load_file, config.PATH)
+    if not ok or data == nil then return "missing" end
+    return "ok", data
+end
+
+local settings, config_warnings, config_base = config.resolve(read_config())
+for _, w in ipairs(config_warnings) do log.warn(w) end
+state.enabled = settings.progression
+
+-- Set when the last config write failed; cleared by the next successful one.
+local config_save_failed = false
+
+-- json.dump_file returns true even when the file cannot be opened (read-only or locked), so read it back.
+local function written(value)
+    if not (fs and fs.read) then return true end
+    local okr, text = pcall(fs.read, config.PATH)
+    if not okr then return false end
+    local okd, back = pcall(json.load_string, text)
+    return okd and type(back) == "table" and back.progression == value
+end
+
+local function save_config(value)
+    local out = config.merge(config_base, { progression = value })
+    local ok, res = pcall(json.dump_file, config.PATH, out)
+    if ok and res ~= false and written(value) then
+        config_base = out
+        config_save_failed = false
+    else
+        config_save_failed = true
+        local err = res
+        if ok then
+            if res == false then
+                err = "dump_file returned false"
+            else
+                err = "file unchanged after write (read-only or locked?)"
+            end
+        end
+        report("config write", err)
+    end
+end
 
 -- Core entries (checkLevelUp, addJobPoint) push a frame for every call, with real = nil unless they rewrote;
 -- the swap entries (dispLevelUpUI, reqJobRankUp) look only at the top frame. The write is the last statement
@@ -152,7 +207,11 @@ end
 
 local function draw()
     local changed, value = imgui.checkbox("Hired pawns gain levels and vocation ranks", state.enabled)
-    if changed then state.enabled = value end
+    if changed then
+        state.enabled = value -- takes effect even if the write below fails
+        save_config(value)
+    end
+    if config_save_failed then imgui.text("Could not save config.json (see log)") end
     local rows = nil
     if party_loaded then
         rows = {}

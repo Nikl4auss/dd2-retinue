@@ -294,3 +294,86 @@ for `dispLevelUpUI` (base 2) and `GuiManager.reqJobRankUp` (base 3)). Call struc
 `grep -n 'addExpAndJobPoint\|isSubPawn' src -r` (only the `PawnUtil.isSubPawn` get_method).
 
 **Out of scope**: config.json (10), status line, anything in `tools/`.
+
+# Ticket 10 (Toggle persists in `config.json`)
+
+Source: [issues/10-toggle-persists-in-config.md](issues/10-toggle-persists-in-config.md), spec § `config.json`,
+§ Toggle; decision in [issues/07](issues/07-config-and-menu-shape.md). Base commit: `295b5be`.
+Tier: **Sonnet** (`implementer`). Cross-review: skipped (Sol unavailable; no Astra trigger).
+
+- [x] Slice 4: Toggle persists in config.json
+
+## Slice 4: Toggle persists in config.json
+
+**Goal**: the progression checkbox survives *Reset scripts* and relaunches, in `reframework/data/Retinue/config.json`
+(`{ "version": 1, "progression": true }`). A fresh install writes nothing until the user changes the setting; a
+hand-edited file with mistakes never breaks the mod and is never silently overwritten.
+
+**Context**: `src/autorun/Retinue.lua` (state, draw), the pure-module pattern in `src/autorun/Retinue/*.lua` and the
+tests in `tests/`. Spec § `config.json` is the behaviour contract.
+
+**Design**:
+1. New pure module `src/autorun/Retinue/config.lua` (no REFramework globals):
+   ```lua
+   local M = {}
+   M.PATH = "Retinue/config.json"   -- relative to reframework/data (json.* and fs.* root)
+   M.VERSION = 1
+   M.DEFAULTS = { progression = true }
+   M.TYPES = { progression = "boolean" }
+
+   -- status: "missing" | "unparseable" | "ok"; data: the decoded value when status == "ok".
+   -- Returns settings, warnings, base:
+   --   settings: { progression = boolean } (a key with the right type is used; otherwise its default)
+   --   warnings: array of strings, for log.warn, each prefixed "[Retinue] config.json: "
+   --   base: the decoded object to preserve unknown keys from on rewrite, or nil.
+   -- "missing"     -> defaults, no warnings, base nil.
+   -- "unparseable" -> defaults, one warning ("not valid JSON; using defaults. The file is left as is until a
+   --                  setting is changed."), base nil.
+   -- "ok" but data is not a table, or is a JSON array (`#data > 0`) -> defaults, one warning ("top level is not
+   --                  an object; using defaults ..."), base nil.
+   -- "ok" object    -> per known key: right type -> used; missing or wrong type -> default plus one warning
+   --                  naming the key, e.g. 'progression is missing or not a boolean; using true'. base = data.
+   --                  `version` is not validated and never warns; a higher version is read for the known keys.
+   function M.resolve(status, data) end
+
+   -- Returns a NEW table to write: a shallow copy of base (unknown keys kept; base not mutated; nil base -> {}),
+   -- with every known key from settings, and version = base.version if it is an integer > M.VERSION, else M.VERSION.
+   function M.merge(base, settings) end
+   return M
+   ```
+2. `Retinue.lua` glue:
+   - At load (once), `local function read_config()` returns `status, data`:
+     - If `fs` and `fs.read` exist: `local ok, text = pcall(fs.read, config.PATH)`. Not ok, nil or `""` → `"missing"`.
+       Otherwise `local okd, data = pcall(json.load_string, text)`; not okd or `data == nil` → `"unparseable"`, else
+       `"ok", data`.
+     - Fallback when `fs.read` is unavailable: `local ok, data = pcall(json.load_file, config.PATH)`; nil or error →
+       `"missing"`, else `"ok", data` (unparseable then reads as missing: documented limitation in a comment).
+   - `local settings, warnings, base = config.resolve(read_config())`; each warning → `log.warn(w)`;
+     `state.enabled = settings.progression`. Keep `config_base = base` (file-local).
+   - Checkbox change: `state.enabled = value` first (the toggle takes effect even if the write fails), then
+     `local out = config.merge(config_base, { progression = value })`, `pcall(json.dump_file, config.PATH, out)`.
+     Success (pcall ok and result ~= false) → `config_base = out`. Failure → `report("config write", err or "dump_file returned false")`
+     and show `imgui.text("Could not save config.json (see log)")` under the checkbox until the next successful write.
+   - `re.on_config_save` is not used. Nothing is written at load, ever.
+   - Header comment: mention config.json and `config.lua`.
+3. `tests/config_test.lua`: missing → `{progression=true}`, no warnings, base nil; valid `{version=1, progression=false}`
+   → false, no warnings, base is data; wrong type `"yes"` → true plus one warning naming `progression`; missing key
+   `{version=1}` → true plus one warning; unparseable → defaults plus one warning; non-object (`"x"`, `42`, `{1,2}`) →
+   defaults plus one warning; higher version `{version=3, progression=false}` → false, and `merge` keeps version 3;
+   unknown keys `{version=1, progression="yes", extra=1}` → merge with `{progression=false}` gives
+   `{version=1, progression=false, extra=1}`; merge(nil, s) → `{version=1, progression=...}`; merge does not mutate
+   base; version 0, `"2"`, 1.5 → written as 1.
+
+**Acceptance criteria**:
+- [ ] Read once at load; written immediately on every menu change; never written at load or by `re.on_config_save`.
+- [ ] Fresh install (no file) → progression on and no file created until a change.
+- [ ] Per-key resolution and warnings as specified; garbage or non-object → defaults + warning; file untouched until a change.
+- [ ] Rewrite keeps unknown keys and never lowers `version`.
+- [ ] A failed write logs once, shows the menu note, and leaves the in-memory toggle as chosen.
+- [ ] `config.lua` pure; `tests/run.sh` passes.
+
+**Verify**: `tests/run.sh`; `luac5.4 -p src/autorun/Retinue.lua src/autorun/Retinue/*.lua tests/*.lua`;
+`grep -nE '\b(sdk|re|imgui|log|json|fs)\.' src/autorun/Retinue/{ids,targets,progression,errlog,status,opencalls,config}.lua` (no hits);
+`grep -n on_config_save -r src` (no hits).
+
+**Out of scope**: the roster (M2), any other setting, docs (12), `tools/`.
