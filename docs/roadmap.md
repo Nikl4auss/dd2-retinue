@@ -26,13 +26,11 @@ M2 narrows it to the roster. All tickets done; checklist run in
 Spec: [.scratch/m1-progression/spec.md](../.scratch/m1-progression/spec.md) (from the wayfinder map
 [map.md](../.scratch/m1-progression/map.md)); in-game checklist in [testing.md](testing.md#m1--progression).
 
-## M2 — Identity and persistence
+## M2 — Identity and persistence · in progress
 
-- Roster file format and validation (pure Lua, tested)
-- Adopt / release from the mod menu
-- Behaviour on dismiss, lost, and re-hire from the Rift (does the game keep the progress? recognise by offline ID?)
-- JSON backup of each adopted pawn's state; restore when the game's copy is gone
-- Guarantee: uninstalling the mod leaves a save that loads with ordinary hired pawns
+Adopt up to two pawns (the party is main pawn + two adopted); they keep their identity and progress across dismiss,
+lost and re-hire, and uninstalling leaves ordinary hired pawns. Being charted as a wayfinder map:
+[.scratch/m2-identity/map.md](../.scratch/m2-identity/map.md).
 
 ## M3 — Vocation
 
