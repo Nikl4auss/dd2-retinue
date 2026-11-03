@@ -6,7 +6,7 @@
 -- app.ExpDispenser.dispLevelUpUI and app.GuiManager.reqJobRankUp put the real ID back, so the level-up and
 -- rank-up notifications name the hired pawn. The REFramework menu has a "Retinue" section with one checkbox
 -- (saved in reframework/data/Retinue/config.json, on when there is no file) and a status line naming the
--- party pawns progression applies to (name, level, vocation, rank), read only while the menu is drawn. The
+-- party pawns progression applies to (name, level, vocation, rank, discipline), read only while the menu is drawn. The
 -- four hooks install all or nothing: if any hooked method cannot be found after a game update, no hook is
 -- installed and the menu says so.
 --
@@ -122,6 +122,11 @@ state.available, missing = hooks.install(entries, report)
 -- Party read: called, never hooked.
 local td_pawn_util = sdk.find_type_definition("app.PawnUtil")
 local m_is_sub = td_pawn_util and td_pawn_util:get_method("isSubPawn(app.CharacterID)")
+if not m_is_sub then
+    -- Without it no pawn can be a target: say so instead of failing silently.
+    state.available = false
+    missing[#missing + 1] = "app.PawnUtil.isSubPawn(app.CharacterID)"
+end
 
 local td_guibase = sdk.find_type_definition("app.GUIBase")
 local m_gui_name = td_guibase and td_guibase:get_method("getName(app.Character)")
@@ -174,8 +179,11 @@ re.on_pre_application_entry("UpdateBehavior", function()
     calls:clear()
 end)
 
+local refresh_failed = false
+
 re.on_frame(function()
     local ok, err = pcall(refresh_targets)
+    refresh_failed = not ok
     if not ok then
         state.targets = {}
         party_loaded = false
@@ -217,7 +225,7 @@ local function draw()
         rows = {}
         for i, chara in ipairs(target_charas) do rows[i] = read_row(chara) end
     end
-    imgui.text(status.format(rows))
+    imgui.text(refresh_failed and "Status unavailable (see log)" or status.format(rows))
     for _, method_name in ipairs(missing) do
         imgui.text("Progression unavailable: " .. method_name .. " not found (game update?)")
     end

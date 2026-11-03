@@ -29,7 +29,8 @@ Baseline to compare against: in the same fight the main pawn gained +1891 exp an
 ### Procedure
 
 1. Quit the game. Back up, one label per run: `tools/saves.sh backup m1-variant1`.
-2. `./deploy.sh --experiments` (add `--probe` if you also want the probe).
+2. `./deploy.sh --remove`, then `./deploy.sh --experiments` (add `--probe` if you also want the probe). This links
+   the experiments instead of the mod: the two hook the same methods and are never linked together.
 3. Launch, load the save (two hired pawns in the party), open the REFramework menu, expand
    **Retinue Exp Hooks (EXPERIMENT)**. Check the status line says all hooks are installed (if some are
    missing, note which and stop). Note which other mods touching exp or skills are active.

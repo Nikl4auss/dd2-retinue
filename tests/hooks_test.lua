@@ -68,6 +68,21 @@ do
     assert(hooked[1].post("RV") == "RV")
 end
 
+-- sdk.hook throwing mid-install: reported, install fails with that method, the caller stays unavailable
+do
+    local real_hook, n = sdk.hook, 0
+    sdk.hook = function(m, pre, post)
+        n = n + 1
+        if n == 2 then error("hook refused") end
+    end
+    local before = #logs
+    local ok, missing = hooks.install(entries, report)
+    sdk.hook = real_hook
+    assert(ok == false and #missing == 1)
+    assert(missing[1] == "app.ExpDispenser.addJobPoint(app.CharacterID, app.JobContext, System.Int32, System.Boolean)")
+    assert(#logs == before + 1 and logs[#logs]:find("install addJobPoint", 1, true))
+end
+
 -- SPECS pins roles and ID positions (instance method reqJobRankUp has the ID at args[3])
 do
     local want = { { "checkLevelUp", "core", 2 }, { "addJobPoint", "core", 2 }, { "dispLevelUpUI", "swap", 2 },

@@ -78,8 +78,10 @@ function M.install(entries, report)
     end
     if #missing > 0 then return false, missing end
 
+    -- Each sdk.hook under pcall: a throw leaves earlier hooks installed, but they do nothing while the caller
+    -- keeps progression unavailable, and the script still registers its menu.
     for i, entry in ipairs(entries) do
-        sdk.hook(resolved[i],
+        local okh, err = pcall(sdk.hook, resolved[i],
             function(args)
                 local ok, e = pcall(entry.pre, args)
                 if not ok then report("pre " .. entry.key, e) end
@@ -95,6 +97,10 @@ function M.install(entries, report)
                 if res ~= nil then return res end
                 return retval
             end)
+        if not okh then
+            report("install " .. entry.key, err)
+            return false, { entry.type .. "." .. entry.sig }
+        end
     end
     return true, {}
 end

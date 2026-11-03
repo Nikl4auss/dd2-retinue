@@ -5,9 +5,12 @@
 #
 #   ./deploy.sh                         link the mod
 #   ./deploy.sh --probe                 link the mod and the probe
-#   ./deploy.sh --experiments           link the mod and the experiments (they hook the game: back up first,
-#                                       see tools/experiments/README.md)
-#   ./deploy.sh --probe --experiments   link all three
+#   ./deploy.sh --experiments           link the experiments INSTEAD of the mod (they hook the game: back up
+#                                       first, see tools/experiments/README.md)
+#   ./deploy.sh --probe --experiments   link the experiments and the probe, not the mod
+#
+# The mod and the experiments hook the same methods, so they are never linked together: linking one while the
+# other is linked fails (run --remove first).
 #   ./deploy.sh --remove                remove every link this script created (mod, probe and experiments)
 set -euo pipefail
 
@@ -28,8 +31,18 @@ done
 
 [[ -d "$AUTORUN" ]] || { echo "Not found: $AUTORUN (set DD2_DIR)" >&2; exit 1; }
 
+if (( !remove )); then
+    if (( experiments )); then other="$AUTORUN/Retinue.lua"; else other="$AUTORUN/Retinue_Exp_Hooks.lua"; fi
+    if [[ -e "$other" || -L "$other" ]]; then
+        echo "Already linked: $other. The mod and the experiments must not run together; run --remove first." >&2
+        exit 1
+    fi
+fi
+
 sources=()
-for f in "$ROOT"/src/autorun/*; do [[ "$(basename "$f")" == .gitkeep ]] || sources+=("$f"); done
+if (( remove || !experiments )); then
+    for f in "$ROOT"/src/autorun/*; do [[ "$(basename "$f")" == .gitkeep ]] || sources+=("$f"); done
+fi
 if (( probe || remove )); then for f in "$ROOT"/tools/probe/*.lua; do sources+=("$f"); done; fi
 if (( experiments || remove )); then for f in "$ROOT"/tools/experiments/*.lua; do sources+=("$f"); done; fi
 
