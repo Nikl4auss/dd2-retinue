@@ -6,13 +6,21 @@ local M = {}
 -- id_arg is the index in args[] of the app.CharacterID. args[1] is the thread context; for static methods
 -- (these ExpDispenser ones) the first parameter is args[2]. Instance methods have `this` at args[2] and the
 -- first parameter at args[3] (e.g. GuiManager.reqJobRankUp: id_arg = 3).
+-- role: "core" rewrites a hired pawn's ID and pushes an open-call frame; "swap" puts the real ID back for the
+-- notification (Retinue.lua).
 M.SPECS = {
-    { key = "checkLevelUp", type = "app.ExpDispenser",
+    { key = "checkLevelUp", role = "core", type = "app.ExpDispenser",
       sig = "checkLevelUp(app.CharacterID, app.HumanStatusContext, app.Character.JobEnum, System.Boolean, app.DragonHermitContext)",
       id_arg = 2 },
-    { key = "addJobPoint", type = "app.ExpDispenser",
+    { key = "addJobPoint", role = "core", type = "app.ExpDispenser",
       sig = "addJobPoint(app.CharacterID, app.JobContext, System.Int32, System.Boolean)",
       id_arg = 2 },
+    { key = "dispLevelUpUI", role = "swap", type = "app.ExpDispenser",
+      sig = "dispLevelUpUI(app.CharacterID, System.Int32, System.Int32)",
+      id_arg = 2 },
+    { key = "reqJobRankUp", role = "swap", type = "app.GuiManager",
+      sig = "reqJobRankUp(app.CharacterID, app.Character.JobEnum, System.Int32, System.Int32)",
+      id_arg = 3 },
 }
 
 -- Hook argument decoding (args[n] are raw pointer-sized values).

@@ -1,9 +1,14 @@
 -- hooks.install under a stub `sdk` global: all-or-nothing, CALL_ORIGINAL on error, post passes retval,
 -- and the u32 conversions.
 local hooked = {}
-local have = { ["app.ExpDispenser"] = {
-    ["checkLevelUp(app.CharacterID, app.HumanStatusContext, app.Character.JobEnum, System.Boolean, app.DragonHermitContext)"] = "M1",
-} }
+local LEVELUP = "checkLevelUp(app.CharacterID, app.HumanStatusContext, app.Character.JobEnum, System.Boolean, app.DragonHermitContext)"
+local JOBPOINT = "addJobPoint(app.CharacterID, app.JobContext, System.Int32, System.Boolean)"
+local DISP = "dispLevelUpUI(app.CharacterID, System.Int32, System.Int32)"
+local RANKUP = "reqJobRankUp(app.CharacterID, app.Character.JobEnum, System.Int32, System.Int32)"
+local have = {
+    ["app.ExpDispenser"] = { [LEVELUP] = "M1", [DISP] = "M3" },
+    ["app.GuiManager"] = { [RANKUP] = "M4" },
+}
 sdk = {
     PreHookResult = { CALL_ORIGINAL = "CO" },
     find_type_definition = function(t)
@@ -30,7 +35,7 @@ do
     assert(ok == false)
     assert(#hooked == 0)
     assert(#missing == 1)
-    assert(missing[1] == "app.ExpDispenser.addJobPoint(app.CharacterID, app.JobContext, System.Int32, System.Boolean)")
+    assert(missing[1] == "app.ExpDispenser." .. JOBPOINT)
 end
 
 -- missing type: also unavailable
@@ -38,19 +43,40 @@ do
     local saved = have["app.ExpDispenser"]
     have["app.ExpDispenser"] = nil
     local ok, missing = hooks.install(entries, report)
-    assert(ok == false and #hooked == 0 and #missing == 2)
+    assert(ok == false and #hooked == 0 and #missing == 3)
     have["app.ExpDispenser"] = saved
 end
 
--- all present: both hooked; a throwing pre still calls the original, logs, and the post passes retval
+-- only reqJobRankUp missing (with addJobPoint present): nothing installed, the notice names its type
 do
-    have["app.ExpDispenser"]["addJobPoint(app.CharacterID, app.JobContext, System.Int32, System.Boolean)"] = "M2"
+    have["app.ExpDispenser"][JOBPOINT] = "M2"
+    local saved = have["app.GuiManager"]
+    have["app.GuiManager"] = nil
+    local ok, missing = hooks.install(entries, report)
+    assert(ok == false and #hooked == 0 and #missing == 1)
+    assert(missing[1] == "app.GuiManager." .. RANKUP)
+    have["app.GuiManager"] = saved
+end
+
+-- all present: all four hooked; a throwing pre still calls the original, logs, and the post passes retval
+do
     local ok, missing = hooks.install(entries, report)
     assert(ok == true and #missing == 0)
-    assert(#hooked == 2 and hooked[1].m == "M1" and hooked[2].m == "M2")
+    assert(#hooked == 4 and hooked[1].m == "M1" and hooked[2].m == "M2" and hooked[3].m == "M3" and hooked[4].m == "M4")
     assert(hooked[1].pre({}) == "CO")
     assert(#logs == 1 and logs[1]:find("pre checkLevelUp", 1, true))
     assert(hooked[1].post("RV") == "RV")
+end
+
+-- SPECS pins roles and ID positions (instance method reqJobRankUp has the ID at args[3])
+do
+    local want = { { "checkLevelUp", "core", 2 }, { "addJobPoint", "core", 2 }, { "dispLevelUpUI", "swap", 2 },
+                   { "reqJobRankUp", "swap", 3 } }
+    assert(#hooks.SPECS == #want)
+    for i, w in ipairs(want) do
+        local s = hooks.SPECS[i]
+        assert(s.key == w[1] and s.role == w[2] and s.id_arg == w[3], "SPECS[" .. i .. "]")
+    end
 end
 
 -- u32 domain: a negative int32 view of the main pawn's ID maps to the same integer

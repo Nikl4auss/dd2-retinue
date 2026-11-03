@@ -11,11 +11,12 @@ touched.
 
 **Status:** ready-for-agent
 
-- [ ] The core pre-hook pushes an open-call entry only when it rewrites, and the matching post-hook pops it. Stale
-      entries are dropped when an outer post-hook pops, and the stack is cleared at the start of every frame.
-- [ ] The swap happens only when the incoming ID is the main pawn's fixed ID and an entry is open. It uses the
-      innermost entry's real ID. Every other call passes through.
-- [ ] On an error in a hook, any entry pushed by that call is removed (no stale entry).
+- [ ] The core pre-hook pushes one frame per call, carrying the real ID only when it rewrote; the matching post-hook
+      pops it. Stale frames are dropped when an outer post-hook pops, and the stack is cleared at the start of every
+      game frame. (Amended from "push only when it rewrites"; see plan.md, Ticket 09.)
+- [ ] The swap happens only when the incoming ID is the main pawn's fixed ID and the innermost open call was
+      rewritten. It uses that call's real ID. Every other call passes through.
+- [ ] On an error in a hook, the call's frame never carries a real ID (no renaming entry).
 - [ ] Install is all or nothing over all four methods. Any missing method makes progression unavailable, with the
       menu notice.
 - [ ] Pure tests of the swap decision: rewritten call open versus not, nested calls, a stale entry after a missing

@@ -60,25 +60,29 @@ ID. Retinue puts the real ID back so the notification names the hired pawn ([000
 
 - Pre-hooks on `app.ExpDispenser.dispLevelUpUI(app.CharacterID, System.Int32, System.Int32)` and
   `app.GuiManager.reqJobRankUp(app.CharacterID, app.Character.JobEnum, System.Int32, System.Int32)` replace argument 1
-  **only when** it equals `ch100000_00` **and** a rewritten `checkLevelUp` / `addJobPoint` call is open. The
-  replacement is the real ID of the innermost open rewritten call.
-- Open rewritten calls are tracked as a stack. The core pre-hook pushes an entry only when it rewrites, and the
-  matching post-hook pops it. Entries whose post-hook never ran are dropped when an outer post-hook pops, and the
-  stack is cleared at the start of every game frame. A stale entry must never rename a later notification, such as
-  the player's rank-up from SkillCreator's `addJobPointInternal` call or the main pawn's own level-up.
+  **only when** it equals `ch100000_00` **and** the innermost open `checkLevelUp` / `addJobPoint` call was rewritten. The
+  replacement is that call's real ID.
+- The core pre-hook pushes one frame per `checkLevelUp` / `addJobPoint` call, whether or not it rewrote; the
+  matching post-hook pops it. A frame carries the real ID (`real`) only when the call was rewritten, and `real` is
+  set after the argument write succeeds. The swap looks only at the **top** frame, so a main-pawn or toggle-off call
+  (a frame with no real ID) always shadows a stale rewritten frame below it. Frames whose post-hook never ran are
+  dropped when an outer post-hook pops, and the stack is cleared at the start of every game frame (on the game thread, before
+  `UpdateBehavior`, so a clear can never fall between a core call and its notification). A stale entry
+  must never rename a later notification, such as the player's rank-up from SkillCreator's `addJobPointInternal`
+  call or the main pawn's own level-up.
 - Every other call to these methods passes through untouched.
 
 ### Toggle
 
-- When progression is **off**, the hooks stay installed but do nothing: no rewrite and no stack push. Hired pawns
-  behave as in vanilla, so exp banks and no discipline is gained.
+- When progression is **off**, the hooks stay installed but do nothing: no rewrite (core calls still push a
+  frame without a real ID, which renames nothing). Hired pawns behave as in vanilla, so exp banks and no discipline is gained.
 - A change takes effect **immediately**, including mid-fight. The next call reads the current value.
 - Turning progression off reverts nothing. Levels, discipline and rank already gained stay.
 
 ### Failure handling
 
 - Every hook body runs under `pcall`, and every pre-hook returns `CALL_ORIGINAL`. On an error the arguments are left
-  as passed (no partial rewrite), any entry the failing call pushed is removed, and the error is logged once per
+  as passed (no partial rewrite), a failing call's frame never carries a real ID, and the error is logged once per
   method and message, not every frame.
 - Hooks are installed once at script load. Methods are looked up by full signature first, then by name plus parameter
   type names. Reuse `find_method` from `tools/experiments/Retinue_Exp_Hooks.lua`.

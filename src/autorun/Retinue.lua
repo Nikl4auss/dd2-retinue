@@ -1,21 +1,23 @@
 -- Retinue (Dragon's Dogma 2, REFramework Lua): hired pawns level up.
 --
--- At this stage the mod does one thing: pre-hooks on app.ExpDispenser.checkLevelUp and
--- app.ExpDispenser.addJobPoint replace the CharacterID of a hired pawn in your party with the main pawn's
--- fixed ID, so the game's own level-up path runs for them and they gain levels, discipline and vocation
--- rank from any exp source. Notifications still name the main pawn. The REFramework menu has a
--- "Retinue" section with one checkbox (in memory only, on at load) and a status line naming the party
--- pawns progression applies to (name, level, vocation, rank), read only while the menu is drawn. If a
--- hooked method cannot be found after a game update, no hook is installed and the menu says so.
+-- Pre-hooks on app.ExpDispenser.checkLevelUp and app.ExpDispenser.addJobPoint replace the CharacterID of a
+-- hired pawn in your party with the main pawn's fixed ID, so the game's own level-up path runs for them and
+-- they gain levels, discipline and vocation rank from any exp source. Pre-hooks on
+-- app.ExpDispenser.dispLevelUpUI and app.GuiManager.reqJobRankUp put the real ID back, so the level-up and
+-- rank-up notifications name the hired pawn. The REFramework menu has a "Retinue" section with one checkbox
+-- (in memory only, on at load) and a status line naming the party pawns progression applies to (name, level,
+-- vocation, rank), read only while the menu is drawn. The four hooks install all or nothing: if any hooked
+-- method cannot be found after a game update, no hook is installed and the menu says so.
 --
 -- Do NOT deploy tools/experiments/Retinue_Exp_Hooks.lua alongside this script: both would hook the same
 -- methods and rewrite the same arguments.
 --
--- The decisions live in Retinue/{targets,progression,errlog,status}.lua (pure, tested by tests/run.sh); this file
--- and Retinue/hooks.lua are the REFramework glue. Every hook body runs under pcall.
+-- The decisions live in Retinue/{targets,progression,errlog,status,opencalls}.lua (pure, tested by
+-- tests/run.sh); this file and Retinue/hooks.lua are the REFramework glue. Every hook body runs under pcall.
 
 local errlog = require("Retinue.errlog")
 local hooks = require("Retinue.hooks")
+local opencalls = require("Retinue.opencalls")
 local progression = require("Retinue.progression")
 local status = require("Retinue.status")
 local targets = require("Retinue.targets")
@@ -25,15 +27,34 @@ local missing = {}
 
 local report = errlog.new(function(msg) log.error(msg) end)
 
--- Core pre body, shared by both hooks. The write is the last statement, so an error leaves the args as
--- passed. Booleans, exp and job points are never read or written.
+local calls = opencalls.new()
+
+-- Core entries (checkLevelUp, addJobPoint) push a frame for every call, with real = nil unless they rewrote;
+-- the swap entries (dispLevelUpUI, reqJobRankUp) look only at the top frame. The write is the last statement
+-- and frame.real is set only after it succeeds, so an error leaves the args as passed and no renaming frame.
+-- Booleans, exp and job points are never read or written.
 local function make_entry(spec)
+    if spec.role == "core" then
+        return {
+            key = spec.key, type = spec.type, sig = spec.sig,
+            pre = function(args)
+                local frame, overflowed = calls:push(spec.key)
+                if overflowed then report("opencalls", "stack overflow, reset") end
+                local id = hooks.arg_u32(args[spec.id_arg])
+                local new = progression.rewrite_id(id, state)
+                if new then
+                    args[spec.id_arg] = sdk.to_ptr(new)
+                    frame.real = id
+                end
+            end,
+            post = function() calls:pop(spec.key) end,
+        }
+    end
     return {
         key = spec.key, type = spec.type, sig = spec.sig,
         pre = function(args)
-            local id = hooks.arg_u32(args[spec.id_arg])
-            local new = progression.rewrite_id(id, state)
-            if new then args[spec.id_arg] = sdk.to_ptr(new) end
+            local real = calls:swap_id(hooks.arg_u32(args[spec.id_arg]))
+            if real then args[spec.id_arg] = sdk.to_ptr(real) end
         end,
     }
 end
@@ -91,6 +112,12 @@ local function refresh_targets()
     state.targets = set
     target_charas = charas
 end
+
+-- Clear the open-call stack at the start of each game update, on the game thread: re.on_frame may run on
+-- the render thread, where a clear could fall between a rewritten core pre-hook and its notification.
+re.on_pre_application_entry("UpdateBehavior", function()
+    calls:clear()
+end)
 
 re.on_frame(function()
     local ok, err = pcall(refresh_targets)

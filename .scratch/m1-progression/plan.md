@@ -197,3 +197,100 @@ check (level and rank visible per hired pawn).
 `grep -nE '\b(sdk|re|imgui|log|json)\.' src/autorun/Retinue/{ids,targets,progression,errlog,status}.lua` (no hits).
 
 **Out of scope**: config.json (10), notifications (09), discipline in the line (not in the spec), any change in `tools/`.
+
+# Ticket 09 (Notifications name the hired pawn)
+
+Source: [issues/09-notifications-name-hired-pawn.md](issues/09-notifications-name-hired-pawn.md), spec § Notification
+swap-back, § Failure handling; findings [0003](../../docs/findings/0003-notification-swap-back.md). Base commit: `d94740b`.
+Tier: **Sonnet** (`implementer`). Cross-review: skipped (Sol unavailable; no Astra trigger).
+
+- [x] Slice 3: Notifications name the hired pawn
+
+**Design decision (deviation from the spec's wording, recorded in the spec by this slice):** the core pre-hook pushes
+a frame for **every** `checkLevelUp` / `addJobPoint` call, with `real = nil` unless it rewrote; the swap looks only at
+the **top** frame. Why: post-hooks can't tell whether their own pre pushed, so "push only when rewriting" lets a
+non-rewritten call's post pop an outer rewritten entry, and a stale rewritten entry left in the same frame would
+rename the main pawn's next level-up. With one frame per call, a main-pawn or toggle-off call always sits on top
+with `real = nil`, so a stale entry below it can never rename its notification. `real` is set only after the arg write
+succeeds, so an error never leaves a renaming entry (this replaces "remove the entry on error", which would break the
+pre/post pairing). Observable behaviour is the spec's.
+
+## Slice 3: Notifications name the hired pawn
+
+**Goal**: level-up and rank-up notifications for a hired pawn show its own name, once. The player's and the main
+pawn's notifications are never touched.
+
+**Context**: `src/autorun/Retinue.lua` (make_entry, on_frame, header), `src/autorun/Retinue/hooks.lua` (SPECS,
+install; note its `id_arg` comment: instance methods have the ID at `args[3]`), `tests/hooks_test.lua` (stub `sdk`),
+`tools/experiments/Retinue_Exp_Hooks.lua` (`pre_body` swap block ~line 375, `post_body` pop ~line 394, SPECS entries
+for `dispLevelUpUI` (base 2) and `GuiManager.reqJobRankUp` (base 3)). Call structure (findings 0003):
+`checkLevelUp` → `dispLevelUpUI` directly; `addJobPoint` → `addJobPointInternal` (not hooked) → `GuiManager.reqJobRankUp`.
+
+**Design**:
+1. New pure module `src/autorun/Retinue/opencalls.lua` (no REFramework globals):
+   ```lua
+   local M = {}
+   M.MAX_DEPTH = 64
+   -- Returns a stack object with methods:
+   --   s:push(key) -> frame   frame = { key = key, real = nil }. If depth is already MAX_DEPTH, clears first
+   --                          (defensive; returns true as a second value when it had to clear).
+   --   s:pop(key)             removes the innermost frame whose key == key and every frame above it
+   --                          (stale frames whose post never ran). No-op if none matches.
+   --   s:clear()              empties the stack (start of every game frame).
+   --   s:depth() -> integer
+   --   s:swap_id(id) -> real|nil   the top frame's `real` iff id == ids.MAIN_PAWN and the stack is non-empty and the
+   --                          top frame's real ~= nil; else nil.
+   function M.new() end
+   return M
+   ```
+2. `hooks.lua` `SPECS`: add a `role` field to every entry (`"core"` for the two existing ones) and append:
+   - `{ key = "dispLevelUpUI", role = "swap", type = "app.ExpDispenser", sig = "dispLevelUpUI(app.CharacterID, System.Int32, System.Int32)", id_arg = 2 }`
+   - `{ key = "reqJobRankUp", role = "swap", type = "app.GuiManager", sig = "reqJobRankUp(app.CharacterID, app.Character.JobEnum, System.Int32, System.Int32)", id_arg = 3 }`
+   `install` itself is unchanged (already all or nothing over every entry passed).
+3. `Retinue.lua`:
+   - `local calls = opencalls.new()`.
+   - Core entry (`role == "core"`):
+     pre: `local frame, overflowed = calls:push(spec.key)` (if `overflowed`, `report("opencalls", "stack overflow, reset")`);
+     then `local id = hooks.arg_u32(args[spec.id_arg]); local new = progression.rewrite_id(id, state)`;
+     `if new then args[spec.id_arg] = sdk.to_ptr(new); frame.real = id end` (real set after the write).
+     post: `calls:pop(spec.key)`; returns nil (retval passes through).
+   - Swap entry (`role == "swap"`): pre only:
+     `local real = calls:swap_id(hooks.arg_u32(args[spec.id_arg])); if real then args[spec.id_arg] = sdk.to_ptr(real) end`.
+     No push, no post.
+   - `re.on_frame`: `calls:clear()` first (outside the refresh pcall, it can't fail), then the existing refresh.
+   - Do not gate the swap on `state.enabled`: with progression off no frame has `real`, so nothing swaps; turning it
+     off mid-call still lets the open rewritten call's notification be renamed correctly.
+   - Header comment: notifications now name the hired pawn; list `opencalls.lua` among the pure modules; four hooks,
+     all or nothing.
+4. Spec edits (`.scratch/m1-progression/spec.md`): in § Notification swap-back, replace the "Open rewritten calls are
+   tracked as a stack ..." bullet with the one-frame-per-call rule above (top frame only, `real` set after the write,
+   stale frames dropped by an outer pop, stack cleared every frame). In § Toggle, change "no rewrite and no stack
+   push" to "no rewrite (core calls still push a frame without a real ID, which renames nothing)". In § Failure
+   handling, change "any entry the failing call pushed is removed" to "a failing call's frame never carries a real ID".
+   Keep the rest.
+5. Tests:
+   - `tests/opencalls_test.lua`: rewritten call open → `swap_id(MAIN)` = real; none open → nil; non-main ID → nil
+     even with a rewritten frame on top; nested: rewritten outer (real 1) + non-rewritten inner → nil, after inner pop →
+     1; two nested rewritten (1 then 2) → 2, after pop → 1; stale: push A(real 1), push B(real 2) with no pop, `pop("A")`
+     → depth 0 and nil; stale in the same game frame: push A(real 1) never popped, then a main-pawn call pushes C
+     (real nil) → nil; `clear()` → nil and depth 0; `pop` of an absent key is a no-op; overflow: pushing past MAX_DEPTH
+     clears and returns true; a frame whose real was never set (error path) → nil.
+   - `tests/hooks_test.lua`: extend the stub so the four SPECS resolve (add `app.GuiManager`); assert install hooks 4
+     when all are present and 0 when only `reqJobRankUp` is missing, listing `app.GuiManager.reqJobRankUp(...)`.
+
+**Acceptance criteria**:
+- [ ] Exactly four hooks; `addExpAndJobPoint` and `isSubPawn` still never hooked.
+- [ ] Swap only when the incoming ID is the main pawn's and the top frame carries a real ID; uses that ID.
+- [ ] A notification inside a non-rewritten call (main pawn, toggle off, player via SkillCreator) is never renamed,
+      even with a stale entry below.
+- [ ] Stack cleared at the start of every `re.on_frame`; stale frames dropped by an outer pop.
+- [ ] Every hook body under pcall, CALL_ORIGINAL always, errors logged once; a failing core pre leaves args as passed
+      and its frame with `real = nil`.
+- [ ] All four methods all or nothing; the notice lists each missing one with its type.
+- [ ] Spec updated as in Design 4. `tests/run.sh` passes; `opencalls.lua` has no REFramework globals.
+
+**Verify**: `tests/run.sh`; `luac5.4 -p src/autorun/Retinue.lua src/autorun/Retinue/*.lua tests/*.lua`;
+`grep -nE '\b(sdk|re|imgui|log|json)\.' src/autorun/Retinue/{ids,targets,progression,errlog,status,opencalls}.lua` (no hits);
+`grep -n 'addExpAndJobPoint\|isSubPawn' src -r` (only the `PawnUtil.isSubPawn` get_method).
+
+**Out of scope**: config.json (10), status line, anything in `tools/`.
