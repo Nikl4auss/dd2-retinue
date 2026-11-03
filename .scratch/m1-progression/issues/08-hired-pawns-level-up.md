@@ -14,7 +14,7 @@ ticket builds on.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Targets: a party pawn whose ID is not the main pawn's and for which `PawnUtil.isSubPawn` (called, never hooked)
       is true. Membership is refreshed at least once per frame. The predicate is a single replaceable function (M2).
@@ -27,7 +27,7 @@ ticket builds on.
 - [x] Deploy links the mod's module folder as well as the entry script.
 - [x] The test runner runs every test script with `lua5.4` and exits non-zero on failure. The target logic is covered
       wherever it is pure.
-- [ ] Verified in game by the user (experiment script not deployed): after one fight, a hired pawn gains discipline
+- [x] Verified in game by the user (experiment script not deployed): after one fight, a hired pawn gains discipline
       and levels when its exp allows, and the main pawn is unchanged.
 
 ## Comments
@@ -38,3 +38,4 @@ ticket builds on.
   line ([11](11-menu-status-line.md)) shows those numbers; not checked with the probe.
 - 2026-11-03: with the status line from 11, the user confirmed in game that hired pawns gain discipline after a
   fight. Remaining: the main pawn unchanged.
+- 2026-11-03: the user confirmed the main pawn gained only its normal amount for the fight. All criteria met; closed.

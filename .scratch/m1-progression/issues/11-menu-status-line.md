@@ -21,3 +21,4 @@ glance that the mod is acting, and for whom.
 - 2026-11-03: implemented in `2649520`; discipline added to the line in `e8f1948` at the user's request (spec
   § Menu updated). In game the user saw the `Applies to:` line, with discipline rising after a fight. Not yet
   checked: the line following a Rift swap without *Reset scripts*.
+- 2026-11-03: Rift-swap check still pending (only one hired pawn in the party during the test). Stays open for it.
