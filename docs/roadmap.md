@@ -18,9 +18,10 @@ spec and tickets. The sketch is then replaced by a link to that folder, and the 
 - [x] Map the API needed for M1–M5 → [findings/api-map.md](findings/api-map.md)
 - [x] Locate the save folder and script the backup step → `tools/saves.sh`, [testing.md](testing.md)
 
-## M1 — Progression · in progress
+## M1 — Progression · implemented, in-game checklist pending
 
-Adopted pawns gain levels and discipline like the main pawn.
+Adopted pawns gain levels and discipline like the main pawn. In M1 this applies to every hired pawn in the party;
+M2 narrows it to the roster. Tickets 08–11 are done; ticket 12 (docs and the checklist run) is open.
 Spec: [.scratch/m1-progression/spec.md](../.scratch/m1-progression/spec.md) (from the wayfinder map
 [map.md](../.scratch/m1-progression/map.md)); in-game checklist in [testing.md](testing.md#m1--progression).
 

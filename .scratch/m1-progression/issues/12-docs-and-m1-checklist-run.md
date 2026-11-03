@@ -14,8 +14,13 @@ findings note.
 
 **Status:** ready-for-human
 
-- [ ] README compatibility note and status, CHANGELOG entry and roadmap updated. No version bump (0.1.0 = M1 + M2).
+- [x] README compatibility note and status, CHANGELOG entry and roadmap updated. No version bump (0.1.0 = M1 + M2).
 - [ ] Backup taken (`m1-checklist`), and the experiment script is not deployed.
 - [ ] Every non-opportunistic checklist item passes. Each opportunistic item is recorded as passed or not reached.
 - [ ] A findings note with probe snapshots under the findings data folder. Any failure becomes a new ticket, not a
       silent fix.
+
+## Comments
+
+- 2026-11-03: README (status, what it does, compatibility), CHANGELOG (Unreleased → Added/Changed) and roadmap
+  updated. The roadmap says "implemented, in-game checklist pending"; it is marked done after the checklist run.
