@@ -49,10 +49,16 @@ Settled while charting (2026-11-03):
 - [Run variant 4: notification swap-back and rank-up](issues/05-run-variant-4.md): swap-back gives the right name
   on both notifications (no fallback needed); hired rank-up works and persists; one unexplained, unreproduced
   freeze on load. Findings 0003.
+- [Do installed mods hook or call the exp path Retinue rewrites?](issues/06-other-mods-on-exp-path.md): no conflict;
+  nothing hooks the rewritten/swapped members or lifts the gate; SDT and Bestiary scale exp upstream on the real ID.
+  Keep the rewrite on the leaves and scope the swap-back strictly. Findings 0004.
+- [Decide the shape of `config.json` and the M1 mod-menu section](issues/07-config-and-menu-shape.md): flat
+  `{ version: 1, progression: true }`, per-key fallback, written only on change; toggle acts immediately; menu shows
+  checkbox, status line of hired pawns in party, and a hook-failure notice.
 
 ## Not yet specified
 
-(none: the remaining questions are open tickets)
+(none: every decision is made; the next step is writing the M1 spec and checklist, i.e. the destination)
 
 ## Out of scope
 
