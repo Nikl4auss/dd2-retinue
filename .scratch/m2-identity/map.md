@@ -19,7 +19,7 @@ Settled while charting (2026-11-03):
 
 - Scope: the five roadmap bullets for M2: roster file format and validation; adopt and release; behaviour on
   dismiss, lost and re-hire; JSON backup of each adopted pawn's state with restore when the game's copy is gone
-  (may shrink if the game keeps everything, decided in a ticket); the uninstall guarantee.
+  (required: the game keeps no progress past dismiss); the uninstall guarantee.
 - **The roster narrows M1**: only adopted pawns progress; ordinary hired pawns are vanilla again. The M1
   `progression` toggle stays as a global switch.
 - **Offline pawns only** (owner `CAPCOM`, with `_OfflineID`).
@@ -44,11 +44,15 @@ Settled while charting (2026-11-03):
 - [Which native UI entry points could host adopt and release?](issues/05-native-ui-entry-points.md): the mod menu
   stays the complete surface (away pawns are unreachable in world); best native spot is the hired pawn's talk menu
   (reuse a slot), fallback a Status-page button; release confirms via the game's own dialog. Branch `research/m2-native-ui`.
+- [What does the game do to a hired pawn on dismiss, lost and re-hire?](issues/02-dismiss-lost-rehire-internals.md):
+  CharacterIDs are reused (observed), dismiss likely deletes the whole record, the Rift keeps only generation data
+  (offline ID, look, skills, job, `Level`): progress is not kept, so the mod's backup is required. Lost path inferred.
+  Branch `research/m2-dismiss-lost-rehire`.
 
 ## Not yet specified
 
-- **What the backup holds, and when it is taken and restored**: hangs on what the game discards on dismiss/lost and
-  whether a re-hired pawn comes back as the same character. Also whether restoring (writing level/exp/vocation into
+- **What the backup holds, and when it is taken and restored**: the backup is required (the game keeps no progress
+  past dismiss, per the internals research); its exact contents and timing hang on the experiment. Also whether restoring (writing level/exp/vocation into
   a re-hired pawn's contexts) stays within ADR 0001, or needs a new ADR.
 - **How an away pawn comes back**: via the Rift as the game offers it (Rift search `ui041401` is a candidate surface), or a mod-driven re-hire; and for a lost
   pawn, whether the game ever offers it again.
