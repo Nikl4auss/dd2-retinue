@@ -1,3 +1,7 @@
 # Generated from the game's il2cpp_dump.json (1+ GB, version specific)
 tools/dump/out/
 il2cpp_dump.json
+
+# Claude Code: per-machine settings and temporary agent worktrees
+.claude/settings.local.json
+.claude/worktrees/
