@@ -70,8 +70,8 @@ passed or not reached.
 9. **Party change**: swap a hired pawn at the Rift. The status line follows without *Reset scripts*, and the new
    pawn progresses on its next fight.
 10. **Malformed config**: quit, write `not json` into `config.json`, and launch. Progression is on (default), the
-    REFramework log has a warning, and the file is unchanged until you toggle. Then put
-    `{ "version": 1, "progression": "yes", "extra": 1 }`: progression is on, there is a warning for `progression`,
+    menu and the REFramework log show a `config.json` warning, and the file is unchanged until you toggle. Then put
+    `{ "version": 1, "progression": "yes", "extra": 1 }`: progression is on, there is a warning for `progression` (menu and log),
     and after a toggle the file keeps `"extra": 1`.
 11. **Main pawn untouched**: across all of the above, nothing about the main pawn differs from vanilla.
 12. **Mod-originated grant**: UDD2P's Sphinx reward (or any mod that grants exp) levels hired pawns. This verifies

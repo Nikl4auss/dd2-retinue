@@ -26,7 +26,7 @@ end
 -- status: "missing" | "unparseable" | "ok"; data: the decoded value when status == "ok".
 -- Returns settings, warnings, base:
 --   settings: one entry per known key (the file's value if it has the right type, else the default)
---   warnings: strings for the log
+--   warnings: strings for the log and the menu
 --   base: the decoded object to keep unknown keys from on rewrite, or nil
 function M.resolve(status, data)
     if status == "missing" then

@@ -49,7 +49,9 @@ local function read_config()
 end
 
 local settings, config_warnings, config_base = config.resolve(read_config())
-for _, w in ipairs(config_warnings) do log.warn(w) end
+-- Logged with log.error, not log.warn: another mod can raise the global log level to "error" (NickCore does),
+-- which drops warnings. They are also shown in the menu, which no other mod can hide.
+for _, w in ipairs(config_warnings) do log.error(w) end
 state.enabled = settings.progression
 
 -- Set when the last config write failed; cleared by the next successful one.
@@ -70,6 +72,7 @@ local function save_config(value)
     if ok and res ~= false and written(value) then
         config_base = out
         config_save_failed = false
+        config_warnings = {} -- the file now holds a clean rewrite
     else
         config_save_failed = true
         local err = res
@@ -220,6 +223,7 @@ local function draw()
         save_config(value)
     end
     if config_save_failed then imgui.text("Could not save config.json (see log)") end
+    for _, w in ipairs(config_warnings) do imgui.text((w:gsub("^%[Retinue%] ", ""))) end
     local rows = nil
     if party_loaded then
         rows = {}

@@ -14,7 +14,7 @@ never silently overwritten.
 
 - [x] Read once at script load, written immediately on every change from the menu. `re.on_config_save` is not used.
 - [x] Missing file: defaults (progression on), and no file is created until a change.
-- [x] Per-key resolution: a valid key is used; a missing or wrongly typed key gets its default and a log warning. An
+- [x] Per-key resolution: a valid key is used; a missing or wrongly typed key gets its default and a warning (menu and log). An
       unparseable file or a non-object top level means all defaults plus a warning, and the file is not overwritten
       until a change.
 - [x] A higher `version` is read for the known keys. On rewrite, unknown keys are kept and `version` is not lowered.

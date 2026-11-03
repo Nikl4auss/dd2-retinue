@@ -101,7 +101,8 @@ separate from M2's roster. The answer to [Decide the shape of `config.json` and 
 
 - **Missing file**: defaults in memory, and nothing is written until the user changes a setting.
 - **Per-key resolution**: a key with the right type is used. A missing or wrongly typed key gets its default and a
-  warning in the REFramework log (`log.warn`). An unparseable file or a non-object top level means all defaults plus a
+  warning, shown in the *Retinue* menu and written to the REFramework log with `log.error` (not `log.warn`: another
+  mod can raise the global log level to `error`, as NickCore does, which drops warnings). An unparseable file or a non-object top level means all defaults plus a
   warning. A `version` higher than 1 is read for the keys known. An unparseable file is not overwritten until the user
   changes a setting. On rewrite, unknown keys are preserved and `version` is set to 1 unless the file holds a higher
   one.
