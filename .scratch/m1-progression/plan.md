@@ -377,3 +377,14 @@ tests in `tests/`. Spec § `config.json` is the behaviour contract.
 `grep -n on_config_save -r src` (no hits).
 
 **Out of scope**: the roster (M2), any other setting, docs (12), `tools/`.
+
+# Final pass
+
+Opus reviewer over `11d96d7...HEAD`: CHANGES_REQUESTED, all fixed in `0b9a889` except one recorded gap.
+
+- Fixed: `deploy.sh --experiments` linked the mod too (now mutually exclusive); `sdk.hook` throw aborted the script;
+  missing `PawnUtil.isSubPawn` was silent; refresh failure showed `Load a save`; header omitted discipline.
+- Known gap (accepted, within the ticket 09 design): a stale rewritten frame (its post never ran) can return to the top
+  after a later main-pawn core call pops, and would rename a main-pawn notification fired outside any core call in the
+  same game frame. No known caller does this (findings 0004).
+- Cross-review: skipped at both gates (Sol unavailable; no Astra trigger).
