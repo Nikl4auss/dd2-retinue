@@ -12,9 +12,13 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
   (the creator; `CAPCOM` with an `_OfflineID` for game-generated pawns).
   _Avoid_: sub pawn, support pawn
 - **Adopted pawn**: a hired pawn the mod has taken ownership of. To the game's save it is still a hired pawn;
-  the mod lifts hired-pawn restrictions for it at runtime. At most three are tracked (the **roster**);
-  at most two can be in the party at once, because the main pawn holds slot 0.
-- **Roster**: the mod's list of adopted pawns, persisted in `reframework/data/Retinue/`.
+  the mod lifts hired-pawn restrictions for it at runtime. Only offline (game-generated) pawns can be adopted.
+  An adopted pawn is either **present** (in the party) or **away** (dismissed or lost, still in the roster).
+- **Roster**: the mod's list of adopted pawns, persisted in `reframework/data/Retinue/`. At most two: the party is
+  the main pawn plus two adopted pawns. An away pawn keeps its place in the roster.
+- **Adopt**: add a hired pawn in the party to the roster.
+- **Release**: remove a pawn from the roster; it becomes an ordinary hired pawn again and keeps its level.
+  _Avoid_: dismiss (that is the game's action at the Rift)
 - **Party slot**: one of the three pawn positions in the party (`PawnManager._PartyPawnList`).
 
 ## Identity
