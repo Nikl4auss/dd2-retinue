@@ -9,8 +9,8 @@ the restrictions placed on hired pawns at runtime. See [ADR 0001](docs/adr/0001-
 
 ## Status
 
-Nothing released yet (0.0.0). M0 (research) is done. M1 (progression) is implemented and its in-game checklist is
-being run; 0.1.0 will be M1 + M2. See [docs/roadmap.md](docs/roadmap.md).
+Nothing released yet (0.0.0). M0 (research) is done. M1 (progression) is done (checklist:
+[findings 0005](docs/findings/0005-m1-checklist-run.md)); M2 is next. 0.1.0 will be M1 + M2. See [docs/roadmap.md](docs/roadmap.md).
 
 ## What it does (M1)
 
