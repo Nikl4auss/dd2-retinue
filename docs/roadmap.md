@@ -18,14 +18,10 @@ spec and tickets. The sketch is then replaced by a link to that folder, and the 
 - [x] Map the API needed for M1–M5 → [findings/api-map.md](findings/api-map.md)
 - [x] Locate the save folder and script the backup step → `tools/saves.sh`, [testing.md](testing.md)
 
-## M1 — Progression
+## M1 — Progression · in progress
 
 Adopted pawns gain levels and discipline like the main pawn.
-
-- Experiment: does lifting `ExpDispenser.isSubPawn` alone make levels and discipline grow?
-- Experiment: what is `HumanStatusContext.Exp` (progress in level vs. total)? Any level jump on first adoption?
-- Decide whether `checkLevelUp` / `addJobPoint` need further hooks
-- Level-up notification shows for the right pawn
+Work tracked in the wayfinder map [.scratch/m1-progression/map.md](../.scratch/m1-progression/map.md).
 
 ## M2 — Identity and persistence
 
