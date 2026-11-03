@@ -1,0 +1,58 @@
+# Roadmap
+
+Each milestone runs the same loop: **experiment → findings → decision (ADR if there is a real choice) →
+implementation → review → in-game test checklist → commit** (and a tag when it completes a release).
+
+Releases: **0.1.0** = M1 + M2 (first playable). Later milestones bump the minor version.
+
+This file is the index of milestones, not a task list. Bullets under a milestone that has not started are a scope
+sketch. When a milestone starts, its work moves to the issue tracker under `.scratch/<milestone-slug>/`
+(see [agents/issue-tracker.md](agents/issue-tracker.md)): a `/wayfinder` map while there are open questions, then a
+spec and tickets. The sketch is then replaced by a link to that folder, and the status line is kept up to date here.
+
+## M0 — Research · done
+
+- [x] Dump the type database and build query tools (`tools/dump/`)
+- [x] Read Arisen's Own 1.3.2 to locate the relevant game systems
+- [x] Probe how hired pawns behave across combat and save/load → [findings/0001](findings/0001-hired-pawn-baseline.md)
+- [x] Map the API needed for M1–M5 → [findings/api-map.md](findings/api-map.md)
+- [x] Locate the save folder and script the backup step → `tools/saves.sh`, [testing.md](testing.md)
+
+## M1 — Progression
+
+Adopted pawns gain levels and discipline like the main pawn.
+
+- Experiment: does lifting `ExpDispenser.isSubPawn` alone make levels and discipline grow?
+- Experiment: what is `HumanStatusContext.Exp` (progress in level vs. total)? Any level jump on first adoption?
+- Decide whether `checkLevelUp` / `addJobPoint` need further hooks
+- Level-up notification shows for the right pawn
+
+## M2 — Identity and persistence
+
+- Roster file format and validation (pure Lua, tested)
+- Adopt / release from the mod menu
+- Behaviour on dismiss, lost, and re-hire from the Rift (does the game keep the progress? recognise by offline ID?)
+- JSON backup of each adopted pawn's state; restore when the game's copy is gone
+- Guarantee: uninstalling the mod leaves a save that loads with ordinary hired pawns
+
+## M3 — Vocation
+
+- Allow vocation change for adopted pawns at the Vocation Guild (`CharaChangeJobGuildRef.ListInfo.IsSubPawn`)
+- Augments and skills per vocation
+
+## M4 — Equipment
+
+- Lift hired-pawn equip restrictions (`ItemIDUtil.isSubPawnDisableEquipItem`, `GUIBase.isSubpawnDisableEquipStorage`)
+- Items stay with the pawn (no `ItemManager.returnSubPawnItems` for adopted pawns)
+
+## M5 — Name
+
+- Rename (`PawnDataContext.setName`, `_Nickname`), persisted across save/load
+
+## M6 — Appearance
+
+- Open the game's appearance editor for an adopted pawn
+
+## M7 — Creation from scratch (optional)
+
+- Re-evaluate after M6; this is where Arisen's Own spends most of its complexity

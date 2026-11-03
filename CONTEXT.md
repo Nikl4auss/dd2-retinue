@@ -1,0 +1,41 @@
+# Context
+
+Domain terms as used in code, docs and conversation. Game class names in `code`.
+`_Avoid_` lists words not to use for a term in our own prose and identifiers; game identifiers keep the game's naming.
+
+## Pawns
+
+- **Main pawn**: the pawn the player created. Exactly one. Party slot 0 (`app.PawnManager.PawnID.MainPawn`).
+  `PawnUtil.isMainPawn` is true; its `Pawn` has a `MainPawnDataContext`.
+- **Hired pawn** (game: *sub pawn*): a pawn recruited from the Rift. Party slots 1–2 (`SubPawn01`, `SubPawn02`).
+  `PawnUtil.isSubPawn` is true; has a `SubPawnDataContext` (hire time, rental token) and a `PawnOwnerContext`
+  (the creator; `CAPCOM` with an `_OfflineID` for game-generated pawns).
+  _Avoid_: sub pawn, support pawn
+- **Adopted pawn**: a hired pawn the mod has taken ownership of. To the game's save it is still a hired pawn;
+  the mod lifts hired-pawn restrictions for it at runtime. At most three are tracked (the **roster**);
+  at most two can be in the party at once, because the main pawn holds slot 0.
+- **Roster**: the mod's list of adopted pawns, persisted in `reframework/data/Retinue/`.
+- **Party slot**: one of the three pawn positions in the party (`PawnManager._PartyPawnList`).
+
+## Identity
+
+- **CharacterID** (`app.CharacterID`, a 32-bit enum value): identifies a pawn's character in the current save.
+  Stable across save/load while the pawn stays hired.
+- **Offline ID** (`PawnOwnerContext._OfflineID`, a GUID): identifies a game-generated Rift pawn; candidate key for
+  recognising the same pawn after it was dismissed and re-hired (unverified).
+
+## Progression
+
+- **Experience** (`HumanStatusContext.Exp`): appears to be progress within the current level, not a running total (unverified).
+- **Discipline** (`JobContext.ConsumableExpProp`): spendable vocation points.
+- **Vocation** (game: *job*, `app.Character.JobEnum`): 1 Fighter, 2 Archer, 3 Mage, 4 Thief, 5 Warrior, 6 Sorcerer,
+  7 Mystic Spearhand, 8 Magick Archer, 9 Trickster, 10 Warfarer.
+  _Avoid_: job, class
+- **Vocation rank** (`JobContext.calcJobRank`).
+
+## Lifecycle events
+
+- **Hire**: pawn joins from the Rift (`PawnManager.hirePawn`).
+- **Dismiss**: player releases a hired pawn (`PawnManager.dismissPawn`); the game returns items given to it
+  (`ItemManager.returnSubPawnItems`).
+- **Lost**: a pawn left dead too long leaves the party (`PawnManager.lost`).
