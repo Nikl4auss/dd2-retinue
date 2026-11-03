@@ -26,10 +26,10 @@ Game members relevant to the mod, verified against `il2cpp_dump.json` of 2026-11
 |---|---|---|
 | `app.PawnUtil.isSubPawn(app.CharacterID)` / `(app.Character)` (static) | central check; broad effects unknown | verified-game (returns true for hired) |
 | `app.PawnUtil.isMainPawn(app.CharacterID / app.Character / app.Pawn)` (static) | | verified-game |
-| `app.ExpDispenser.isSubPawn(app.CharacterID)` | seen in AO; gates level-up | verified-game (returns true for hired) |
-| `app.ExpDispenser.checkLevelUp(CharacterID, HumanStatusContext, JobEnum, bool, DragonHermitContext)` | AO rewrites the ID to the main pawn's | verified-dump |
-| `app.ExpDispenser.addJobPoint(CharacterID, JobContext, int, bool)` | AO rewrites the ID | verified-dump |
-| `app.ExpDispenser.dispLevelUpUI(CharacterID, int, int)` | level-up notification | verified-dump |
+| `app.ExpDispenser.isSubPawn(app.CharacterID)` | seen in AO; **never called by the game** during exp distribution, hooking it has no effect (0002) | verified-game |
+| `app.ExpDispenser.checkLevelUp(CharacterID, HumanStatusContext, JobEnum, bool, DragonHermitContext)` | gated on the ID; rewriting it to the main pawn's levels the passed context; bool = show notification (0002) | verified-game |
+| `app.ExpDispenser.addJobPoint(CharacterID, JobContext, int, bool)` | gated on the ID; with it rewritten, reaches `addJobPointInternal` (discipline + CulmativeExp) (0002) | verified-game |
+| `app.ExpDispenser.dispLevelUpUI(CharacterID, int newLv, int oldLv)` | level-up notification; calls `GuiManager.reqLevelUp(id, oldLv, newLv)` (0002) | verified-game |
 | `app.ItemIDUtil.isSubPawnDisableEquipItem(app.ItemIDEnum)` | items hired pawns cannot equip | verified-dump |
 | `app.GUIBase.isSubpawnDisableEquipStorage(app.ItemDefine.StorageData)` | same, in menus | verified-dump |
 | `app.ItemManager.returnSubPawnItems(app.CharacterID)` | returns items on dismissal | verified-dump |

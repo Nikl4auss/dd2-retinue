@@ -26,7 +26,7 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
 
 ## Progression
 
-- **Experience** (`HumanStatusContext.Exp`): appears to be progress within the current level, not a running total (unverified).
+- **Experience** (`HumanStatusContext.Exp`): progress within the current level, not a running total (verified, findings 0002).
 - **Discipline** (`JobContext.ConsumableExpProp`): spendable vocation points.
 - **Vocation** (game: *job*, `app.Character.JobEnum`): 1 Fighter, 2 Archer, 3 Mage, 4 Thief, 5 Warrior, 6 Sorcerer,
   7 Mystic Spearhand, 8 Magick Archer, 9 Trickster, 10 Warfarer.

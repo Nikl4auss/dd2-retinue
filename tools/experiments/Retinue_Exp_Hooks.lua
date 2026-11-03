@@ -38,6 +38,7 @@ local VARIANT_ITEMS = { "0 Off (no overrides)", "1 isSubPawn", "2 + checkLevelUp
 
 -- Session state. Deliberately not persisted: every launch starts at variant 0.
 local variant, rewrite_bool, log_calls = 0, true, true
+local rewrite_id = true -- variants 2-3: rewrite the CharacterID to the main pawn's
 local suppress_log = false -- true while the script itself calls hooked methods (snapshots)
 local targets, names, party_rows = {}, {}, {} -- targets: hired party CharacterIDs -> true
 local party_status, hook_status, flush_status = "no data yet", "hooks not installed yet", ""
@@ -327,7 +328,7 @@ local function pre_body(spec, args)
 
     local rw = spec.rewrite
     if rw and variant >= rw.min_variant and targets[id] then
-        local ov = { id_from = id, id_to = MAIN_ID }
+        local ov = { id_from = id, id_to = rewrite_id and MAIN_ID or id }
         local bi = spec.base + rw.bool_param
         if rewrite_bool then
             ov.bool_from = arg_bool(args[bi])
@@ -335,7 +336,7 @@ local function pre_body(spec, args)
         end
         -- Reads done: now write. Arisen's Own does the same (ID to the main pawn's, Boolean to 0).
         if rewrite_bool then args[bi] = sdk.to_ptr(0) end
-        args[spec.base] = sdk.to_ptr(MAIN_ID)
+        if rewrite_id then args[spec.base] = sdk.to_ptr(MAIN_ID) end
         if entry then entry.override = ov end
     end
 
@@ -639,7 +640,7 @@ local function flush()
 end
 
 local function add_event(kind, extra)
-    local ev = { kind = kind, t = os.clock(), wall = wall(), variant = variant, rewrite_bool = rewrite_bool, log_calls = log_calls }
+    local ev = { kind = kind, t = os.clock(), wall = wall(), variant = variant, rewrite_bool = rewrite_bool, rewrite_id = rewrite_id, log_calls = log_calls }
     for k, v in pairs(extra or {}) do ev[k] = v end
     run.variant_events[#run.variant_events + 1] = ev
     dirty = true
@@ -689,6 +690,11 @@ local function draw_body()
 
     local changed, idx = imgui.combo("Variant", variant + 1, VARIANT_ITEMS)
     if changed then set_variant(idx - 1) end
+    local ch_id, rid = imgui.checkbox("Rewrite ID to the main pawn's (as Arisen's Own)", rewrite_id)
+    if ch_id then
+        rewrite_id = rid
+        add_event("rewrite_id", { value = rid })
+    end
     local ch_rw, rw = imgui.checkbox("Rewrite Boolean to false (as Arisen's Own)", rewrite_bool)
     if ch_rw then
         rewrite_bool = rw

@@ -22,8 +22,9 @@ Settled while charting (2026-11-03):
 - Progression starts **when the hook becomes active**. No retroactive exp or discipline.
 - Parity with the main pawn: **the game's own exp curve and per-level stat gains**. No balance options in M1.
 - M1 covers **level, discipline and the current vocation's rank**.
-- Hook only **`app.ExpDispenser.isSubPawn`**, never `app.PawnUtil.isSubPawn` (used by guild, equipment, Rift),
-  and only for CharacterIDs that are currently hired pawns in the party.
+- Never hook `app.PawnUtil.isSubPawn` (used by guild, equipment, Rift). Overrides apply only to CharacterIDs
+  that are currently hired pawns in the party. (`ExpDispenser.isSubPawn` turned out to be ineffective: see
+  Decisions so far.)
 - Questions are answered by an **experiment script** in `tools/experiments/` (not part of the mod) with the hook
   variants togglable from the menu: (1) `isSubPawn` alone, (2) + ID rewrite in `checkLevelUp`,
   (3) + ID rewrite in `addJobPoint`. Run in order; go further only if the previous variant falls short.
@@ -38,12 +39,13 @@ Settled while charting (2026-11-03):
   IDs; rank follows `CulmativeExp`. Inferred from signatures; the experiment confirms.
 - [Build the hook-variant experiment script](issues/02-build-hook-experiment.md): `tools/experiments/Retinue_Exp_Hooks.lua`
   + `deploy.sh --experiments`; procedure in `tools/experiments/README.md`. Built and mock-tested, not yet run in game.
+- [Run variant 1 (`isSubPawn` alone) in game](issues/03-run-variant-1.md): `isSubPawn` alone does nothing; the ID
+  rewrite in `checkLevelUp` + `addJobPoint` is what works; the Boolean only toggles the (wrongly named)
+  notification; main pawn unaffected; gains persist. Findings 0002.
 
 ## Not yet specified
 
-- Does the level-up notification name the right pawn, and what to do if it doesn't? (Observed in the variant 1 run.)
-- Would an ID rewrite in `checkLevelUp` / `addJobPoint` also add exp or discipline to the main pawn?
-- Do gained levels survive save/load, and stay when the hook is turned off?
+- Does a hired pawn's vocation rank-up happen (and notify) under the rewrite? Not reached in the 0002 runs.
 - Interaction with other active mods that touch experience or skills.
 - Exact shape of `config.json` and of the mod-menu section.
 
