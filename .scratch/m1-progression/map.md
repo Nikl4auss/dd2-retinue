@@ -36,6 +36,8 @@ Settled while charting (2026-11-03):
 - [How does the game compute level-up, and what is `HumanStatusContext.Exp`?](issues/01-level-up-internals.md):
   Exp is per-level progress; the ID only gates and labels, so `isSubPawn` alone likely suffices for real hired-pawn
   IDs; rank follows `CulmativeExp`. Inferred from signatures; the experiment confirms.
+- [Build the hook-variant experiment script](issues/02-build-hook-experiment.md): `tools/experiments/Retinue_Exp_Hooks.lua`
+  + `deploy.sh --experiments`; procedure in `tools/experiments/README.md`. Built and mock-tested, not yet run in game.
 
 ## Not yet specified
 

@@ -7,7 +7,8 @@
    `DD2.exe` is up.
 2. Note which other mods are active if they touch pawns, items, skills or experience.
 
-Read-only probes (`tools/probe/`) need no backup.
+Read-only probes (`tools/probe/`) need no backup. Experiments (`tools/experiments/`) hook the game and can
+change saves: they DO need a backup, one per run.
 
 To roll back: `tools/saves.sh list`, then `tools/saves.sh restore <backup>`. Restore first takes a
 `pre-restore` backup of the current state, so it can itself be undone.
@@ -27,6 +28,8 @@ To roll back: `tools/saves.sh list`, then `tools/saves.sh restore <backup>`. Res
 - Use the probe's *Save snapshot* at each step; snapshots land in `reframework/data/Retinue/probe/`.
 - Copy them into `docs/findings/data/<date>-<topic>/` and write a findings note
   (procedure, results table, conclusions, open questions).
+- Experiment runs write JSON logs to `reframework/data/Retinue/experiments/`; the procedure is in
+  `tools/experiments/README.md`.
 
 ## Checklists
 
