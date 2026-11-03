@@ -19,7 +19,8 @@ Settled while charting (2026-11-03):
 - M1 applies to **every hired pawn in the party**, behind a mod-menu toggle. Gating by the roster arrives in M2.
 - The toggle is **on by default** and persisted in `reframework/data/Retinue/config.json`, separate from the roster.
   Turning it off reverts nothing (levels already gained stay, per ADR 0001).
-- Progression starts **when the hook becomes active**. No retroactive exp or discipline.
+- Progression starts **when the hook becomes active**. No retroactive exp or discipline from the mod; exp the game
+  itself banked while the pawn was blocked is applied as-is (see Decide the M1 hook set).
 - Parity with the main pawn: **the game's own exp curve and per-level stat gains**. No balance options in M1.
 - M1 covers **level, discipline and the current vocation's rank**.
 - Never hook `app.PawnUtil.isSubPawn` (used by guild, equipment, Rift). Overrides apply only to CharacterIDs
@@ -42,10 +43,12 @@ Settled while charting (2026-11-03):
 - [Run variant 1 (`isSubPawn` alone) in game](issues/03-run-variant-1.md): `isSubPawn` alone does nothing; the ID
   rewrite in `checkLevelUp` + `addJobPoint` is what works; the Boolean only toggles the (wrongly named)
   notification; main pawn unaffected; gains persist. Findings 0002.
+- [Decide the M1 hook set](issues/04-decide-hook-set.md): rewrite the ID to `ch100000_00` in `checkLevelUp` +
+  `addJobPoint` for hired party pawns; notification by swapping the real ID back in `dispLevelUpUI` /
+  `reqJobRankUp`, silent as fallback; banked exp applies as-is.
 
 ## Not yet specified
 
-- Does a hired pawn's vocation rank-up happen (and notify) under the rewrite? Not reached in the 0002 runs.
 - Interaction with other active mods that touch experience or skills.
 - Exact shape of `config.json` and of the mod-menu section.
 

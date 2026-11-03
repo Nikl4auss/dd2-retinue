@@ -27,6 +27,8 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
 ## Progression
 
 - **Experience** (`HumanStatusContext.Exp`): progress within the current level, not a running total (verified, findings 0002).
+- **Banked experience**: experience a hired pawn keeps accumulating past its level's requirement while the game
+  blocks its level-up. Belongs to the game's state, not the mod's; applied as-is once progression is lifted.
 - **Discipline** (`JobContext.ConsumableExpProp`): spendable vocation points.
 - **Vocation** (game: *job*, `app.Character.JobEnum`): 1 Fighter, 2 Archer, 3 Mage, 4 Thief, 5 Warrior, 6 Sorcerer,
   7 Mystic Spearhand, 8 Magick Archer, 9 Trickster, 10 Warfarer.
