@@ -1353,12 +1353,11 @@ local function fmt_entry(e)
     return table.concat(parts, " ")
 end
 
--- imgui.radio_button(label, current, value) -> changed, new (REFramework); tolerate a single-return variant.
+-- One-of-many pick drawn as a checkbox (this REFramework build has no imgui.radio_button): true when the row is
+-- ticked now and was not the selected one.
 local function radio(lbl, current, value)
-    local r1, r2 = imgui.radio_button(lbl, current, value)
-    if r1 == true then return true end
-    if type(r1) == "number" and r1 == value and current ~= value then return true end
-    return false
+    local changed, v = imgui.checkbox(lbl, current == value)
+    return changed and v == true and current ~= value
 end
 
 local function menu_rows(m)
