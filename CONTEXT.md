@@ -14,6 +14,7 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
 - **Adopted pawn**: a hired pawn the mod has taken ownership of. To the game's save it is still a hired pawn;
   the mod lifts hired-pawn restrictions for it at runtime. Only offline (game-generated) pawns can be adopted.
   An adopted pawn is either **present** (in the party) or **away** (dismissed or lost, still in the roster).
+  Between a Return and a successful restore it is **returning**: back in the party, its backup not yet written into it.
 - **Roster**: the mod's list of adopted pawns, persisted in `reframework/data/Retinue/`. At most two: the party is
   the main pawn plus two adopted pawns. An away pawn keeps its place in the roster.
 - **Locked roster**: a damaged roster. Nothing is adopted, released or progressed through it, and the mod never
