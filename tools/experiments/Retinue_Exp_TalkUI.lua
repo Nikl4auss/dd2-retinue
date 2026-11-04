@@ -70,6 +70,9 @@ local markers, marker_text = {}, ""
 local dlg = { main = DIALOG_DEFAULT_MAIN, sel0 = "Yes", sel1 = "No", sel2 = "", sel3 = "", use_tex = false }
 local captured_dialog_args = nil -- { vals, wall, t }: the latest requestDialog the GAME made
 local captured_tex = nil -- its texture holder object (only passed when dlg.use_tex)
+-- The second run showed the game's own yes/no dialogs (save, return to title) go straight to the widget
+-- (ui010101.reqDisp, 24 args) and never through requestDialog: capture those and replay them on the widget.
+local captured_reqdisp = nil -- { vals, wall, t, tex }
 local in_self_call = false -- true while this script itself calls requestDialog
 local dialog_poll, dialog_live = nil, nil
 local last_menu, menu_live, menu_gen = nil, false, 0
@@ -1011,8 +1014,20 @@ local SPECS = {
           .. "System.Boolean, System.Boolean, System.Boolean, System.Single, System.Boolean, System.Boolean, "
           .. "System.Boolean, System.Boolean)",
       pre = function(args, frame)
+          local vals = decode_reqdisp(args)
+          if not in_self_call then
+              captured_reqdisp = { vals = vals, wall = wall(), t = os.clock(), tex = nil }
+              if vals[12] == true then captured_reqdisp.tex = try(function() return to_managed(args[14]) end) end
+          end
           if not frame.log then return nil end
-          return { self_call = in_self_call or nil, args = decode_reqdisp(args) }
+          return { self_call = in_self_call or nil, args = vals }
+      end },
+    -- who reads the dialog answer, and what it is (logged only when not None)
+    { key = "ui010101.getRetVal", type = "app.ui010101", sig = "getRetVal()", use_post = true, chatty = true,
+      post = function(retval)
+          local v = arg_i32(retval)
+          if v ~= 0 then add_event("dialog_getRetVal", { value = v, name = enum_name("app.ui010101.RetVal", v) }) end
+          return { value = v }
       end },
 
     -- Q4: Status page (log-only)
@@ -1175,10 +1190,24 @@ local function dialog_state_now()
     s.wait = try(function() return gm:call("isWaitDialogMessage") end)
     s.state_name = enum_name("app.ui010101.RetVal", s.state)
     s.raw_name = enum_name("app.ui010101.RetVal", s.raw)
+    -- the widget itself (GuiManager.Dialog): its Ret field and raw getter (getRetVal is not called: it may consume)
+    local w = try(function() return gm:get_field("Dialog") end)
+    if type(w) == "userdata" then
+        s.w_ret = field(w, "Ret")
+        s.w_ret_name = enum_name("app.ui010101.RetVal", s.w_ret)
+        s.w_raw = try(function() return w:call("getRawRetVal") end)
+        s.w_raw_name = enum_name("app.ui010101.RetVal", s.w_raw)
+        s.w_keep, s.w_need_reset = field(w, "IsKeepRetVal"), field(w, "NeedResetRetVal")
+    else
+        s.w_ret = "no widget"
+    end
     return s
 end
 
-local function dialog_key(s) return table.concat({ tostring(s.state), tostring(s.raw), tostring(s.disp), tostring(s.wait) }, "|") end
+local function dialog_key(s)
+    return table.concat({ tostring(s.state), tostring(s.raw), tostring(s.disp), tostring(s.wait), tostring(s.w_ret),
+        tostring(s.w_raw), tostring(s.w_keep), tostring(s.w_need_reset) }, "|")
+end
 
 local function end_poll(reason)
     local p = dialog_poll
@@ -1203,10 +1232,12 @@ local function poll_dialog()
     if k ~= p.last_key then
         p.last_key = k
         add_event("dialog_state", { dt = os.clock() - p.start, state = s.state, state_name = s.state_name, raw = s.raw,
-            raw_name = s.raw_name, disp = s.disp, wait = s.wait })
+            raw_name = s.raw_name, disp = s.disp, wait = s.wait, w_ret = s.w_ret, w_ret_name = s.w_ret_name,
+            w_raw = s.w_raw, w_raw_name = s.w_raw_name, w_keep = s.w_keep, w_need_reset = s.w_need_reset })
     end
     if s.disp == true then p.saw_disp = true end
-    if s.state_name and s.state_name ~= "None" then p.saw_result = true end
+    if (s.state_name and s.state_name ~= "None") or (s.w_ret_name and s.w_ret_name ~= "None")
+        or (s.w_raw_name and s.w_raw_name ~= "None") then p.saw_result = true end
     if p.saw_result and s.disp ~= true then
         end_poll("answer seen and dialog closed")
     elseif os.clock() - p.start >= DIALOG_POLL_SECONDS then
@@ -1214,8 +1245,56 @@ local function poll_dialog()
     end
 end
 
+-- Replays the latest game dialog captured at ui010101.reqDisp, on the widget, with our five strings.
+local m_widget_reqdisp = nil
+local function open_dialog_widget(entry)
+    local gm = singleton("app.GuiManager")
+    if not gm then error("GuiManager not available") end
+    local w = gm:get_field("Dialog")
+    if w == nil then error("GuiManager.Dialog is nil") end
+    local cap = captured_reqdisp and captured_reqdisp.vals
+    if not cap then error("no captured game dialog yet (open one, e.g. Return to Title, and cancel it)") end
+    if not m_widget_reqdisp then
+        m_widget_reqdisp = find_method(sdk.find_type_definition("app.ui010101"), "reqDisp(System.String, System.String, "
+            .. "System.String, System.String, System.String, System.Boolean, System.Int32, System.Boolean, System.UInt32, "
+            .. "System.Int32, System.Int32, via.render.TextureResourceHolder, System.Boolean, System.Boolean, "
+            .. "System.Boolean, System.Boolean, System.Boolean, System.Boolean, System.Boolean, System.Single, "
+            .. "System.Boolean, System.Boolean, System.Boolean, System.Boolean)")
+    end
+    if not m_widget_reqdisp then error("ui010101.reqDisp not found") end
+    local a, shown = {}, {}
+    local texts = { dlg.main, dlg.sel0, dlg.sel1, dlg.sel2, dlg.sel3 }
+    for i = 1, 5 do a[i] = sdk.create_managed_string(texts[i]); shown[i] = texts[i] end
+    for i = 6, 24 do
+        local v
+        if REQDISP_KINDS[i] == "tex" then
+            if dlg.use_tex then v = captured_reqdisp.tex end
+        elseif cap[i] ~= nil and not is_err(cap[i]) then
+            v = cap[i]
+        end
+        a[i] = v
+        shown[i] = v == nil and "nil" or (type(v) == "userdata" and "<object>" or v)
+    end
+    entry.args, entry.via = shown, "ui010101.reqDisp"
+    entry.captured_from = captured_reqdisp.vals[1]
+    in_self_call = true
+    local ok_call, res = pcall(function() return m_widget_reqdisp:call(w, table.unpack(a, 1, 24)) end)
+    in_self_call = false
+    if not ok_call then error(res) end
+    entry.result = (res == nil or type(res) == "userdata") and "void" or str(res)
+end
+
 local function open_dialog(mode)
     local entry = { mode = mode, kind = "open_dialog" }
+    if mode == "captured" and not captured_dialog_args then
+        local ok_w, err_w = pcall(open_dialog_widget, entry)
+        in_self_call = false
+        entry.ok = ok_w
+        if not ok_w then entry.error = tostring(err_w) end
+        add_event("dialog_open", entry)
+        if ok_w then start_poll(mode) end
+        return
+    end
     local ok, err = pcall(function()
         local gm = singleton("app.GuiManager")
         if not gm then error("GuiManager not available") end
@@ -1494,18 +1573,26 @@ local function draw_q3()
     local c5, v5 = imgui.input_text("sel3", dlg.sel3)
     if c5 then dlg.sel3 = v5 end
     if imgui.button("Open test dialog (defaults)") then queue_work(function() open_dialog("defaults") end) end
-    if captured_dialog_args then
-        imgui.text("Captured a game requestDialog at " .. captured_dialog_args.wall)
+    if captured_dialog_args or captured_reqdisp then
+        if captured_dialog_args then
+            imgui.text("Captured a game requestDialog at " .. captured_dialog_args.wall .. " (replayed via requestDialog)")
+        else
+            imgui.text(string.format("Captured a game dialog at %s: %s (replayed on the widget)", captured_reqdisp.wall,
+                tostring(captured_reqdisp.vals[1]):gsub("[\r\n]+", " "):sub(1, 60)))
+        end
         local cu, vu = imgui.checkbox("Pass the captured texture holder object", dlg.use_tex)
         if cu then dlg.use_tex = vu end
         if imgui.button("Open with captured args") then queue_work(function() open_dialog("captured") end) end
     else
-        imgui.text("Open with captured args: disabled until a game requestDialog is captured (e.g. Return to Title).")
+        imgui.text("Open with captured args: disabled until a game dialog is captured (e.g. Return to Title, cancel).")
     end
     local s = dialog_live
     if s then
         imgui.text(string.format("state=%s (%s)  raw=%s (%s)  displayed=%s  waiting=%s", tostring(s.state),
             tostring(s.state_name), tostring(s.raw), tostring(s.raw_name), tostring(s.disp), tostring(s.wait)))
+        imgui.text(string.format("widget: Ret=%s (%s)  raw=%s (%s)  keep=%s  need_reset=%s", tostring(s.w_ret),
+            tostring(s.w_ret_name), tostring(s.w_raw), tostring(s.w_raw_name), tostring(s.w_keep),
+            tostring(s.w_need_reset)))
     end
     local p = dialog_poll
     if p then
