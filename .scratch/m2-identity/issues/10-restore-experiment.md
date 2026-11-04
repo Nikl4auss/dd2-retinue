@@ -1,7 +1,7 @@
 # Can a backup be written into a re-hired pawn?
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 09
 
 ## Question

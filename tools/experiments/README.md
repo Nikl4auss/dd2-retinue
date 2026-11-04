@@ -339,3 +339,129 @@ Empty collections are written as `{"_empty": true}`.
 - `captured_dialog_args`: the latest `requestDialog` the game made (strings, flags, ints, the float), `settings_now`,
   `status_page_last`, `count_by_spec`, `dropped` / `dropped_by_spec`, `errors` (empty is the goal), `hooks`, `constants`
   (including the guessed default dialog arguments).
+
+## `Retinue_Exp_Restore.lua`: can a backup be written into a re-hired pawn?
+
+Question (M2, ticket `.scratch/m2-identity/issues/10-restore-experiment.md`): can a stored backup (level, exp, stat growth
+`_IncreaseParams`, extra status boost, discipline, `CulmativeExp`) be written into a pawn just re-hired from the Rift,
+matched by OfflineID on `hirePawn` post; does it stick through save, reload and a full relaunch (and with the mod and
+the experiment removed); when does the pawn's ContextDBMS record become writable; is `PawnOwnerContext._OfflineID`
+readable inside `hirePawn` post; and where does equipment the player gave the pawn go on dismiss and on lost?
+Background: `docs/findings/0006-m2-dismiss-lost-rehire.md`, `docs/adr/0002-restore-writes-hired-pawn-contexts.md`.
+
+Menu: **Retinue Restore (EXPERIMENT)**. It runs together with the mod and with the lifecycle script
+(`./deploy.sh --restore`): it hooks none of the methods the mod hooks, and its hooks are log-only. With the default settings
+it writes nothing to the game (restore mode 0, no button pressed). The run file and the **backups persist between
+sessions** (the restore happens after a relaunch); the backups are the only thing this script reads back at start.
+
+### What it hooks
+
+| Group | Methods |
+|---|---|
+| Hire and dismiss | `PawnManager.hirePawn` (pre keeps the `Character`, post reads its OfflineID, level, exp and record state directly), `PawnManager.dismissPawn` (3 overloads; pre captures the backup when *Auto-capture on dismiss* is ticked and schedules `item_counts` at +1 s and +5 s) |
+| Equipment destination | `ItemManager.addStorageNoLock`, `addItemToStorageNoLock`, `subStorageNoLock(Int32,Int32,CharacterID,Int32)` (item id, count, CharacterID in pre), `removeEquipData`, `returnSubPawnItems` (pre + post) |
+
+Caps as in the lifecycle script: 300 entries per hook, 2000 for `hirePawn` and `dismissPawn`. The item hooks fire on
+every pickup, so past 300 they keep logging (up to 2000) for CharacterIDs of pawns in the party or with a backup
+(`known_pawn` in the entry). The status line says `all N hooks installed` or lists the missing ones. The item id / count /
+CharacterID order of the three storage methods is an assumption (the dump has no parameter names): check it against
+a known pickup.
+
+### Panel
+
+- *Settings*: **Restore mode** (0 Log only, default; 1 Auto: next frame after `hirePawn` post; 2 Auto: after 2 s),
+  **IncreaseParams write** (0 fields on the existing object, default; 1 `setIncreaseParam(new object)`), *Ignore level
+  guard* (off), *Auto-capture on dismiss* (on), *Log calls*. Each change is logged in `notes` (`kind: setting`).
+- *Actions*: **Capture backup of slot N**, **Restore backup into slot N** (two clicks, restores the backup matching the
+  slot pawn's OfflineID, refuses if none), **Compare slot N with backup** (label field), **Marker** field + button,
+  **Flush now**. Slot N is a party slot; the main pawn, the player, non-hired pawns and pawns without an OfflineID are refused.
+- *Backups*: one line per stored backup (name, OfflineID, level, exp, discipline, captured, source) with a two-click
+  **Delete**, and **Item counts for backup N** (pick N with the slider; logs `item_counts` for that backup's item ids).
+- Below: the last restore's diff (updates at after, +1 s and +10 s) and the last compare's diff (differing fields only), and
+  the last calls.
+
+### Backups
+
+`reframework/data/Retinue/experiments/restore_backups/<offline_id>.json`, listed in `index.json` (`offline_ids`; Lua
+cannot list a directory), loaded at script start. One per OfflineID; a capture overwrites the previous one. A capture is
+refused (and an existing backup kept) when a restored field cannot be read.
+
+- `version` (1), `offline_id`, `name`, `character_id`, `captured`, `source` (`button` or `dismissPawn-pre`).
+- Restored: `level`, `exp`, `increase_params` {hit_point, stamina, attack, defence, magic_attack, magic_defence, blow,
+  weight}, `extra_status_boost`, `discipline` (`ConsumableExp`), `culmative_exp` (whole array, JSON position = array index).
+- Verification only: `current_job`, `qualified_job_bits`, `changed_job_bits`, `job_ranks` (index = JobEnum 1..10),
+  `max_hp`, `max_stamina` (`calcMaxHp`/`calcMaxStamina` of `CurrentJob`), `increase_params_readonly`,
+  `increase_params_caps` (the `IsCap*` flags).
+- Recorded only: `item_ids` (equipped item ids; the `slots` decoding of the lifecycle script is known broken and skipped),
+  `item_have_all_num` and `item_have_party_num` (`getHaveAllNum`/`getHavePartyNum` per item id, keys are strings), `skills`.
+
+### The restore write
+
+Update callback only, on the LIVE actor (`get_Human():get_StatusContext()` / `get_JobContext()`); the ContextDBMS record is
+never written. Refused when the live level is above the backup's (unless *Ignore level guard*). Steps, each in its own
+`pcall` and logged in `writes` as `{field, method, ok, error}`: `set_Level`, `set_Exp`; `_IncreaseParams` (mode 0: if
+`ReadOnly` is true `setReadOnly(false)`, `set_field` on the eight int fields, then the old `ReadOnly` back; mode 1: a new
+`app.IncreaseStatus` from `sdk.create_instance` + `add_ref` + `.ctor`, the eight fields, `setIncreaseParam`);
+`setExtraStatusBoost` (read back from `_AcquiredExtraStatusBoost`, `set_field` fallback logged as `FALLBACK`);
+`set_ConsumableExpProp` (read back from `ConsumableExp`, same fallback); `CulmativeExp` in place (length must match;
+`arr:set_element(i, v)` first, then `arr:call("SetValue", sdk.create_int32(v), i)`; a method counts only when reading the
+array back gives the backup, the attempts are in the `writes` entry). Then `after` is read at once and `after_1s`,
+`after_10s` later (the game might overwrite values); `diff` = backup against `after_10s`, field by field. Equipment, skills,
+`CurrentJob` and the job bits are never written.
+
+### Procedure
+
+Needs the fixture `<timestamp>-fixture-levelled-pawn` from the lifecycle run (Folken Lv 27, hired at Lv 23) and a Rift stone
+within reach (Nick's Devtools *Warp*). **`tools/saves.sh restore` wipes `reframework/data/Retinue`, backups and run files
+included**: capture the backup in the same cycle after restoring the fixture, and copy the run files (and
+`restore_backups/`) out before the next restore, into `docs/findings/data/<date>-m2-restore/<step>/`.
+
+0. Quit the game. `tools/saves.sh backup m2-restore-start`. Restore the fixture. `./deploy.sh --remove && ./deploy.sh --probe
+   --lifecycle --restore`. Launch, load. Check the status lines of both experiments say all hooks are installed, and that
+   Retinue is active. Take a Status-page screenshot of the pawn (Level, HP, Stamina, Attack, Defence, ...).
+1. **(a) Capture.** Before the dismiss, give the pawn a piece of equipment from the player's storage (note its name).
+   **Capture backup of slot N**; check the backup list (level 27, the item id in `item_ids` once the file is flushed).
+2. **(b) Real dismiss at a Rift stone.** Dismiss through the dialogue (auto-capture overwrites the backup, `source`
+   `dismissPawn-pre`). Check where the given item went (storage chest, inventory) and the `item_counts` entries
+   (`dismiss+1s`, `dismiss+5s`), and the item-hook entries in `calls`. Save (inn/rest), Marker `saved`.
+3. **(c) Restore after re-hire.** Set Restore mode to 1. Re-hire the pawn from the Rift's "previously hired" list. In the
+   run file: `calls` `hirePawn` post `offline_id_in_post` (value or error), `returns` (`hire_post`, `return_matched`,
+   `reread` 1f and 1s), the `restore` action (`writes`, `before`/`after`/`after_1s`/`after_10s`, `diff`). Open the Status
+   page and note Level, HP, Stamina, Attack, Defence etc., compare with the screenshot from step 0; check the vocation rank
+   and discipline on the vocation screen. Marker, save, Marker `saved`; back to the title; reload; Marker `reloaded`;
+   **Compare** with label `reloaded` (`auto:first-seen` fires only once per OfflineID per session). Then quit the game
+   fully, relaunch, load, Compare again (`relaunch`; the auto compare fires here, the backup is loaded from file).
+   `record_transitions` shows when the record became visible and `IsRestore`/`IsStore` changed.
+4. **(d) Only if (c) did not stick after save/reload:** restore the post-dismiss state, re-hire with Restore mode 0, save
+   once, then **Restore backup into slot N** manually, save, reload, Compare. This tells whether the record must exist before
+   the write. Try IncreaseParams write 1 in a separate cycle if the Status page did not move.
+5. **(e) Uninstall check.** Quit, `./deploy.sh --remove` (nothing linked: neither mod nor experiments), launch, load the save
+   from (c): the pawn loads at the restored level, the Status page as restored, no errors in the REFramework log; save once and
+   reload. Then redeploy (`./deploy.sh --probe --lifecycle --restore`) and Compare again.
+6. **(f) Lost path for equipment.** Restore the fixture, give the pawn an item, Capture, Nick's Devtools *Kill pawns*, travel to
+   a Rift, **Item counts for that backup**; note where the item went (compare `all`/`party` against `at_backup_*`, and
+   `equip_now`). The lifecycle script's `lost` entries show which path fired.
+7. **(g) Collect.** Quit. Copy the last cycle's `restore_*.json`, `restore_backups/` and the REFramework log into
+   `docs/findings/data/<date>-m2-restore/<step>/`. `./deploy.sh --remove`, and restore a backup if you do not want to keep
+   the changes.
+
+### What the run file contains
+
+`restore_<YYYYmmdd_HHMMSS>.json`, one per script session, flushed every 2 s when changed (also via **Flush now**). Empty
+collections are written as `{"_empty": true}`.
+
+- `summary`, `count_by_spec` (`{pre, post}` per hook), `calls` (per-hook caps, `dropped_by_spec`), `hooks`, `errors` (empty is
+  the goal), `constants`.
+- `calls`: `seq`, `t`, `wall`, `method`, `phase`, `id`, `name`, decoded `args`. `hirePawn` pre has `offline_id_in_pre`; its post
+  has `offline_id_in_post`, `level_in_post`, `exp_in_post`, `record`. `dismissPawn` pre has `auto_capture` (what happened)
+  and `item_counts_scheduled`. Item hooks: `args.item_id`, `count`, `chara_id`, plus `known_pawn` / `backup_offline_id`.
+- `actions`: `capture`, `restore` (with `writes`, `before`, `after`, `after_1s`, `after_10s`, `diff_*`, `diff`),
+  `delete_backup`, and refused or failed button presses (`ok: false`, `error`).
+- `returns`: `hire_post`, `reread` (labels `1f`, `1s`, `2s`: CharacterID, OfflineID, level, exp, `record`, `is_restore`,
+  `is_store`), `return_matched` / `return_unmatched`, `restore_waiting`.
+- `compares`: `label`, `n_diff`, `all_equal`, `diff` rows `{field, expected, actual, equal}` (restored fields, verification
+  fields, `item_ids`), `live`, `record`, `is_restore`, `is_store`.
+- `record_transitions`: one entry per change of `by_charid`, `by_uniqid`, `is_restore`, `is_store` of a party pawn with a
+  backup. `markers` `{t, wall, label}`. `item_counts`: per item id `all`, `party`, `at_backup_all`, `at_backup_party`, and
+  `equip_now`. `notes`: `setting` changes and `pawn-absent` (a backed-up OfflineID never seen 30 s after the party became
+  non-empty).

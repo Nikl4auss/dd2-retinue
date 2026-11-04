@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Links the mod (src/autorun/*) and, optionally, the dev tools into the game's reframework/autorun folder:
 # the read-only probe (tools/probe/*.lua), the M1 hooking experiment (tools/experiments/Retinue_Exp_Hooks.lua)
-# the M2 lifecycle experiment (tools/experiments/Retinue_Exp_Lifecycle.lua) and the M2 talk-UI experiment
-# (tools/experiments/Retinue_Exp_TalkUI.lua).
+# the M2 lifecycle experiment (tools/experiments/Retinue_Exp_Lifecycle.lua), the M2 talk-UI experiment
+# (tools/experiments/Retinue_Exp_TalkUI.lua) and the M2 restore experiment (tools/experiments/Retinue_Exp_Restore.lua).
 # Symlinks, so edits in the repo are live after "Reset scripts" in the REFramework menu.
 #
 #   ./deploy.sh                         link the mod
@@ -15,9 +15,13 @@
 #   ./deploy.sh --probe --lifecycle     link the mod, the probe and the lifecycle experiment
 #   ./deploy.sh --talkui                link the mod and the talk-UI experiment (log-only hooks, Q2 toggles that
 #                                       edit the pawn talk menu and a button that opens a native dialog: back up first)
+#   ./deploy.sh --restore               link the mod and the restore experiment (log-only hooks, backups kept in
+#                                       reframework/data/Retinue, and buttons / modes that WRITE a stored backup
+#                                       into a pawn: back up first)
 #
 # The mod and the M1 experiment hook the same methods, so they are never linked together: linking one while the
-# other is linked fails (run --remove first). --lifecycle and --talkui have no such conflict and combine with any of the above.
+# other is linked fails (run --remove first). --lifecycle, --talkui and --restore have no such conflict and combine
+# with any of the above.
 #   ./deploy.sh --remove                remove every link this script created (mod, probe and experiments)
 set -euo pipefail
 
@@ -25,13 +29,14 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 GAME="${DD2_DIR:-$HOME/Documentos/Games/Dragon Dogma 2}"
 AUTORUN="$GAME/reframework/autorun"
 
-probe=0 experiments=0 lifecycle=0 talkui=0 remove=0
+probe=0 experiments=0 lifecycle=0 talkui=0 restore=0 remove=0
 for arg in "$@"; do
     case "$arg" in
         --probe) probe=1 ;;
         --experiments) experiments=1 ;;
         --lifecycle) lifecycle=1 ;;
         --talkui) talkui=1 ;;
+        --restore) restore=1 ;;
         --remove) remove=1 ;;
         -h|--help) sed -n '2,/^set -/p' "${BASH_SOURCE[0]}" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $arg (see --help)" >&2; exit 2 ;;
@@ -56,6 +61,7 @@ if (( probe || remove )); then for f in "$ROOT"/tools/probe/*.lua; do sources+=(
 if (( experiments || remove )); then sources+=("$ROOT/tools/experiments/Retinue_Exp_Hooks.lua"); fi
 if (( lifecycle || remove )); then sources+=("$ROOT/tools/experiments/Retinue_Exp_Lifecycle.lua"); fi
 if (( talkui || remove )); then sources+=("$ROOT/tools/experiments/Retinue_Exp_TalkUI.lua"); fi
+if (( restore || remove )); then sources+=("$ROOT/tools/experiments/Retinue_Exp_Restore.lua"); fi
 
 for src in "${sources[@]}"; do
     [[ -e "$src" ]] || continue
