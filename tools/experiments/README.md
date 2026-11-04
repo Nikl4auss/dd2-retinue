@@ -272,8 +272,7 @@ mutations still run.
 - **Marker** field and button: appends `{t, label}` to the file. Use it to say where you are ("field", "rift", "status").
 - **Q1/Q2 talk menu**: the last menu as rows (`index`, list `Msg`, `_Choice`, `ChoiceId`, next node, the pawn the entry
   is about) with a **Target** radio (the row to relabel / catch) and a **Never-mind** radio (the index a redirect jumps
-  to); the **Label** (default "Adopt") and the toggles: *Relabel (newChoiceInfo, by Guid)*, *Relabel (requestTalkSelect,
-  by index)*, *Catch pick*, *Redirect target pick to Never-mind*, *Append fifth entry*, *Raise DispMax* (value, default 5).
+  to); the **Label** (default "Adopt") and the toggles: *Relabel (newChoiceInfo, by Guid)*, *Relabel (list, by row)*, *Catch pick*, *Redirect target pick to Never-mind*, *Append fifth entry*, *Raise DispMax* (value, default 5).
   An on-screen line says `ADOPT picked for <name> <id>` when the Target is picked; nothing is adopted.
 - **Q3 native dialog**: texts (main, sel0..sel3), **Open test dialog (defaults)**, **Open with captured args**
   (disabled until the game opened a yes/no dialog and the hook captured its arguments), and the live
@@ -293,19 +292,21 @@ nowhere): save before each Q2 step.**
    appears. Do not pick anything yet (press Never mind). Look at the *Q1/Q2 talk menu* node: node class, rent type, rows.
    Then **Q1 (Rift).** Marker `rift`, warp to a Rift stone, talk to the same pawn there (and open the Rift's dismiss flow
    with a spare pawn only if you want `startDismiss` logged). Note whether the menu differs.
-2. **Q2.** In the talk-menu panel, after Q1 has shown the menu once: set **Target** on the "Add to Favorites" row and
-   **Never-mind** on the "Never mind" row. Save. Then, one at a time and each followed by talking to the pawn again:
+2. **Q2.** The first run showed the party-pawn menu is an `app.ShopChoiceNode` with 10 choices of which 4 are shown,
+   and the game hands the list straight to `ui021601.reqDisp` (`requestTalkSelect` is not used; `DispMax` is already 8).
+   After talking to the pawn once, the *Q1/Q2 talk menu* panel lists the 4 shown entries as
+   `row N [choice M] msg=...`: row = position on screen, choice = index in the node (what `nextNode` receives).
+   Set **Target** on the `msg=Add to Favorites` row (row 2, choice 7) and **Never-mind** on the `msg=Never mind.` row
+   (row 3, choice 9). Save. Then, one at a time, each followed by talking to the pawn again (add a marker before each):
    a. *Relabel (newChoiceInfo)* on, talk, note whether the entry reads "Adopt". Off.
-   b. *Relabel (requestTalkSelect)* on, talk, note again (which path renders?). Off.
+   b. *Relabel (list)* on, talk, note again (which path renders?). Off.
    c. *Catch pick* on (and a relabel that worked), pick the entry: the panel shows `ADOPT picked for ...`; note what the
       game does with the pick (Favorite toggled?). Off.
    d. *Catch pick* + *Redirect* on, pick it: note what the screen shows and whether the conversation ends cleanly (like
       Never mind). Off.
-   e. *Append fifth entry* on, talk: does a fifth row show? Pick it (it is redirected to Never-mind). Off.
-   f. Same with *Raise DispMax* on as well (leave the value at 5; try 6 if the fifth row shows cut off). `DispMax` is
-      restored when the talk select ends; the events `dispmax_raised` / `dispmax_restored` record it. Try (e) first
-      without, then with Raise DispMax.
-   Add a marker before each step so the file can be read per step.
+   e. *Append fifth entry* on, talk: does a fifth row show? Pick it: the selected index is rewritten to the Never-mind row
+      (event `fifth_selected`), so it should behave as Never mind. Off.
+   f. Only if the fifth row did not show or showed cut off: same with *Raise DispMax* on as well (value 5 or more).
 3. **Q3.** Press **Open test dialog (defaults)**: note whether a dialog shows, its layout and buttons, and answer it; the
    panel and the file record every state change for 60 s. Then trigger any yes/no game dialog (e.g. Return to Title and
    cancel), so the hook captures its arguments, and press **Open with captured args**. Compare.

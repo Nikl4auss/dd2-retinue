@@ -74,6 +74,14 @@ local in_self_call = false -- true while this script itself calls requestDialog
 local dialog_poll, dialog_live = nil, nil
 local last_menu, menu_live, menu_gen = nil, false, 0
 local fifth_state = nil -- { gen, pos }: a fifth entry was appended at index `pos` in menu generation `gen`
+-- newChoiceInfo results since the last node start, in call order: { guid, msg }. The first in-game run showed the
+-- party-pawn menu is an app.ShopChoiceNode (10 choices, 4 shown) whose list goes straight to ui021601.reqDisp
+-- (requestTalkSelect is never called), so display entry i is matched to its node choice through these Guids.
+local nci_recent = {}
+local rts_pending = false -- requestTalkSelect handled this menu; the reqDisp it triggers must not record it again
+local fifth_seen = 0
+local selected_index_post -- defined before SPECS
+local map_choices -- defined before record_menu -- times a selected-index hook returned the fifth entry's position (rewritten)
 local notice = nil -- { text, t }
 local status_pawn, status_page = nil, nil -- Q4 live data
 local party_cache = {} -- { {id, name, slot} }: refreshed once a second, read by the panel
@@ -515,6 +523,22 @@ local function brief_node(n)
         choices = n.choices and #n.choices or nil }
 end
 
+-- Gives each shown list entry its Guid (from the last newChoiceInfo calls, in order) and the index of that Guid in
+-- the node's _Choices (what nextNode receives). with_guids = false keeps the Guids already set (remap only).
+map_choices = function(m, with_guids)
+    local by_guid = {}
+    for _, c in ipairs(m.node and m.node.choices or {}) do
+        if is_guid(c.ChoiceId) then by_guid[c.ChoiceId] = c.index end
+    end
+    for i, e in ipairs(m.list or {}) do
+        if with_guids then
+            local r = nci_recent[#nci_recent - (m.list_count - i)] -- the last list_count calls, in order
+            if r and r.guid and (r.msg == nil or r.msg == e.Msg) then e.guid = r.guid end
+        end
+        if e.guid then e.choice_index = by_guid[e.guid] end
+    end
+end
+
 -- Menu snapshot. opts: { player = TalkEventPlayer object or nil, list = List<ListInfo> or nil }.
 local function record_menu(source, opts)
     local m = { source = source, t = os.clock(), wall = wall(), seq = seq }
@@ -528,6 +552,7 @@ local function record_menu(source, opts)
     m.marker = markers[#markers] and markers[#markers].label or nil
     m.list, m.list_count = nil, 0
     if opts.list then m.list, m.list_count = decode_list(opts.list) end
+    map_choices(m, true)
     for _, e in ipairs(m.list or {}) do
         if e.listener_id and is_hired_party_pawn(e.listener_id) then
             m.pawn_id, m.pawn_name = e.listener_id, e.listener_name
@@ -539,7 +564,7 @@ local function record_menu(source, opts)
             if is_hired_party_pawn(id) then m.pawn_from_talk = id; break end
         end
     end
-    m.pawn_ctx = m.pawn_id ~= nil or (m.node ~= nil and m.node.is_pawn_rental == true)
+    m.pawn_ctx = m.pawn_id ~= nil or m.pawn_from_talk ~= nil or (m.node ~= nil and m.node.is_pawn_rental == true)
     if #run.menus < MENU_CAP then
         run.menus[#run.menus + 1] = sanitize(m)
         m.idx = #run.menus
@@ -580,33 +605,27 @@ local function valid_nevermind(range, from_idx)
 end
 
 local function mutate_talk_select(list, m, fields)
-    if toggles.relabel_rts and target and type(target.index) == "number" and m.pawn_ctx and target.index < m.list_count then
+    local tdisp = target and target.display
+    if toggles.relabel_rts and type(tdisp) == "number" and m.pawn_ctx and tdisp < m.list_count then
         local ok, err = pcall(function()
-            local item = list:call("get_Item", target.index)
+            local item = list:call("get_Item", tdisp)
             local old = field(item, "Msg")
             local done = set_msg(item, label_text)
-            add_event("relabel", { path = "requestTalkSelect", index = target.index, old = old, new = label_text,
-                ok = done, pawn_id = m.pawn_id })
+            add_event("relabel", { path = "list", display = tdisp, index = target.index, old = old, new = label_text,
+                ok = done, pawn_id = m.pawn_id or m.pawn_from_talk })
             fields.relabeled_rts = done
         end)
         if not ok then log_error("relabel_rts", err) end
     end
-    if toggles.fifth and m.pawn_id and m.list_count > 0 then
+    if toggles.fifth and m.pawn_ctx and m.list_count > 0 then
         local ok, err = pcall(function()
-            local tmpl
-            for i = 0, m.list_count - 1 do
-                local item = list:call("get_Item", i)
-                if item ~= nil and type(try(function() return item:get_field("Listener") end)) == "userdata" then
-                    tmpl = item
-                    break
-                end
-            end
+            local tmpl = list:call("get_Item", 0) -- the shop-choice entries carry no Listener: copy the first entry
             if tmpl == nil then return end
             local newi = sdk.create_instance("app.ui021601.ListInfo")
             if newi == nil then return end
             pcall(function() newi:add_ref() end)
             pcall(function() newi:call(".ctor") end)
-            newi:set_field("Listener", tmpl:get_field("Listener"))
+            pcall(function() newi:set_field("Listener", tmpl:get_field("Listener")) end)
             newi:set_field("ListenerType", tmpl:get_field("ListenerType"))
             newi:set_field("SpeakerType", tmpl:get_field("SpeakerType"))
             newi:set_field("_IsDecideEnable", true)
@@ -615,7 +634,8 @@ local function mutate_talk_select(list, m, fields)
             list:call("Add", newi)
             fifth_state = { gen = menu_gen, pos = pos }
             m.appended_index = pos
-            add_event("fifth_appended", { index = pos, count_after = list:call("get_Count"), pawn_id = m.pawn_id })
+            add_event("fifth_appended", { index = pos, count_after = list:call("get_Count"),
+                pawn_id = m.pawn_id or m.pawn_from_talk })
             fields.fifth_appended_at = pos
             if toggles.raise_dispmax then
                 local want = math.tointeger(tonumber(dispmax_text))
@@ -650,6 +670,23 @@ end
 -- `frame.log` says whether the entry will be logged, so a pre can skip expensive decoding.
 
 local TE = "app.TalkEventPlayer"
+
+-- Post of the selected-index getters: when the fifth entry is selected, hand the game the Never-mind entry's
+-- display index (else the last original entry), so the appended index never reaches the game's choice mapping.
+selected_index_post = function(retval, frame)
+    local st = fifth_state
+    if not st or st.gen ~= menu_gen then return nil end
+    local idx = arg_i32(retval)
+    if idx ~= st.pos then return nil end
+    local nd = nevermind and nevermind.display
+    local new = (type(nd) == "number" and nd >= 0 and nd < st.pos) and nd or (st.pos - 1)
+    frame.ret_override = sdk.to_ptr(new)
+    fifth_seen = fifth_seen + 1
+    if fifth_seen == 1 or fifth_seen % 100 == 0 then
+        add_event("fifth_selected", { index = idx, returned = new, times = fifth_seen })
+    end
+    return { index = idx, returned = new }
+end
 local GM = "app.GuiManager"
 local UI6 = "app.ui060601_01"
 
@@ -658,7 +695,14 @@ local function node_menu_post(source)
         local m = record_menu(source, { player = frame.player })
         local fields = { menu_index = m.idx, node = brief_node(m.node) }
         if menu_gen ~= frame.gen then
-            fields.kept_last_menu = true -- a requestTalkSelect ran inside this call; its list is the better menu
+            fields.kept_last_menu = true -- a list was shown inside this call; its menu is the better one
+            -- at reqDisp time the current node may still have been the previous one: attach this node's choices
+            local lm = last_menu
+            if lm and m.node and m.node.choices and #m.node.choices > 0 then
+                lm.node = m.node
+                map_choices(lm, false)
+                if lm.idx and run.menus[lm.idx] then run.menus[lm.idx].node_after = sanitize(brief_node(m.node)) end
+            end
         elseif m.node and m.node.choices and #m.node.choices > 0 then
             last_menu, menu_live = m, false
         end
@@ -690,6 +734,7 @@ local function nci_post(retval, frame)
         return f
     end
     f.ret_msg = field(obj, "Msg")
+    if #nci_recent < 64 then nci_recent[#nci_recent + 1] = { guid = frame.guid, msg = f.ret_msg } end
     local l = try(function() return obj:get_field("Listener") end)
     if type(l) == "userdata" then f.ret_listener_id = to_u32(try(function() return l:call("get_CharaId") end)) end
     if toggles.relabel_nci and target and target.guid and is_guid(frame.guid) and frame.guid == target.guid
@@ -716,7 +761,7 @@ local function dialog_pre(kinds)
                 elseif kind == "f32" then return arg_f32(a)
                 else return arg_nonnull(a) end -- "tex": nil / non-nil
             end)
-            vals[i] = ok and v or ("ERR: " .. tostring(v))
+            if ok then vals[i] = v else vals[i] = "ERR: " .. tostring(v) end
         end
         return vals
     end
@@ -767,7 +812,7 @@ end
 local SPECS = {
     -- Q1/Q2: the talk flow
     { key = "TalkEventPlayer.startNode", type = TE, sig = "startNode()", use_post = true,
-      pre = function(args, frame) frame.gen, frame.player = menu_gen, to_managed(args[2]) end,
+      pre = function(args, frame) frame.gen, frame.player, nci_recent = menu_gen, to_managed(args[2]), {} end,
       post = node_menu_post("startNode") },
     { key = "TalkEventPlayer.startPawnRentalNode", type = TE, sig = "startPawnRentalNode()", use_post = true,
       pre = function(args, frame) frame.gen, frame.player = menu_gen, to_managed(args[2]) end,
@@ -802,11 +847,12 @@ local SPECS = {
               f.fifth = fifth_state and { gen = fifth_state.gen, pos = fifth_state.pos, current_gen = menu_gen } or nil
           end
           local new_idx, why
-          -- fifth entry: its index must never reach the game; send it to Never mind, else the last original entry
-          if fifth_state and fifth_state.gen == menu_gen and idx >= fifth_state.pos then
-              local nm = valid_nevermind(fifth_state.pos, idx)
-              new_idx, why = nm or (fifth_state.pos - 1), "picked_fifth"
-              add_event("picked_fifth", { index = idx, redirect_to = new_idx, never_mind_set = nm ~= nil })
+          -- guard: an index past the node's choices (e.g. a fifth entry that slipped through) must not reach the game
+          local nch = node and node.choices and #node.choices or 0
+          if fifth_state and fifth_state.gen == menu_gen and nch > 0 and idx >= nch then
+              local nm = valid_nevermind(nch, idx)
+              new_idx, why = nm or (nch - 1), "out_of_range"
+              add_event("picked_out_of_range", { index = idx, choices = nch, redirect_to = new_idx })
           elseif toggles.catch_pick or toggles.redirect then
               if matches_target(idx, node) then
                   local pid = pick_pawn(idx)
@@ -821,7 +867,7 @@ local SPECS = {
                   if toggles.redirect then
                       local range = math.max(node and node.choices and #node.choices or 0,
                           (menu_live and lm and lm.list_count) or 0)
-                      local pawn_ctx = (node and node.is_pawn_rental) or (menu_live and lm and lm.pawn_id ~= nil)
+                      local pawn_ctx = (node and node.is_pawn_rental) or (lm and lm.pawn_ctx)
                       local nm = valid_nevermind(range, idx)
                       if nm and pawn_ctx and pid ~= MAIN_ID then
                           new_idx, why = nm, "target_to_nevermind"
@@ -841,16 +887,18 @@ local SPECS = {
           -- was the fifth pick: an unrelated nextNode(0) between the menu and the real pick must not clear it, or the
           -- appended index would reach the game.
           menu_live = false
-          if why == "picked_fifth" then fifth_state = nil end
+          if why == "out_of_range" then fifth_state = nil end
           return f
       end },
     { key = "TalkEventPlayer.checkNextCandidate(Int32)", type = TE, sig = "checkNextCandidate(System.Int32)", use_post = true,
       pre = function(args, frame)
           local idx = arg_i32(args[3])
           local f = { index = idx }
-          -- a preview of the appended fifth index would read past _Choices: keep it vanilla
-          if fifth_state and fifth_state.gen == menu_gen and idx >= fifth_state.pos then
-              local new_idx = valid_nevermind(fifth_state.pos, idx) or (fifth_state.pos - 1)
+          -- a preview past the node's choices (a fifth entry that slipped through) would read past _Choices
+          local _, tn = talk_info()
+          local nch = #elements(tn and try(function() return tn:get_field("_Choices") end) or nil)
+          if fifth_state and fifth_state.gen == menu_gen and nch > 0 and idx >= nch then
+              local new_idx = valid_nevermind(nch, idx) or (nch - 1)
               args[3] = sdk.to_ptr(new_idx)
               f.override = { original = idx, new = new_idx, reason = "fifth_preview" }
           end
@@ -882,6 +930,7 @@ local SPECS = {
           end
           -- the snapshot is taken BEFORE any mutation, so it shows what vanilla built
           local m = record_menu("requestTalkSelect", { list = list, player = nil })
+          rts_pending = true
           menu_gen = menu_gen + 1
           last_menu, menu_live, fifth_state = m, true, nil
           f.menu_index = m.idx
@@ -894,11 +943,27 @@ local SPECS = {
       sig = "reqDisp(System.Collections.Generic.List`1<app.ui021601.ListInfo>, System.Boolean, via.gui.GenderType, "
           .. "via.gui.GenderType, System.Boolean, System.Boolean, System.Int32)",
       pre = function(args, frame)
-          if not frame.log then return nil end
           local list = to_managed(args[3])
           local n = list and try(function() return list:call("get_Count") end) or "nil"
-          return { list_count = n, disp_max = dispmax_of(to_managed(args[2])), dispmax_raised = dispmax_state ~= nil }
+          local f = { list_count = n, disp_max = dispmax_of(to_managed(args[2])), dispmax_raised = dispmax_state ~= nil }
+          if rts_pending then -- requestTalkSelect already recorded (and mutated) this list
+              rts_pending = false
+              f.via_requestTalkSelect = true
+              return f
+          end
+          -- snapshot BEFORE any mutation, so it shows what vanilla built
+          local m = record_menu("reqDisp", { list = list, player = nil })
+          menu_gen = menu_gen + 1
+          last_menu, menu_live, fifth_state = m, true, nil
+          f.menu_index, f.pawn_ctx = m.idx, m.pawn_ctx
+          if list ~= nil then mutate_talk_select(list, m, f) end
+          return f
       end },
+    -- the picked display index: a fifth entry is rewritten here to Never mind, before the game maps it to a choice
+    { key = "GuiManager.getTalkSelectSelectedIndex", type = GM, sig = "getTalkSelectSelectedIndex()", use_post = true,
+      chatty = true, post = function(retval, frame) return selected_index_post(retval, frame) end },
+    { key = "ui021601.getSelectedIndex", type = "app.ui021601", sig = "getSelectedIndex()", use_post = true,
+      chatty = true, post = function(retval, frame) return selected_index_post(retval, frame) end },
     { key = "FacilityManager.startDismiss", type = "app.FacilityManager", sig = "startDismiss(via.GameObject)",
       pre = function(args, frame)
           local f = { rift = rift_context() }
@@ -1036,6 +1101,7 @@ local function post_body(spec, retval)
         for k, v in pairs(fields) do e[k] = v end
         append_entry(spec, e)
     end
+    return frame.ret_override -- only the selected-index hooks set it (fifth entry)
 end
 
 local function install_hooks()
@@ -1051,6 +1117,7 @@ local function install_hooks()
                 post_fn = function(retval)
                     local ok_post, e = pcall(post_body, spec, retval)
                     if not ok_post then log_error("post " .. spec.key, e) end
+                    if ok_post and e ~= nil then return e end
                     return retval
                 end
             end
@@ -1299,11 +1366,19 @@ local function menu_rows(m)
     if not m then return rows end
     local choices = m.node and type(m.node.choices) == "table" and m.node.choices or {}
     local list = type(m.list) == "table" and m.list or {}
-    for i = 1, math.max(#choices, #list) do
-        local c, l = choices[i], list[i]
-        rows[i] = { index = i - 1, guid = c and is_guid(c.ChoiceId) and c.ChoiceId or nil, choice = c and c.Choice,
-            msg = l and l.Msg, listener_id = l and l.listener_id, listener_name = l and l.listener_name,
-            next_name = c and c.next and c.next.name }
+    if #list > 0 then -- the entries on screen; index = the node choice nextNode receives, display = row on screen
+        for i, l in ipairs(list) do
+            local ci = l.choice_index
+            local c = ci and choices[ci + 1]
+            rows[i] = { index = ci or l.index, display = l.index, guid = l.guid, choice = c and c.Choice, msg = l.Msg,
+                listener_id = l.listener_id, listener_name = l.listener_name, next_name = c and c.next and c.next.name }
+        end
+        return rows
+    end
+    for i = 1, #choices do
+        local c = choices[i]
+        rows[i] = { index = i - 1, guid = is_guid(c.ChoiceId) and c.ChoiceId or nil, choice = c.Choice,
+            next_name = c.next and c.next.name }
     end
     return rows
 end
@@ -1317,7 +1392,7 @@ local function draw_toggle(key, text)
 end
 
 local function row_ref(row)
-    return { index = row.index, guid = row.guid, choice = row.choice, msg = row.msg }
+    return { index = row.index, display = row.display, guid = row.guid, choice = row.choice, msg = row.msg }
 end
 
 local function draw_menu_table()
@@ -1354,7 +1429,8 @@ local function draw_menu_table()
             queue_work(function() add_event("set_nevermind", ref) end)
         end
         imgui.same_line()
-        imgui.text(string.format("%d  msg=%s  choice=%s  id=%s  next=%s  pawn=%s", row.index, tostring(row.msg),
+        imgui.text(string.format("%s  [choice %d]  msg=%s  choice=%s  id=%s  next=%s  pawn=%s",
+            row.display and ("row " .. row.display) or "-", row.index, tostring(row.msg),
             tostring(row.choice), tostring(row.guid and row.guid:sub(1, 8) or "-"), tostring(row.next_name),
             tostring(row.listener_id and (tostring(row.listener_name or "?") .. " " .. row.listener_id) or "-")))
     end
@@ -1371,10 +1447,10 @@ local function draw_q2()
         queue_work(function() add_event("label", { label = v }) end)
     end
     draw_toggle("relabel_nci", "Relabel (newChoiceInfo, by Guid)")
-    draw_toggle("relabel_rts", "Relabel (requestTalkSelect, by index)")
+    draw_toggle("relabel_rts", "Relabel (list, by row)")
     draw_toggle("catch_pick", "Catch pick (nextNode)")
     draw_toggle("redirect", "Redirect target pick to Never-mind")
-    draw_toggle("fifth", "Append fifth entry (requestTalkSelect)")
+    draw_toggle("fifth", "Append fifth entry")
     draw_toggle("raise_dispmax", "Raise DispMax (with the fifth entry; restored when the talk select ends)")
     local cd, vd = imgui.input_text("DispMax value", dispmax_text)
     if cd then dispmax_text = vd end
