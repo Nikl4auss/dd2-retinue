@@ -237,3 +237,104 @@ wrote 21 MB.
 - `errors` (caught hook errors; empty is the goal), `hooks` (installed and missing), `dropped` (call entries lost after
   the shared 20000 cap or a hook's own cap; `dropped_by_spec` has the second part per hook), `constants` (`main_id`, all
   caps, `StrayPawnPastInformationMax`, `RelationPawnDismissNum`).
+
+## `Retinue_Exp_TalkUI.lua`: how should adopt and release look and feel in the game's own UI?
+
+Question (M2, ticket 06; probes Q1-Q4 of `docs/findings/research-m2-native-ui.md`, branch `research/m2-native-ui`):
+
+- **Q1** What does the talk menu of a hired party pawn look like, in the field and at a Rift stone: node class
+  (`PawnRentalNode` per choice, or one `ChoiceSegmentNode`), `_RentType`, each choice's `ChoiceId` / text / next node,
+  the `ListInfo` entries and the pawn each one carries?
+- **Q2** Can one entry be relabelled ("Adopt"), can its pick be caught in `nextNode` and redirected to "Never mind" so
+  the conversation just ends, and does a fifth entry appended to the list show (with and without raising the widget's
+  `DispMax`)?
+- **Q3** Can the mod menu open the game's own dialog box (`GuiManager.requestDialog`) and read the answer, and which
+  arguments give a Yes/No layout?
+- **Q4** Does the Status page (`ui060601_01`) tell us which hired pawn a tab shows?
+
+Menu: **Retinue Talk UI (EXPERIMENT)**. Nothing is persisted between sessions; every mutating feature is OFF at load.
+It can run together with the mod (`./deploy.sh --talkui`): none of its hooks is a method the mod hooks.
+
+### What it hooks
+
+| Group | Methods | Behaviour |
+|---|---|---|
+| Talk flow (Q1/Q2) | `TalkEventPlayer.startNode`, `startPawnRentalNode`, `updatePawnRentalNode` (chatty: counted, first 5 logged), `startChoiceNode`, `nextNode(Int32)`, `checkNextCandidate(Int32)`, `newChoiceInfo` (2 overloads), `GuiManager.requestTalkSelect`, `ui021601.reqDisp` (list count and `DispMax`), `FacilityManager.startDismiss` (Rift context) | log; the Q2 toggles may edit `ListInfo.Msg`, the list passed to `requestTalkSelect`, the `nextNode` / `checkNextCandidate` index, `TalkSelect.DispMax` |
+| Dialog (Q3) | `GuiManager.requestDialog` (String overload, 21 args), `ui010101.reqDisp` (24 args) | log-only |
+| Status page (Q4) | `ui060601_01.setupPawn`, `setPawnData`, `partyListCtrlSelectionChangedIsPC`, `setTabId` | log-only |
+
+The status line says `all N hooks installed` or lists the missing ones. Every hook has its own cap of logged entries
+(300 by default, 1000 for the ones that matter, 5 for `updatePawnRentalNode`); beyond it only `count_by_spec` counts and
+mutations still run.
+
+### The panel
+
+- **Marker** field and button: appends `{t, label}` to the file. Use it to say where you are ("field", "rift", "status").
+- **Q1/Q2 talk menu**: the last menu as rows (`index`, list `Msg`, `_Choice`, `ChoiceId`, next node, the pawn the entry
+  is about) with a **Target** radio (the row to relabel / catch) and a **Never-mind** radio (the index a redirect jumps
+  to); the **Label** (default "Adopt") and the toggles: *Relabel (newChoiceInfo, by Guid)*, *Relabel (requestTalkSelect,
+  by index)*, *Catch pick*, *Redirect target pick to Never-mind*, *Append fifth entry*, *Raise DispMax* (value, default 5).
+  An on-screen line says `ADOPT picked for <name> <id>` when the Target is picked; nothing is adopted.
+- **Q3 native dialog**: texts (main, sel0..sel3), **Open test dialog (defaults)**, **Open with captured args**
+  (disabled until the game opened a yes/no dialog and the hook captured its arguments), and the live
+  `getDialogState` / `getRawDialogState` / `IsDispDialogGui` / `isWaitDialogMessage` values.
+- **Q4 Status page**: the current Status pawn (last `setupPawn`: id, name, hired party pawn or not) and the last
+  `PawnDataList` read.
+
+### Procedure
+
+Needs a save with at least one hired (CAPCOM) pawn in the party and a Rift stone within reach (Nick's Devtools *Warp*).
+**Back up first and expect Q2 redirect and fifth entry to be able to end a conversation oddly (or leave a choice pointing
+nowhere): save before each Q2 step.**
+
+0. Quit the game. `tools/saves.sh backup m2-talkui`. `./deploy.sh --remove && ./deploy.sh --talkui`. Launch, load, open
+   **Retinue Talk UI (EXPERIMENT)**; the status line must say all hooks are installed (if some are missing, note which).
+1. **Q1 (field).** Type marker `field`, press **Add marker**. Walk up to a hired party pawn and talk to it: the menu
+   appears. Do not pick anything yet (press Never mind). Look at the *Q1/Q2 talk menu* node: node class, rent type, rows.
+   Then **Q1 (Rift).** Marker `rift`, warp to a Rift stone, talk to the same pawn there (and open the Rift's dismiss flow
+   with a spare pawn only if you want `startDismiss` logged). Note whether the menu differs.
+2. **Q2.** In the talk-menu panel, after Q1 has shown the menu once: set **Target** on the "Add to Favorites" row and
+   **Never-mind** on the "Never mind" row. Save. Then, one at a time and each followed by talking to the pawn again:
+   a. *Relabel (newChoiceInfo)* on, talk, note whether the entry reads "Adopt". Off.
+   b. *Relabel (requestTalkSelect)* on, talk, note again (which path renders?). Off.
+   c. *Catch pick* on (and a relabel that worked), pick the entry: the panel shows `ADOPT picked for ...`; note what the
+      game does with the pick (Favorite toggled?). Off.
+   d. *Catch pick* + *Redirect* on, pick it: note what the screen shows and whether the conversation ends cleanly (like
+      Never mind). Off.
+   e. *Append fifth entry* on, talk: does a fifth row show? Pick it (it is redirected to Never-mind). Off.
+   f. Same with *Raise DispMax* on as well (leave the value at 5; try 6 if the fifth row shows cut off). `DispMax` is
+      restored when the talk select ends; the events `dispmax_raised` / `dispmax_restored` record it. Try (e) first
+      without, then with Raise DispMax.
+   Add a marker before each step so the file can be read per step.
+3. **Q3.** Press **Open test dialog (defaults)**: note whether a dialog shows, its layout and buttons, and answer it; the
+   panel and the file record every state change for 60 s. Then trigger any yes/no game dialog (e.g. Return to Title and
+   cancel), so the hook captures its arguments, and press **Open with captured args**. Compare.
+4. **Q4.** Marker `status`. Open pause, Status, and cycle the party tabs (a hired pawn, the main pawn, the Arisen). The
+   panel's *Q4 Status page* shows the current Status pawn; the file has every `setupPawn`, `setTabId` and
+   `partyListCtrlSelectionChangedIsPC` with the `PawnDataList`.
+5. Quit the game. Copy `reframework/data/Retinue/experiments/talkui_*.json` (game folder) into
+   `docs/findings/data/<date>-m2-talkui/`. Then `./deploy.sh --remove`, and restore the backup if you do not want to keep
+   the changes.
+
+A forgotten script is harmless: it starts with everything off on the next launch (the hooks keep logging).
+
+### What the run file contains
+
+`talkui_<YYYYmmdd_HHMMSS>.json`, one per script session, flushed every 2 s when changed (also via **Flush log now**).
+Empty collections are written as `{"_empty": true}`.
+
+- `markers`: `{t, wall, label}`.
+- `menus`: one snapshot whenever `startNode`, `startPawnRentalNode` or `requestTalkSelect` fires: `source`, `node`
+  (`class`, `NodeId`, `NodeName`, `NodeNameHash`, `NodeType`, `RentType`/`RentTypeName` for a `PawnRentalNode`, `choices`
+  with `index`, `ChoiceId`, `Choice`, first `next` candidate), `talk` (speaker / listener CharacterIDs, event type), `rift`
+  (`DismissStateNow`, `DismissPawnCharaId`), `disp_max` (`TalkSelect.DispMax`), `marker` (latest), and for
+  `requestTalkSelect` the `list` (`Msg`, `IsDecideEnable`, listener id, level, official, slot), `pawn_id`. The
+  `requestTalkSelect` snapshot is taken before any mutation.
+- `calls`: one entry per hooked call phase: `seq`, `t`, `method`, `phase` (`pre`/`post`), decoded arguments, and
+  `override` (original and new index) when a Q2 rewrite fired. `newChoiceInfo` post has the returned `Msg` and listener.
+- `events`: `toggle`, `label`, `set_target`, `set_nevermind`, `relabel` (path, old, new), `picked`, `picked_fifth`,
+  `redirect`, `redirect_skipped`, `fifth_appended`, `dispmax_raised` / `dispmax_restored`, `dialog_open`, `dialog_state`
+  (every change of the four dialog values, with the elapsed time), `dialog_poll_end`.
+- `captured_dialog_args`: the latest `requestDialog` the game made (strings, flags, ints, the float), `settings_now`,
+  `status_page_last`, `count_by_spec`, `dropped` / `dropped_by_spec`, `errors` (empty is the goal), `hooks`, `constants`
+  (including the guessed default dialog arguments).
