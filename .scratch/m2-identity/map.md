@@ -25,8 +25,9 @@ Settled while charting (2026-11-03):
 - **Offline pawns only** (owner `CAPCOM`, with `_OfflineID`).
 - **Roster holds at most 2** (the party is main pawn + two adopted). A constant in one place, so it can grow later.
   An away pawn (dismissed or lost) keeps its place in the roster.
-- **Adopt** only a hired pawn currently in the party. Where it is triggered from should feel native; the mod menu is
-  the baseline and fallback (see the native-UI tickets).
+- **Adopt** only a hired pawn currently in the party. Where and how: see "How should adopt and release look and feel?".
+- **Native first** (2026-11-04): everything the player needs must be doable fluidly in the game itself. The REFramework
+  mod menu is a development convenience and a fallback, never a required surface.
 - **Release** (with confirmation): leaves the roster, stays in the party as an ordinary hired pawn with its level,
   its backup is deleted, it stops progressing.
 - **Dismiss and lost do not release**: the pawn stays in the roster as away, meant to come back with its progress
@@ -54,6 +55,10 @@ Settled while charting (2026-11-03):
 - [Run the dismiss / lost / re-hire experiment in game](issues/04-run-lifecycle-experiment.md): re-hire keeps the
   OfflineID but gets a new CharacterID; dismiss deletes the record at once, lost later; the pawn returns via the Rift's
   "previously hired" list (lost too) at first-hire level, exp 0, regenerated equipment. Findings 0006.
+- [How should adopt and release look and feel?](issues/06-adopt-release-ux.md): a fifth entry ("Adopt"/"Release") in
+  the party pawn's root talk menu, confirmed by the game's own dialog opened before the talk ends (fallback: confirm in
+  the talk menu); a full retinue offers to release an away member natively; native first, mod menu only for dev and
+  fallback. Findings 0007.
 
 ## Not yet specified
 
@@ -63,8 +68,9 @@ Settled while charting (2026-11-03):
 - **Roster vs. save drift**: restoring an older save (or `tools/saves.sh restore`) while the roster says otherwise;
   how the roster is validated against the loaded save.
 - **The uninstall guarantee**: how it is verified for adopted and away pawns (checklist shape).
-- **Mod-menu section for the roster**: present and away entries, release; the mod menu is the complete surface
-  whatever native option the UX ticket picks.
+- **Native roster status**: where the player sees, in game, who is adopted and who is away (and why an away
+  pawn can't be adopted twice), and how an away pawn's return is presented (the Rift's "previously hired" list). The mod
+  menu shows the same for development and as a fallback.
 
 ## Out of scope
 
