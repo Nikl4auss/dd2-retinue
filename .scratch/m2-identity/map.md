@@ -51,14 +51,15 @@ Settled while charting (2026-11-03):
 - [Build the dismiss / lost / re-hire experiment script](issues/03-build-lifecycle-experiment.md): built
   `tools/experiments/Retinue_Exp_Lifecycle.lua` (log-only hooks, snapshots, test actions), linked with the mod via
   `./deploy.sh --lifecycle`; procedure with fixture saves in `tools/experiments/README.md`.
+- [Run the dismiss / lost / re-hire experiment in game](issues/04-run-lifecycle-experiment.md): re-hire keeps the
+  OfflineID but gets a new CharacterID; dismiss deletes the record at once, lost later; the pawn returns via the Rift's
+  "previously hired" list (lost too) at first-hire level, exp 0, regenerated equipment. Findings 0006.
 
 ## Not yet specified
 
-- **What the backup holds, and when it is taken and restored**: the backup is required (the game keeps no progress
-  past dismiss, per the internals research); its exact contents and timing hang on the experiment. Also whether restoring (writing level/exp/vocation into
-  a re-hired pawn's contexts) stays within ADR 0001, or needs a new ADR.
-- **How an away pawn comes back**: via the Rift as the game offers it (Rift search `ui041401` is a candidate surface), or a mod-driven re-hire; and for a lost
-  pawn, whether the game ever offers it again.
+- **Mod-side detection and restore flow**: how the mod notices adopt-relevant events (dismiss pre, `hirePawn` post by
+  OfflineID, lost with no single hook) and drives restore and away/present status; shape depends on the backup and
+  restore tickets.
 - **Roster vs. save drift**: restoring an older save (or `tools/saves.sh restore`) while the roster says otherwise;
   how the roster is validated against the loaded save.
 - **The uninstall guarantee**: how it is verified for adopted and away pawns (checklist shape).
