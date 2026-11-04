@@ -763,33 +763,65 @@ local function need_number(v, what)
     return to_int(v)
 end
 
--- Writes `vals` (Lua integers) into the existing Int32[] `arr` in place. Tries arr:set_element(i, v), then
--- arr:call("SetValue", sdk.create_int32(v), i); a method counts only if reading the array back gives `vals`.
+-- Writes `vals` (Lua integers) into the existing Int32[] `arr` (JobContext.CulmativeExp; 1-based position = JobEnum).
+-- Tries, in order: arr:call("SetValue", sdk.create_int32(v), i); index assignment arr[i] = v; then the game's own
+-- JobContext methods per differing element: set_NowJobCulmativeExpProp(v) for the current job, addJobExp(job, delta)
+-- for the others. A method counts only if reading the array back gives `vals`. The first in-game run (2026-11-04)
+-- showed set_element does not exist and SetValue returns without changing the array.
 -- Returns the method that worked (or nil) and the attempts.
-local function write_array(arr, vals)
+local function write_array(arr, vals, jc)
     local n = arr:call("get_Length")
     if n ~= #vals then return nil, { { error = string.format("length mismatch: game %s, backup %d", str(n), #vals) } } end
+    local function readback_equal()
+        local okb, back = pcall(read_num_array, arr)
+        if not (okb and type(back) == "table" and #back == #vals) then return false, nil end
+        for i = 1, #vals do
+            if back[i] ~= vals[i] then return false, back end
+        end
+        return true, back
+    end
     local methods = {
-        { "set_element", function(i, v) arr:set_element(i, v) end },
-        { "SetValue", function(i, v) arr:call("SetValue", sdk.create_int32(v), i) end },
+        { "SetValue", function()
+            for i = 0, n - 1 do arr:call("SetValue", sdk.create_int32(vals[i + 1]), i) end
+        end },
+        { "index assign", function()
+            for i = 0, n - 1 do arr[i] = vals[i + 1] end
+        end },
+        { "game methods (set_NowJobCulmativeExpProp / addJobExp)", function(attempt)
+            local _, back = readback_equal()
+            if not back then error("array not readable") end
+            local cur = to_int(jc:get_field("CurrentJob"))
+            local disc_before = to_int(jc:get_field("ConsumableExp"))
+            local calls = {}
+            for i = 1, #vals do
+                if back[i] ~= vals[i] then
+                    if i == cur then
+                        jc:call("set_NowJobCulmativeExpProp", vals[i])
+                        calls[#calls + 1] = string.format("set_NowJobCulmativeExpProp(%d) job %d", vals[i], i)
+                    else
+                        jc:call("addJobExp(app.Character.JobEnum, System.Int32)", i, vals[i] - back[i])
+                        calls[#calls + 1] = string.format("addJobExp(%d, %d)", i, vals[i] - back[i])
+                    end
+                end
+            end
+            attempt.calls = calls
+            local disc_after = to_int(jc:get_field("ConsumableExp"))
+            attempt.discipline_before, attempt.discipline_after = disc_before, disc_after
+            if disc_after ~= disc_before then
+                jc:call("set_ConsumableExpProp", disc_before) -- the game method touched discipline: put it back
+                attempt.discipline_reset = to_int(jc:get_field("ConsumableExp"))
+            end
+        end },
     }
     local attempts = {}
     for _, m in ipairs(methods) do
-        local ok, err = pcall(function()
-            for i = 0, n - 1 do m[2](i, vals[i + 1]) end
-        end)
-        local same = false
-        if ok then
-            local okb, back = pcall(read_num_array, arr)
-            if okb and type(back) == "table" and #back == #vals then
-                same = true
-                for i = 1, #vals do
-                    if back[i] ~= vals[i] then same = false; break end
-                end
-            end
-        end
-        attempts[#attempts + 1] = { method = m[1], ok = ok, error = (not ok) and tostring(err) or nil,
-            readback_equal = same }
+        local attempt = { method = m[1] }
+        local ok, err = pcall(m[2], attempt)
+        attempt.ok = ok
+        if not ok then attempt.error = tostring(err) end
+        local same, back = readback_equal()
+        attempt.readback_equal, attempt.readback = same, back
+        attempts[#attempts + 1] = attempt
         if same then return m[1], attempts end
     end
     return nil, attempts
@@ -899,7 +931,7 @@ local function do_restore(offline, chara, source)
         if arr == nil then error("CulmativeExp is nil") end
         local vals = {}
         for i, v in ipairs(lst(bk.culmative_exp)) do vals[i] = need_number(v, "culmative_exp[" .. i .. "]") end
-        worked, attempts = write_array(arr, vals)
+        worked, attempts = write_array(arr, vals, jc)
     end)
     local w = { field = "culmative_exp", method = worked or "none worked", ok = ok_arr and worked ~= nil,
         attempts = attempts }

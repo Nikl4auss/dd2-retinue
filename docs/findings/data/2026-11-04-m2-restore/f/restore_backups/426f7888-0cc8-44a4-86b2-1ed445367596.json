@@ -1,0 +1,182 @@
+{
+    "captured": "2026-11-04 17:21:24",
+    "changed_job_bits": 16,
+    "character_id": 1601809365,
+    "culmative_exp": [
+        0,
+        0,
+        0,
+        0,
+        11130,
+        0,
+        0,
+        0,
+        0,
+        0
+    ],
+    "current_job": 5,
+    "discipline": 1930,
+    "equipment_present": true,
+    "exp": 9610,
+    "extra_status_boost": 0,
+    "increase_params": {
+        "attack": 1395,
+        "blow": 260,
+        "defence": 1104,
+        "hit_point": 7875,
+        "magic_attack": 558,
+        "magic_defence": 445,
+        "stamina": 2550,
+        "weight": 140
+    },
+    "increase_params_caps": {
+        "attack": false,
+        "blow": false,
+        "defence": false,
+        "hit_point": false,
+        "magic_attack": false,
+        "magic_defence": false,
+        "stamina": false,
+        "weight": false
+    },
+    "increase_params_readonly": false,
+    "item_have_all_num": {
+        "1203": 1,
+        "3329": 1,
+        "4018": 1,
+        "5132": 1,
+        "6123": 1
+    },
+    "item_have_party_num": {
+        "1203": 1,
+        "3329": 1,
+        "4018": 1,
+        "5132": 1,
+        "6123": 1
+    },
+    "item_ids": [
+        3329,
+        6123,
+        5132,
+        4018,
+        1203
+    ],
+    "job_ranks": [
+        1,
+        1,
+        1,
+        1,
+        6,
+        1,
+        1,
+        1,
+        1,
+        1
+    ],
+    "level": 27,
+    "max_hp": 1637.5,
+    "max_stamina": 855.0,
+    "name": "Folken",
+    "offline_id": "426f7888-0cc8-44a4-86b2-1ed445367596",
+    "qualified_job_bits": 0,
+    "skills": {
+        "equiped": [
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ],
+            [
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil",
+                "nil"
+            ]
+        ],
+        "normal": [
+            21,
+            22,
+            23,
+            24
+        ]
+    },
+    "source": "button",
+    "version": 1
+}

@@ -70,19 +70,19 @@ Settled while charting (2026-11-03):
   level, exp, stat growth `_IncreaseParams`, extra boost, discipline, all `CulmativeExp`; equipment and skills only
   recorded; written on adopt, a 10 s dirty-check poll while present and `dismissPawn` pre, frozen while away; one file
   per pawn in `Retinue/backups/`; restored only on a `hirePawn` Return. ADR 0002.
+- [Can a backup be written into a re-hired pawn?](issues/10-restore-experiment.md): yes; written to the live
+  contexts one frame after `hirePawn` post (no save needed), all fields stick through save, reload, relaunch and
+  uninstall; Status page identical; `CulmativeExp` by index assignment; given gear is lost on dismiss and lost. Findings 0008.
 
 ## Not yet specified
 
-- **Mod-side detection and restore flow**: how the mod notices a present pawn leaving the party (dismiss pre is
-  known; lost has no single hook: party-diff in the poll?) and when, after `hirePawn` post, the restore write can
-  happen (the record may not be writable until a save); depends on the restore experiment.
 - **Roster vs. save drift**: restoring an older save (or `tools/saves.sh restore`) while the roster says otherwise;
   how the roster is validated against the loaded save.
 - **The uninstall guarantee**: how it is verified for adopted and away pawns (checklist shape).
 - **Native roster status**: where the player sees, in game, who is adopted and who is away (and why an away
   pawn can't be adopted twice), and how an away pawn's return is presented (the Rift's "previously hired" list). Also how a
-  locked or read-only roster is surfaced natively. The mod
-  menu shows the same for development and as a fallback.
+  locked or read-only roster is surfaced natively, and whether to warn that gear given to an adopted pawn is lost if it
+  is dismissed or lost (findings 0008). The mod menu shows the same for development and as a fallback.
 
 ## Out of scope
 

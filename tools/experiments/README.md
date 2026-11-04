@@ -404,7 +404,8 @@ never written. Refused when the live level is above the backup's (unless *Ignore
 `app.IncreaseStatus` from `sdk.create_instance` + `add_ref` + `.ctor`, the eight fields, `setIncreaseParam`);
 `setExtraStatusBoost` (read back from `_AcquiredExtraStatusBoost`, `set_field` fallback logged as `FALLBACK`);
 `set_ConsumableExpProp` (read back from `ConsumableExp`, same fallback); `CulmativeExp` in place (length must match;
-`arr:set_element(i, v)` first, then `arr:call("SetValue", sdk.create_int32(v), i)`; a method counts only when reading the
+`arr:call("SetValue", sdk.create_int32(v), i)` (a no-op in game), then index assignment `arr[i] = v` (works, findings 0008),
+then `set_NowJobCulmativeExpProp` / `addJobExp(job, delta)` (untested); a method counts only when reading the
 array back gives the backup, the attempts are in the `writes` entry). Then `after` is read at once and `after_1s`,
 `after_10s` later (the game might overwrite values); `diff` = backup against `after_10s`, field by field. Equipment, skills,
 `CurrentJob` and the job bits are never written.
