@@ -106,12 +106,24 @@ The status line says `all N hooks installed` or lists the missing ones. Consecut
 hooks (`deleteContexts`, `createNewRecordIfNotExist`, `restoreContextsToHolder`, the lost-timer calls) collapse into
 one with a `count`.
 
+**Caps.** Some hooks fire thousands of times a second (the first in-game run: `restorePastInformation`, 10000 calls in
+6 s), so every hook has its own cap of logged entries: 300 by default, 2000 for the hooks that matter most
+(`dismissPawn` x3, `addStrayPawn_DisMissList`, `deleteRecord` x2, `lost`, `hirePawn`, `getUnusedOfflineCharacterID` x2).
+The lost-group hooks (`lost`, `pawnLost` x2, the lost-timer calls) keep logging past 300 (up to 2000) while the pawn is
+one seen in the party. Beyond its cap a hook only increments counters: `count_by_spec[hook] = {pre, post}` always holds
+the true number of calls, so the file tells you how often each hook fires. The shared 20000-entry cap stays as a last
+guard. The status line shows calls logged/dropped/seen, snapshots by class and the three most-called hooks, so
+flooding is visible live.
+
 ### Snapshots
 
 `{label, kind, time, t, seq, pawns, world}`. Taken by the **Snapshot** button (type a label first), and
 automatically, a couple of frames after the event and never inside the hook: dismiss, lost, hire (post), Rift start
 and end. Every test action takes one immediately (`before`) and one about 1 s later (`after`). Untick *Auto snapshots
-on events* to keep only the manual and action ones.
+on events* to keep only the manual and action ones. Automatic snapshots are throttled to one per kind (label) per 5 s
+(`suppressed_auto_by_kind` counts the skipped ones); the lost-group ones are raised only for pawns seen in the party, not
+for stray/world pawns (`lostDeadPawns` and `lostAllPawns` take no pawn and rely on the throttle). Automatic snapshots
+are capped at 200 and manual + test-action ones at 200 of their own, so a manual snapshot is never lost to automatic ones.
 
 - `pawns`: the current party plus every CharacterID/OfflineID seen since the session started (so a dismissed pawn is
   still looked up): CharacterID, OfflineID, `owner` (`capcom` when `_UserId` is all zeros, else `user`; to be confirmed),
@@ -202,7 +214,19 @@ with `./deploy.sh --remove`.
 
 `lifecycle_<YYYYmmdd_HHMMSS>.json`, one per script session, flushed every 2 s when changed (also via **Flush log now**):
 
-- `snapshots`: as above (capped at 400; `dropped_snapshots` counts the rest).
+**Empty collections.** REFramework's `json.dump_file` writes an empty Lua table as `null`. The script therefore writes
+`{"_empty": true}` for every empty list or table (top level, `hooks.installed`/`missing`, and inside snapshots and
+entries); read it as `[]`/`{}`. Entry fields that would be empty (`args` of a hook without parameters) are left out.
+
+**File size.** Typically 1 to 5 MB (a snapshot is about 13 KB, a call entry about 0.2 KB). Worst case with every cap hit
+is roughly 10 MB compact, up to about twice that as REFramework pretty-prints it. The first run, with no per-hook caps,
+wrote 21 MB.
+
+- `summary`: `calls_logged`, `calls_dropped`, `snapshots`, `snapshots_auto`, `snapshots_manual`, `actions`, `errors`.
+- `count_by_spec`: for every installed hook, `{pre, post}` = every call seen, logged or not (a hook that never fired is
+  listed with zeros).
+- `snapshots`: as above (automatic capped at 200, manual and action at 200; `dropped_snapshots_auto` and
+  `dropped_snapshots_manual` count the rest; `suppressed_auto_by_kind` counts the throttled automatic ones).
 - `calls`: one entry per hooked call phase: `seq`, `t` (`os.clock()`), `depth` (nesting of in-flight hooked calls), `method`,
   `phase` (`pre`/`post`), `id` (CharacterID), `offline_id` (when readable from the actor's `PawnOwnerContext` or from
   what was seen earlier), `name`, decoded `args`, `ret` (post), `pre_seq` (post), `state` (the pawn's full state, in the
@@ -211,4 +235,5 @@ with `./deploy.sh --remove`.
 - `actions`: one entry per test action: `kind`, `slot`, `args`, `id`, `name`, `offline_id`, `ok`, `result` or `error`,
   `seq_before`/`seq_after` (the range of `calls` it produced), `snapshot_before`/`snapshot_after` (indices into `snapshots`).
 - `errors` (caught hook errors; empty is the goal), `hooks` (installed and missing), `dropped` (call entries lost after
-  the 20000 cap or a chatty hook's own 2000-entry cap; `dropped_by_spec` has the second part per hook), `constants` (`main_id`, caps, `StrayPawnPastInformationMax`, `RelationPawnDismissNum`).
+  the shared 20000 cap or a hook's own cap; `dropped_by_spec` has the second part per hook), `constants` (`main_id`, all
+  caps, `StrayPawnPastInformationMax`, `RelationPawnDismissNum`).

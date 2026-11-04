@@ -22,8 +22,14 @@ local RUN_FILE = RUN_DIR .. "lifecycle_" .. os.date("%Y%m%d_%H%M%S") .. ".json"
 local REFRESH_SECONDS = 1.0
 local FLUSH_SECONDS = 2.0
 local CALL_CAP = 20000
-local SPEC_CALL_CAP = 2000 -- per chatty (collapsing) hook, so none can exhaust the shared cap
-local SNAPSHOT_CAP = 400
+-- Every hook has its own cap of logged entries (pre phase), so none can exhaust the shared CALL_CAP: the first
+-- in-game run lost everything to one hook (restorePastInformation) that fires thousands of times a second.
+-- Beyond its cap a hook only increments the counters (run.count_by_spec, run.dropped_by_spec).
+local DEFAULT_SPEC_CAP = 300
+local IMPORTANT_SPEC_CAP = 2000 -- hooks marked `important`, and `party_bypass` hooks for tracked party pawns
+local AUTO_SNAPSHOT_CAP = 200 -- automatic snapshots
+local MANUAL_SNAPSHOT_CAP = 200 -- manual + test-action snapshots, so automatic ones can never crowd them out
+local AUTO_SNAPSHOT_THROTTLE = 5.0 -- seconds: at most one automatic snapshot per kind (label) in this window
 local ERROR_CAP = 200
 local STACK_MAX = 64
 local TRACKED_MAX = 64
@@ -56,7 +62,11 @@ local run = {
         script = "Retinue_Exp_Lifecycle",
         main_id = MAIN_ID,
         call_cap = CALL_CAP,
-        snapshot_cap = SNAPSHOT_CAP,
+        default_spec_cap = DEFAULT_SPEC_CAP,
+        important_spec_cap = IMPORTANT_SPEC_CAP,
+        auto_snapshot_cap = AUTO_SNAPSHOT_CAP,
+        manual_snapshot_cap = MANUAL_SNAPSHOT_CAP,
+        auto_snapshot_throttle = AUTO_SNAPSHOT_THROTTLE,
         refresh_seconds = REFRESH_SECONDS,
         flush_seconds = FLUSH_SECONDS,
         job_names = JOB_NAMES,
@@ -68,14 +78,19 @@ local run = {
     hooks = { installed = {}, missing = {} },
     dropped = 0, -- call entries lost to the shared cap or to a per-hook cap
     dropped_by_spec = {}, -- the part of `dropped` lost to a per-hook cap, by hook
-    dropped_snapshots = 0,
+    count_by_spec = {}, -- hook -> { pre = n, post = n }: every call seen, logged or not
+    suppressed_auto_by_kind = {}, -- automatic snapshots skipped by the 5 s throttle, by label
+    dropped_snapshots_auto = 0,
+    dropped_snapshots_manual = 0,
 }
+local snap_n = { auto = 0, manual = 0 }
+local logged_by_spec = {} -- hook key -> entries (pre phase) appended so far
+local last_auto_snapshot = {} -- label -> os.clock() when an automatic snapshot of that kind was last scheduled
 local calls = run.calls
 local seq, dirty, frame_no = 0, true, 0
 local last_flush, last_refresh = -FLUSH_SECONDS, -REFRESH_SECONDS
 local stack = {} -- frames of in-flight hooked calls (pre pushes, post pops)
 local last_entry, last_collapse_key = nil, nil
-local spec_counts = {} -- hook key -> entries appended so far, for the per-hook cap
 
 -- Pawn tracking: every (CharacterID, OfflineID) seen since session start.
 local tracked, tracked_order, by_id, uniq_to_id = {}, {}, {}, {}
@@ -120,11 +135,18 @@ local function sanitize(v)
     local t = type(v)
     if t == "number" or t == "string" or t == "boolean" or t == "nil" then return v end
     if t == "table" then
+        -- REFramework's json writes an empty Lua table as null: write a marker object instead (read it as [])
+        if next(v) == nil then return { _empty = true } end
         local o = {}
         for k, x in pairs(v) do o[k] = sanitize(x) end
         return o
     end
     return str(v)
+end
+
+local function nz(t)
+    if next(t) == nil then return { _empty = true } end
+    return t
 end
 
 local function wall() return os.date("%H:%M:%S") end
@@ -283,7 +305,9 @@ local function upsert(ident, party_slot)
         row.uniq_str, row.uniq_obj = ident.uniq_str, ident.uniq_obj
         uniq_to_id[ident.uniq_str] = id
     end
-    if party_slot then row.in_party, row.slot, row.last_party_clock = true, party_slot, os.clock() end
+    if party_slot then
+        row.in_party, row.slot, row.last_party_clock, row.seen_party = true, party_slot, os.clock(), true
+    end
     tracked[id .. "/" .. tostring(row.offline)] = row
     return row
 end
@@ -560,10 +584,12 @@ local function read_limits()
     return c.StrayPawnPastInformationMax ~= nil and c.RelationPawnDismissNum ~= nil
 end
 
--- Takes a snapshot now. Returns its index in run.snapshots (nil if the cap was hit).
+-- Takes a snapshot now. Returns its index in run.snapshots (nil if its class's cap was hit: automatic snapshots
+-- have their own cap, manual and test-action ones another).
 local function take_snapshot(label, kind)
-    if #run.snapshots >= SNAPSHOT_CAP then
-        run.dropped_snapshots = run.dropped_snapshots + 1
+    local class = (kind == "auto") and "auto" or "manual"
+    if snap_n[class] >= (class == "auto" and AUTO_SNAPSHOT_CAP or MANUAL_SNAPSHOT_CAP) then
+        run["dropped_snapshots_" .. class] = run["dropped_snapshots_" .. class] + 1
         return nil
     end
     local idx
@@ -608,8 +634,9 @@ local function take_snapshot(label, kind)
         local world = sanitize(read_world())
         run.snapshots[#run.snapshots + 1] = {
             label = label, kind = kind or "manual", time = wall(), t = os.clock(), seq = seq,
-            pawns = pawns, world = world,
+            pawns = nz(pawns), world = world,
         }
+        snap_n[class] = snap_n[class] + 1
         idx = #run.snapshots
         dirty = true
     end)
@@ -625,6 +652,15 @@ local function schedule_snapshot(label, opts)
     if not auto_snap and not opts.force then return end
     for _, p in ipairs(pending) do
         if p.label == label then return end
+    end
+    if (opts.kind or "auto") == "auto" and not opts.force then
+        local now = os.clock()
+        local last = last_auto_snapshot[label]
+        if last and now - last < AUTO_SNAPSHOT_THROTTLE then
+            run.suppressed_auto_by_kind[label] = (run.suppressed_auto_by_kind[label] or 0) + 1
+            return
+        end
+        last_auto_snapshot[label] = now
     end
     pending[#pending + 1] = {
         label = label, kind = opts.kind or "auto",
@@ -655,7 +691,7 @@ end
 -- name) is merged from every parameter that yields one; `ret`: return decoder; `post`: also log the
 -- post phase; `state`: record the pawn's full state in pre (last chance to read it); `snap`: label of the
 -- deferred snapshot scheduled in post; `reread`: re-read the pawn's identity in post; `collapse`: merge
--- consecutive identical entries (and cap the hook at SPEC_CALL_CAP entries).
+-- consecutive identical entries. Caps, `party_bypass` and `snap_tracked` are assigned after the table.
 
 local function P(name, kind) return { name, kind } end
 
@@ -698,10 +734,10 @@ local SPECS = {
       snap = "auto:lost" },
     { key = "PawnManager.pawnLost(Character)", type = PM,
       sig = "pawnLost(app.Character, System.Boolean, System.Boolean)",
-      params = { P("chara", "chara"), P("b1", "bool"), P("b2", "bool") }, post = true, state = true,
+      params = { P("chara", "chara_light"), P("b1", "bool"), P("b2", "bool") }, post = true, state = true,
       snap = "auto:lost" },
     { key = "PawnManager.pawnLost(InstanceInfo)", type = PM, sig = "pawnLost(app.InstanceInfo, app.DummyArg_2_0_0_37)",
-      params = { P("info_nonnull", "ptr") }, post = true, snap = "auto:lost" },
+      params = { P("info", "instinfo") }, post = true, snap = "auto:lost" },
     { key = "PawnManager.lostDeadPawns", type = PM, sig = "lostDeadPawns()", params = {}, post = true,
       snap = "auto:lost" },
     { key = "PawnManager.lostAllPawns", type = PM, sig = "lostAllPawns()", params = {}, post = true,
@@ -752,8 +788,29 @@ local SPECS = {
       params = { P("chara", "chara_light") }, post = true },
 }
 
+-- Hooks whose entries matter most for the lifecycle questions get the large cap; every other hook the default.
+local IMPORTANT = {
+    ["PawnManager.dismissPawn(CharacterID)"] = true, ["PawnManager.dismissPawn(Character)"] = true,
+    ["PawnManager.dismissPawn(Pawn)"] = true, ["NPCManager.addStrayPawn_DisMissList"] = true,
+    ["ContextDBMS.deleteRecord(UniqueID)"] = true, ["ContextDBMS.deleteRecord(CharacterID)"] = true,
+    ["PawnManager.lost"] = true, ["PawnManager.hirePawn"] = true,
+    ["StrayPawnManager.getUnusedOfflineCharacterID(List,List)"] = true,
+    ["StrayPawnManager.getUnusedOfflineCharacterID(List,Guid,Boolean)"] = true,
+}
+-- Lost group: these also keep logging past the default cap (up to the large one) while the CharacterID is a pawn
+-- seen in the party, and only such pawns raise an automatic snapshot (`snap_tracked`).
+local LOST_GROUP = {
+    ["PawnManager.lost"] = true, ["PawnManager.pawnLost(Character)"] = true, ["PawnManager.pawnLost(InstanceInfo)"] = true,
+    ["PawnManager.setPawnLostTimer"] = true, ["PawnManager.resetPawnLostTimer(Character)"] = true,
+    ["PawnManager.resetPawnLostTimer(CharacterID)"] = true,
+}
+local SNAP_TRACKED = {
+    ["PawnManager.lost"] = true, ["PawnManager.pawnLost(Character)"] = true, ["PawnManager.pawnLost(InstanceInfo)"] = true,
+}
 for _, spec in ipairs(SPECS) do
-    if spec.collapse then spec.cap = SPEC_CALL_CAP end
+    spec.cap = IMPORTANT[spec.key] and IMPORTANT_SPEC_CAP or DEFAULT_SPEC_CAP
+    spec.party_bypass = LOST_GROUP[spec.key] or nil
+    spec.snap_tracked = SNAP_TRACKED[spec.key] or nil
 end
 
 -- Decoders: (raw arg) -> value stored in the entry, optional identity { id, offline, name, chara }.
@@ -775,6 +832,17 @@ local DEC = {
         if o == nil then return "nil" end
         local ident = ident_of_chara(o)
         return ident.id or ident.err or "?", ident
+    end,
+    -- app.InstanceInfo: only its Chara's CharacterID (light; for the lost group's filters).
+    instinfo = function(a)
+        local o = sdk.to_managed_object(a)
+        if o == nil then return "nil" end
+        local chara = o:get_field("<Chara>k__BackingField")
+        if chara == nil then return "no character" end
+        local id = chara_id_of(chara)
+        local ident = ident_of_id(id)
+        ident.chara = chara
+        return id, ident
     end,
     -- Only the CharacterID is read from the actor; the rest comes from the cache (for possibly hot methods).
     chara_light = function(a)
@@ -910,15 +978,7 @@ local function append_entry(spec, entry)
     else
         last_collapse_key = nil
     end
-    if spec.cap then
-        local n = spec_counts[spec.key] or 0
-        if n >= spec.cap then
-            run.dropped = run.dropped + 1
-            run.dropped_by_spec[spec.key] = (run.dropped_by_spec[spec.key] or 0) + 1
-            return nil
-        end
-        spec_counts[spec.key] = n + 1
-    end
+    if entry.phase == "pre" then logged_by_spec[spec.key] = (logged_by_spec[spec.key] or 0) + 1 end
     calls[#calls + 1] = entry
     last_entry = entry
     dirty = true
@@ -951,10 +1011,28 @@ local function pre_body(spec, args)
     local frame = { key = spec.key, depth = depth }
     stack[depth + 1] = frame -- pushed first: post must find it even if the rest of this body throws
     seq = seq + 1
+    local cnt = run.count_by_spec[spec.key]
+    if not cnt then cnt = { pre = 0, post = 0 }; run.count_by_spec[spec.key] = cnt end
+    cnt.pre = cnt.pre + 1
     if not log_calls or suppress_log then return end
     if #calls >= CALL_CAP then
         run.dropped = run.dropped + 1
         return
+    end
+    local n = logged_by_spec[spec.key] or 0
+    if n >= spec.cap then
+        local allow = false
+        if spec.party_bypass and n < IMPORTANT_SPEC_CAP then
+            -- past the default cap, lost-group calls about a pawn seen in the party still log (light decoders only)
+            local okp = pcall(decode_args, spec, args, frame)
+            local id = okp and frame.ident and frame.ident.id
+            allow = id ~= nil and by_id[id] ~= nil and by_id[id].seen_party == true
+        end
+        if not allow then
+            run.dropped = run.dropped + 1
+            run.dropped_by_spec[spec.key] = (run.dropped_by_spec[spec.key] or 0) + 1
+            return
+        end
     end
     local was = suppress_log
     suppress_log = true -- our own reads below must not be logged
@@ -963,7 +1041,7 @@ local function pre_body(spec, args)
         local ident = frame.ident or {}
         local entry = {
             seq = seq, t = os.clock(), depth = depth, method = spec.key, phase = "pre",
-            id = ident.id, offline_id = ident.offline, name = ident.name, args = dec,
+            id = ident.id, offline_id = ident.offline, name = ident.name, args = next(dec) and dec or nil,
         }
         frame.id, frame.offline = ident.id, ident.offline
         if spec.state then entry.state = capture_state(frame, seq) end
@@ -975,6 +1053,9 @@ local function pre_body(spec, args)
 end
 
 local function post_body(spec, retval)
+    local cnt = run.count_by_spec[spec.key]
+    if not cnt then cnt = { pre = 0, post = 0 }; run.count_by_spec[spec.key] = cnt end
+    cnt.post = cnt.post + 1
     local frame
     for i = #stack, 1, -1 do
         if stack[i].key == spec.key then
@@ -984,7 +1065,13 @@ local function post_body(spec, retval)
         end
     end
     if not frame then return end
-    if spec.snap then schedule_snapshot(spec.snap) end
+    if spec.snap then
+        -- the lost group only snapshots for pawns seen in the party (not for stray/world pawns)
+        local id = frame.ident and frame.ident.id
+        if not spec.snap_tracked or (id ~= nil and by_id[id] ~= nil and by_id[id].seen_party == true) then
+            schedule_snapshot(spec.snap)
+        end
+    end
     if not (spec.post and frame.logged) then return end
     local entry = {
         seq = nil, t = os.clock(), depth = frame.depth, method = spec.key, phase = "post",
@@ -1061,6 +1148,7 @@ local function install_hooks()
         end
     end
     run.hooks.installed, run.hooks.missing = installed, missing
+    for _, key in ipairs(installed) do run.count_by_spec[key] = { pre = 0, post = 0 } end
     if #missing == 0 then
         hook_status = string.format("all %d hooks installed", #installed)
     else
@@ -1130,7 +1218,12 @@ local function run_action(job)
         error("unknown action " .. tostring(job.kind))
     end)
     entry.ok = ok
-    if ok then entry.result = res == nil and "void" or str(res) else entry.error = tostring(res) end
+    if ok then
+        -- void methods hand back a stray ValueType userdata: do not log its address as a result
+        entry.result = (res == nil or type(res) == "userdata") and "void" or str(res)
+    else
+        entry.error = tostring(res)
+    end
     entry.seq_after = seq
     schedule_snapshot(string.format("action:%s slot%d after (action %d)", job.kind, job.slot, #run.actions), {
         seconds = AFTER_ACTION_SECONDS, force = true, kind = "action",
@@ -1214,7 +1307,18 @@ end
 
 local function flush()
     last_flush = os.clock()
-    local ok, err = pcall(function() json.dump_file(RUN_FILE, run) end)
+    local ok, err = pcall(function()
+        -- Shallow view: an empty table would be written as null, so every empty collection becomes {"_empty": true}.
+        local out = {}
+        for k, v in pairs(run) do out[k] = type(v) == "table" and nz(v) or v end
+        out.hooks = { installed = nz(run.hooks.installed), missing = nz(run.hooks.missing) }
+        out.summary = {
+            calls_logged = #calls, calls_dropped = run.dropped, snapshots = #run.snapshots,
+            snapshots_auto = snap_n.auto, snapshots_manual = snap_n.manual, actions = #run.actions,
+            errors = #run.errors,
+        }
+        json.dump_file(RUN_FILE, out)
+    end)
     if ok then
         dirty = false
         flush_status = "Flushed " .. wall()
@@ -1332,7 +1436,7 @@ local function draw_actions()
         end
     end
 
-    confirm_button("dismiss", "Dismiss slot " .. ta.slot, {})
+    confirm_button("dismiss", "Dismiss slot " .. ta.slot, nil)
     local ch1, b1 = imgui.checkbox("lost: bool 1", ta.b1)
     if ch1 then ta.b1 = b1 end
     imgui.same_line()
@@ -1351,8 +1455,24 @@ local function draw_body()
     imgui.text("Log-only hooks; the test actions below change the save. Back up first (tools/saves.sh backup).")
     imgui.text(hook_status)
     imgui.text(refresh_status)
-    imgui.text(string.format("Run file: reframework/data/%s  entries: %d calls, %d snapshots, %d actions, "
-        .. "%d dropped, %d errors", RUN_FILE, #calls, #run.snapshots, #run.actions, run.dropped, #run.errors))
+    imgui.text("Run file: reframework/data/" .. RUN_FILE)
+    local seen, top = 0, {}
+    for key, c in pairs(run.count_by_spec) do
+        local total = c.pre + c.post
+        seen = seen + total
+        top[#top + 1] = { key = key, total = total }
+    end
+    table.sort(top, function(x, y) if x.total ~= y.total then return x.total > y.total end return x.key < y.key end)
+    local top_text = {}
+    for i = 1, math.min(3, #top) do
+        if top[i].total > 0 then top_text[#top_text + 1] = top[i].key .. " " .. top[i].total end
+    end
+    local suppressed = 0
+    for _, n in pairs(run.suppressed_auto_by_kind) do suppressed = suppressed + n end
+    imgui.text(string.format("Calls: %d logged, %d dropped, %d seen (pre+post) | snapshots: auto %d/%d (%d throttled), "
+        .. "manual %d/%d | %d actions, %d errors", #calls, run.dropped, seen, snap_n.auto, AUTO_SNAPSHOT_CAP,
+        suppressed, snap_n.manual, MANUAL_SNAPSHOT_CAP, #run.actions, #run.errors))
+    imgui.text("Most called: " .. (#top_text > 0 and table.concat(top_text, "; ") or "nothing yet"))
     imgui.text(flush_status)
 
     imgui.text(string.format("Dismissed list: %s entries   lost timers: %s   StrayPawnPastInformationMax: %s   "
