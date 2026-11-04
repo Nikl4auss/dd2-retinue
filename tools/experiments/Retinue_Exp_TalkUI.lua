@@ -671,21 +671,31 @@ end
 
 local TE = "app.TalkEventPlayer"
 
--- Post of the selected-index getters: when the fifth entry is selected, hand the game the Never-mind entry's
--- display index (else the last original entry), so the appended index never reaches the game's choice mapping.
-selected_index_post = function(retval, frame)
+-- The pick of a shown entry. The first fifth-entry run showed the selected-index getters never fire (REFramework
+-- "Cannot add nullptr function") and the game read the widget's SelectedIndex itself, ending the talk with no
+-- nextNode at all. So the fifth entry is caught where the decision is read: in the pre of updateChoiceNode (and
+-- ui021601.reqEnd), once the widget reports its GUI ended with SelectedIndex on the appended row, SelectedIndex is
+-- set to the Never-mind row (else the last original row) before the game maps it to a node choice.
+local fifth_decide_logged = false
+selected_index_post = function(where)
+    local w = talk_select()
+    if not w then return nil end
+    local sel = field(w, "SelectedIndex")
+    local ended = try(function() return w:call("get_IsEndGUI") end)
     local st = fifth_state
-    if not st or st.gen ~= menu_gen then return nil end
-    local idx = arg_i32(retval)
-    if idx ~= st.pos then return nil end
+    if ended == true and not fifth_decide_logged and last_menu and menu_live then
+        fifth_decide_logged = true -- once per menu: what a decision looks like (any row)
+        add_event("decide_seen", { where = where, selected = sel, fifth = st and st.pos or nil })
+    end
+    if not st or st.gen ~= menu_gen or sel ~= st.pos or ended ~= true then return nil end
     local nd = nevermind and nevermind.display
     local new = (type(nd) == "number" and nd >= 0 and nd < st.pos) and nd or (st.pos - 1)
-    frame.ret_override = sdk.to_ptr(new)
+    local ok = pcall(function() w:set_field("SelectedIndex", new) end)
     fifth_seen = fifth_seen + 1
-    if fifth_seen == 1 or fifth_seen % 100 == 0 then
-        add_event("fifth_selected", { index = idx, returned = new, times = fifth_seen })
-    end
-    return { index = idx, returned = new }
+    add_event("fifth_decided", { where = where, selected = sel, set_to = new, ok = ok,
+        read_back = field(w, "SelectedIndex") })
+    fifth_state = nil
+    return { selected = sel, set_to = new, ok = ok }
 end
 local GM = "app.GuiManager"
 local UI6 = "app.ui060601_01"
@@ -840,6 +850,7 @@ local SPECS = {
           local lm = last_menu
           local entry = lm and lm.list and lm.list[idx + 1]
           if frame.log then
+              f.node_error = player and { is = field(player, "_IsNodeError"), type = field(player, "_NodeErrorType") }
               f.node = brief_node(node)
               f.choice = choice
               f.menu = lm and { idx = lm.idx, source = lm.source, live = menu_live, list_count = lm.list_count,
@@ -955,15 +966,21 @@ local SPECS = {
           local m = record_menu("reqDisp", { list = list, player = nil })
           menu_gen = menu_gen + 1
           last_menu, menu_live, fifth_state = m, true, nil
+          fifth_decide_logged = false
           f.menu_index, f.pawn_ctx = m.idx, m.pawn_ctx
           if list ~= nil then mutate_talk_select(list, m, f) end
           return f
       end },
     -- the picked display index: a fifth entry is rewritten here to Never mind, before the game maps it to a choice
-    { key = "GuiManager.getTalkSelectSelectedIndex", type = GM, sig = "getTalkSelectSelectedIndex()", use_post = true,
-      chatty = true, post = function(retval, frame) return selected_index_post(retval, frame) end },
-    { key = "ui021601.getSelectedIndex", type = "app.ui021601", sig = "getSelectedIndex()", use_post = true,
-      chatty = true, post = function(retval, frame) return selected_index_post(retval, frame) end },
+    { key = "TalkEventPlayer.updateChoiceNode", type = TE, sig = "updateChoiceNode()", chatty = true,
+      pre = function() return selected_index_post("updateChoiceNode") end },
+    { key = "ui021601.reqEnd", type = "app.ui021601", sig = "reqEnd()",
+      pre = function(args)
+          local w = to_managed(args[2])
+          local f = selected_index_post("reqEnd") or {}
+          f.selected_now = w and field(w, "SelectedIndex")
+          return f
+      end },
     { key = "FacilityManager.startDismiss", type = "app.FacilityManager", sig = "startDismiss(via.GameObject)",
       pre = function(args, frame)
           local f = { rift = rift_context() }
@@ -1313,6 +1330,10 @@ install_hooks()
 
 re.on_pre_application_entry("UpdateBehavior", function()
     local now = os.clock()
+    if fifth_state then
+        local ok, err = pcall(selected_index_post, "UpdateBehavior")
+        if not ok then log_error("fifth update", err) end
+    end
     if #work_queue > 0 then
         local q = work_queue
         work_queue = {}
