@@ -24,6 +24,10 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
   _Avoid_: re-adopt
 - **Release**: remove a pawn from the roster; it becomes an ordinary hired pawn again and keeps its level.
   _Avoid_: dismiss (that is the game's action at the Rift)
+- **Backup**: the mod's copy of an adopted pawn's progress (level, exp, stat growth, discipline, vocation exp), plus what
+  it wore and its skills for display. Mirrors the game while the pawn is present; frozen while it is away.
+- **Restore**: writing a pawn's backup back into it on its Return, because the game brings it back at its first-hire
+  level. Equipment and skills are never restored.
 - **Party slot**: one of the three pawn positions in the party (`PawnManager._PartyPawnList`).
 
 ## Identity

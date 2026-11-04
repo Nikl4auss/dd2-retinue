@@ -66,12 +66,16 @@ Settled while charting (2026-11-03):
   `Retinue/roster.json`, `{version, members:[{offline_id, name, status, character_id?}]}` in adoption order; structural
   errors lock the roster (no progression, no adopt/release, never rewritten), soft errors corrected per field; higher
   version read-only; global, not per save; pure `roster.lua` with tests.
+- [What does a pawn's backup hold, and when is it written?](issues/09-backup-contents-and-timing.md): restores
+  level, exp, stat growth `_IncreaseParams`, extra boost, discipline, all `CulmativeExp`; equipment and skills only
+  recorded; written on adopt, a 10 s dirty-check poll while present and `dismissPawn` pre, frozen while away; one file
+  per pawn in `Retinue/backups/`; restored only on a `hirePawn` Return. ADR 0002.
 
 ## Not yet specified
 
-- **Mod-side detection and restore flow**: how the mod notices adopt-relevant events (dismiss pre, `hirePawn` post by
-  OfflineID, lost with no single hook) and drives restore and away/present status; shape depends on the backup and
-  restore tickets.
+- **Mod-side detection and restore flow**: how the mod notices a present pawn leaving the party (dismiss pre is
+  known; lost has no single hook: party-diff in the poll?) and when, after `hirePawn` post, the restore write can
+  happen (the record may not be writable until a save); depends on the restore experiment.
 - **Roster vs. save drift**: restoring an older save (or `tools/saves.sh restore`) while the roster says otherwise;
   how the roster is validated against the loaded save.
 - **The uninstall guarantee**: how it is verified for adopted and away pawns (checklist shape).
