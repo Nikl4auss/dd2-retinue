@@ -59,6 +59,9 @@ Settled while charting (2026-11-03):
   the party pawn's root talk menu, confirmed by the game's own dialog opened before the talk ends (fallback: confirm in
   the talk menu); a full retinue offers to release an away member natively; native first, mod menu only for dev and
   fallback. Findings 0007.
+- [What identifies an adopted pawn across dismiss and re-hire?](issues/07-identity-key.md): `_OfflineID` alone;
+  CharacterID only a cache; return recognised on `hirePawn` post and on load by OfflineID, from any route; no
+  OfflineID → not adoptable; duplicates → ambiguous, untouched; name kept for display. Glossary term **Return**.
 
 ## Not yet specified
 

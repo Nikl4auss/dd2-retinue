@@ -17,6 +17,8 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
 - **Roster**: the mod's list of adopted pawns, persisted in `reframework/data/Retinue/`. At most two: the party is
   the main pawn plus two adopted pawns. An away pawn keeps its place in the roster.
 - **Adopt**: add a hired pawn in the party to the roster.
+- **Return**: an away adopted pawn hired again from the Rift, by any route; it becomes present again.
+  _Avoid_: re-adopt
 - **Release**: remove a pawn from the roster; it becomes an ordinary hired pawn again and keeps its level.
   _Avoid_: dismiss (that is the game's action at the Rift)
 - **Party slot**: one of the three pawn positions in the party (`PawnManager._PartyPawnList`).
@@ -24,9 +26,10 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
 ## Identity
 
 - **CharacterID** (`app.CharacterID`, a 32-bit enum value): identifies a pawn's character in the current save.
-  Stable across save/load while the pawn stays hired; reused for a different pawn after dismissal (observed).
-- **Offline ID** (`PawnOwnerContext._OfflineID`, a GUID): identifies a game-generated Rift pawn; the Rift's dismissed
-  list keeps it, so it is the candidate key for recognising the same pawn after re-hire (unverified in game).
+  Stable across save/load while the pawn stays hired; a re-hired pawn gets a new one, and a dismissed pawn's
+  CharacterID is reused for a different pawn (findings 0006). Never identifies an adopted pawn.
+- **Offline ID** (`PawnOwnerContext._OfflineID`, a GUID): identifies a game-generated Rift pawn; unchanged across
+  dismiss, lost and re-hire (findings 0006). The roster's key: a pawn without one cannot be adopted.
 
 ## Progression
 
