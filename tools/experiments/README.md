@@ -466,3 +466,117 @@ collections are written as `{"_empty": true}`.
   backup. `markers` `{t, wall, label}`. `item_counts`: per item id `all`, `party`, `at_backup_all`, `at_backup_party`, and
   `equip_now`. `notes`: `setting` changes and `pawn-absent` (a backed-up OfflineID never seen 30 s after the party became
   non-empty).
+
+## `Retinue_Exp_StatusUI.lua`: where does the player see the retinue's status in game?
+
+Question (M2, ticket `.scratch/m2-identity/issues/13-native-roster-status.md`): the player must see, without the REFramework
+menu, who is adopted, who is away, a Return and its restore ("Folken returned — Lv 27 restored"), a locked / read-only roster
+and a warning that gear given to an adopted pawn is lost on dismiss or lost. Which native surface should carry each? The script
+only **shows candidate surfaces with sample text** so the player can judge them in game. It is purely visual: it never writes
+the roster, a backup, pawn data or a save. **Not run in game yet**: every API name was checked against the dump, but none of
+the new calls has been tried, and the probes that depend on guessed arguments say so below.
+
+Menu: **Retinue Exp StatusUI**. Nothing is persisted between sessions; every toggle that changes what the player sees is OFF at
+load. It can run together with the mod (`./deploy.sh --statusui`): none of its hooks is a method the mod hooks.
+
+### What it hooks
+
+| Group | Methods | Behaviour |
+|---|---|---|
+| Talk menu (P2) | `TalkEventPlayer.startNode`, `newChoiceInfo` (2 overloads), `updateChoiceNode`, `ui021601.reqDisp`, `ui021601.reqEnd` | log; with the P2 toggles `reqDisp` pre appends a fifth row to the root menu of a hired party pawn and the pick is rewritten to Never mind (the path verified in finding 0007) |
+| Status page (P3) | `ui060601_01.setupPawn`, `app.GUIBase.PawnInfo2Ref.setup`, `app.GUIBase.CharaChangeRef.updateName` | log; with the P3 toggle appends a suffix to `TxtName` (page's `PawnInfo` and `CharaTab`) of a pawn whose `CopyOwner._OfflineID` is non-zero |
+| Rift list (P4) | `ui041401.setupPawnList` (page, `FlowNow`, `SearchListPos` as the SearchId guess), `ui041401.ResItem.updateDisp` (one call per listed entry: name, level, OfflineId, favourite, summoned) | log; with the P4 toggle writes prefix / suffix into the entry's `TxtPawnName` texts |
+| The game's own calls (P1) | `GuiManager.requestNoButtonDialog` (2 overloads), `requestDispPupUpMessage`, `requestDispSystemPopupMessage`, the three `requestHide*`, `reqLevelUp`, `setTalkBalloonMessage`, `addTalkSubtitleMessage` (10-arg) | log-only: shows what the game passes for the unknown `UInt32` / `Boolean` arguments (the flag `self_call` marks calls made by this script's buttons) |
+| Message lookup (P1, lazy) | `via.gui.message.get` (1 and 2 args), `app.GUIBase.getMsg(Guid)`, `via.gui.MessageAccessData.get_Message` / `getMessage(Language)` | installed the first time *Substitute text* is ticked (they sit on the path of every piece of text, and REFramework cannot remove hooks); return the sample text only for the Guid chosen in the panel. The panel counts hits per hook: that shows which one the popup text goes through |
+
+The status line says `all N hooks installed` or lists the missing ones; a missing method disables only its probe (the button
+shows `[disabled: ...]`). Every hook has its own cap of logged entries (200, 600 for the important ones, 8 for the chatty ones).
+
+### The panel
+
+- Top: markers, the run file, counters, and **Sample pawn** (radio over the hired party pawns): its name and level fill `{name}` / `{lv}`
+  in every text (fallback "Folken" / 27). A literal `\n` in a text is a line break.
+- **P1 transient notices**
+  - *B1* `requestNoButtonDialog(String, UInt32)`: buttons *show with UInt32 = 0* and *show with the UInt32 above*, `requestHideDialog`,
+    and an *auto-hide* (default 10 s, 0 = never) so a dialog that sticks cannot trap you; the log says whether the dialog was still
+    displayed when it was hidden.
+  - *B2* popups need a message Guid. Choose the **script-owned Guid** (nothing in the game uses it), a **new random Guid**, or a
+    **real game Guid** (the "Never mind." choice: it surely resolves, but while *Substitute text* is on every "Never mind." shows the sample
+    text). *Substitute text* installs the lookup hooks. Buttons: `requestDispPupUpMessage(Guid, UInt32)`,
+    `requestDispSystemPopupMessage(Guid, Guid[])` (params nil / an empty array), `requestHidePopUpMessage`,
+    `requestHideSystemPopupMessage`, and *Probe Guid* (`message.isExistGuid` + `message.get` for the Guid, which also shows whether
+    the substitution works at all).
+  - *B3* `reqLevelUp(CharacterID, oldLv, newLv)` for the sample pawn (argument order from findings 0002 / 0003: `reqLevelUp(id, old,
+    new)`, the reverse of `dispLevelUpUI`). Findings show it only as the notice the game raises; a **standalone call has never been
+    made**, so it is not verified to leave stats alone: that is why a backup comes first.
+  - *B4* a line over the sample pawn's head: `setTalkBalloonMessage(GameObject, Guid, GenderType, GenderType, Boolean, Single, UInt32,
+    ..., Boolean)` with the Guid above, `GenderType.Unknown` for both genders, the editable duration and the two Booleans (meaning
+    unknown), and `addTalkSubtitleMessage` (10-arg) as a second button.
+- **P2 talk-menu status row**: *Row label* (default `Release (Retinue · Lv {lv})`), *Append a fifth row*, *Disabled-row label*
+  (default `Adopt — retinue locked`), *Make that row disabled* (`_IsDecideEnable = false`). It acts only on the root menu of a hired
+  party pawn (the `ShopChoiceNode` `_NodeId` `4c4acb4e-…`, or a Dismiss entry among the shown choices). The last such menu is listed.
+- **P3 Status page mark**: *Suffix* (default ` · Retinue`), the toggle, **Arm text dump** (dumps every `via.gui.Text` of the page at the
+  next tab change, the safe way) and **Dump status page now** (uses the last seen page object: press it only while the page is open).
+- **P4 Rift previously hired mark**: *Prefix* (`★ `), *Suffix* (` — Retinue, Lv {lv}`, `{lv}` = the entry's level), an *OfflineID filter*
+  (empty = every entry), the toggle, the same two dump buttons, and the first listed entries.
+- **P5 adopt confirmation**: main text (`Adopt {name} into your retinue?\nGear you give them is lost if they're dismissed or lost.`), the
+  two button texts, **open the adopt dialog**; `requestDialog` with TalkUI's verified neutral arguments, and the answer read from the
+  widget (`SelYes` / `SelNo`).
+- **Recent events** and the last calls.
+
+### Procedure
+
+Needs a save with at least one hired (CAPCOM) pawn in the party, and a Riftstone within reach (Nick's Devtools *Warp*) for P4.
+**Back up first.** Nothing is expected to change state, but the talk-menu row can end a conversation oddly and none of the P1 calls
+has been made before.
+
+0. Quit the game. `tools/saves.sh backup m2-statusui`. `./deploy.sh --remove && ./deploy.sh --statusui`. Launch, load, open
+   **Retinue Exp StatusUI**; the status line must say all hooks are installed (note any missing). Select the sample pawn.
+1. **P1 in the field** (marker `p1`). Note for each button what appears (where on screen, how long, wording, line wrapping), and
+   press the matching hide button. Watch the log for exceptions.
+   a. *B1*: *show with UInt32 = 0*; then with another value (try 1, 2, 5); is a button or prompt shown, does it close by itself, does
+      the hide button close it?
+   b. *B2*: tick *Substitute text* with the script-owned Guid, press *Probe Guid* (is the text returned?), then
+      `requestDispPupUpMessage` and both `requestDispSystemPopupMessage` buttons. If nothing shows or the text is the native one, try
+      *Use real game Guid (Never mind)*, press *Probe Guid* again, and the popup again. Untick *Substitute text* afterwards.
+   c. *B3*: *reqLevelUp* with 26 -> 27: does a level-up notice with the pawn's name show? Check the pawn's level in the Status page
+      afterwards (it should not have changed).
+   d. *B4*: with the Guid and *Substitute text* from (b), press *setTalkBalloonMessage* and *addTalkSubtitleMessage*: does a line show over
+      the pawn's head, for how long, with which text?
+2. **P2** (marker `p2`). Tick *Append a fifth row*, talk to a hired party pawn: is there a fifth row with the label? Pick it (the talk
+   should end like Never mind). Then also tick *Make that row disabled*, talk again: is the row greyed out, can the cursor land on it, can
+   it be picked? Open the pawn's Talk sub-menu: no extra row there. Untick both.
+3. **P3** (marker `p3`). Pause > Status, cycle the tabs once (Arisen, main pawn, a hired pawn). Tick *Mark hired pawns*, cycle again: does only the
+   hired pawn's tab show the suffix (name in the info block and in the tab header)? If not, press **Arm text dump**, change the tab, and
+   the file lists every text of the page.
+4. **P4** (marker `p4`). At a Riftstone open the previously hired list. Note what is logged. Tick *Mark listed pawns*, reopen / scroll the
+   list: do the entries show the prefix and suffix (and does the font draw `★` and `—`)? Set the OfflineID filter to one entry's value (from
+   the panel) and check only it is marked. If nothing changes, use **Arm text dump** and reopen the list.
+5. **P5** (marker `p5`). From the field press **open the adopt dialog**: note wrapping and length of the two lines, answer it (the A press can
+   reach the character: stand somewhere safe). Edit the text and repeat if it wraps badly.
+6. Quit the game. Copy `reframework/data/Retinue/experiments/statusui_*.json` (game folder) into `docs/findings/data/<date>-m2-statusui/`. Then
+   `./deploy.sh --remove`. If anything odd happened (a stuck dialog, a changed level, a broken talk), quit and restore the backup
+   (`tools/saves.sh restore <backup>`, game closed).
+
+A forgotten script is harmless: it starts with everything off on the next launch (the hooks keep logging).
+
+### What the run file contains
+
+`statusui_<YYYYmmdd_HHMMSS>.json`, one per script session, flushed every 2 s when changed (also via **Flush log now**). Empty
+collections are written as `{"_empty": true}`.
+
+- `markers`: `{t, wall, label}`. `party`: the cached party (id, slot, name, level, OfflineID). `hooks`, `count_by_spec`, `dropped*`,
+  `errors` (empty is the goal), `probes_disabled` (methods missing in this game version), `constants`.
+- `calls`: one entry per hooked call phase. Menu: `ui021601.reqDisp` pre has `root`, `node_id`, `pawn_id`, `has_dismiss`,
+  `never_mind_row`, and `row_appended_at` / `row_skipped` / `row_error`. Status page: `ui060601_01.setupPawn` has the decoded `chara_data`
+  (`CharaId`, `OfflineID`, `hired`, `name`), post has `names_before` and `marked`. Rift: `ui041401.setupPawnList` has `FlowNowName`,
+  `SearchListPos`, `SearchId_guess`; `ResItem.updateDisp` has `entry` (name, level, OfflineId, favourite, summoned, `shown_names`), `match`,
+  `marked`. `game: ...` entries are the game's own calls to the P1 methods with their decoded arguments (Single arguments travel in
+  registers: read `f32` values with suspicion).
+- `events`: `call` (one per button: `probe`, `args`, `ok`, `result` or `error`), `probe_unavailable`, `toggle`, `guid_set`, `text_hooks_installed`,
+  `subst_hit` (which lookup hook substituted the text), `pawn_menu` (the entries of every hired-pawn menu with their Guids), `row_appended`,
+  `cursor` (SelectedIndex changes while the row exists, with `on_row`), `row_picked`, `armed`, `text_dump` (summary), `dialog_*`,
+  `adopt_dialog_answer`, `sample_pawn`.
+- `text_dumps`: per dump `label`, `count`, `truncated` and `texts` `{path, name, message, visible}`: every `via.gui.Text` found under the
+  page (fields scanned two levels deep, panels walked).
+- `rift_entries`: the last seen entry per OfflineID. `status_page_last`, `rift_page_last`, `settings_now` (toggles, texts, substitution hits).

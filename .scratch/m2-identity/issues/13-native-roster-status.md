@@ -1,7 +1,7 @@
 # Where does the player see the retinue's status in game?
 
 Type: prototype
-Status: open
+Status: claimed
 Blocked by: 11
 
 ## Question
