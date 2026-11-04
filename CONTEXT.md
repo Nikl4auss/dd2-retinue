@@ -15,8 +15,9 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
   the mod lifts hired-pawn restrictions for it at runtime. Only offline (game-generated) pawns can be adopted.
   An adopted pawn is either **present** (in the party) or **away** (dismissed or lost, still in the roster).
   Between a Return and a successful restore it is **returning**: back in the party, its backup not yet written into it.
-- **Roster**: the mod's list of adopted pawns, persisted in `reframework/data/Retinue/`. At most two: the party is
-  the main pawn plus two adopted pawns. An away pawn keeps its place in the roster.
+- **Roster**: the mod's list of adopted pawns in one save slot, persisted in `reframework/data/Retinue/`. Each save
+  slot has its own. At most two: the party is the main pawn plus two adopted pawns. An away pawn keeps its place in
+  the roster.
 - **Locked roster**: a damaged roster. Nothing is adopted, released or progressed through it, and the mod never
   overwrites it; the player fixes it by hand. A roster written by a newer Retinue is instead **read-only**: its
   pawns still progress, but nothing is adopted or released.
@@ -29,6 +30,10 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
   it wore and its skills for display. Mirrors the game while the pawn is present; frozen while it is away.
 - **Restore**: writing a pawn's backup back into it on its Return, because the game brings it back at its first-hire
   level. Equipment and skills are never restored.
+- **Save slot**: one of the game's three playthroughs. Each has its own history of autosaves, inn saves and manual
+  saves; loading an older one of them rolls that playthrough back. A new game started over a save slot is a different
+  playthrough.
+  _Avoid_: save file, slot (alone: ambiguous with party slot)
 - **Party slot**: one of the three pawn positions in the party (`PawnManager._PartyPawnList`).
 
 ## Identity

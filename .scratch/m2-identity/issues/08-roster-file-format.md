@@ -43,6 +43,8 @@ Resolved 2026-11-04 (grilling); every recommendation accepted.
   Return) and when the cache (`character_id`, `name`) is refreshed. No `re.on_config_save`, no atomic write.
 - **Global**, not per save; no save fingerprint for now. If "Roster vs. save drift" needs one, it adds it with
   `version: 2`.
+  *Superseded (2026-11-04) by "How does the mod reconcile the roster with a save that disagrees with it?": one roster
+  per save slot, `version` stays 1.*
 - **Pure module** `src/autorun/Retinue/roster.lua` (no REFramework globals; I/O in `Retinue.lua`): `resolve`/`merge`
   plus the roster operations (adopt, release, mark away, return; the cap constant in one place) returning errors
   `full`, `already_adopted`, `locked`, `no_offline_id`; tested in `tests/roster_test.lua`.

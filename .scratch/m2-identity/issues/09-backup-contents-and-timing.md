@@ -36,7 +36,7 @@ Lv 27 pawn Lv 23 stats.
     which has no hook but leaves the record for minutes; avoids a write per kill);
   - a forced last read at **`dismissPawn` pre**;
   - **frozen** while away. No extra hooks on `checkLevelUp` or on save.
-- **Where**: one file per member, `reframework/data/Retinue/backups/<offline_id>.json`, with its own `version`. A
+- **Where** (*per save slot since "How does the mod reconcile the roster with a save that disagrees with it?": `slots/<slot>/backups/`*): one file per member, `reframework/data/Retinue/backups/<offline_id>.json`, with its own `version`. A
   missing or damaged backup affects only that pawn (not restored, warning); it never locks the roster. Release deletes
   the file; orphan backups (no roster member) are ignored and never deleted automatically. Pure, tested module
   `src/autorun/Retinue/backup.lua` (serialise/validate), I/O in `Retinue.lua`, as with `roster.lua`.

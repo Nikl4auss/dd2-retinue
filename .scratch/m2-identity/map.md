@@ -23,7 +23,7 @@ Settled while charting (2026-11-03):
 - **The roster narrows M1**: only adopted pawns progress; ordinary hired pawns are vanilla again. The M1
   `progression` toggle stays as a global switch.
 - **Offline pawns only** (owner `CAPCOM`, with `_OfflineID`).
-- **Roster holds at most 2** (the party is main pawn + two adopted). A constant in one place, so it can grow later.
+- **Roster holds at most 2** per save slot (the party is main pawn + two adopted). A constant in one place, so it can grow later.
   An away pawn (dismissed or lost) keeps its place in the roster.
 - **Adopt** only a hired pawn currently in the party. Where and how: see "How should adopt and release look and feel?".
 - **Native first** (2026-11-04): everything the player needs must be doable fluidly in the game itself. The REFramework
@@ -65,7 +65,7 @@ Settled while charting (2026-11-03):
 - [What is the shape of the roster file and its validation?](issues/08-roster-file-format.md): own
   `Retinue/roster.json`, `{version, members:[{offline_id, name, status, character_id?}]}` in adoption order; structural
   errors lock the roster (no progression, no adopt/release, never rewritten), soft errors corrected per field; higher
-  version read-only; global, not per save; pure `roster.lua` with tests.
+  version read-only; pure `roster.lua` with tests (made per save slot by the drift ticket below).
 - [What does a pawn's backup hold, and when is it written?](issues/09-backup-contents-and-timing.md): restores
   level, exp, stat growth `_IncreaseParams`, extra boost, discipline, all `CulmativeExp`; equipment and skills only
   recorded; written on adopt, a 10 s dirty-check poll while present and `dismissPawn` pre, frozen while away; one file
@@ -77,6 +77,10 @@ Settled while charting (2026-11-03):
   `dismissPawn` pre/post plus a 1 s party diff (3 misses, in world) for any departure; Return → `returning` (backup
   frozen, restore retried ~10 s, then on load); restore when game level ≤ backup's; runs with the toggle off; no writes
   on a locked or read-only roster; a log line per transition.
+- [How does the mod reconcile the roster with a save that disagrees with it?](issues/12-roster-save-drift.md):
+  DD2 has three save slots: one roster and backups per slot (`slots/<slot>/`, still v1); slot unknown → no roster;
+  within a slot the save wins (backup lowered, no marker needed); new game → slot archived; cache re-resolved by
+  OfflineID; one reconciliation pass per load.
 
 ## Not yet specified
 
