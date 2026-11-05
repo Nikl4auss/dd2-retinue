@@ -1,7 +1,7 @@
 # M2 — Identity and persistence (spec)
 
 Status: ready for `/to-tickets` · Map: [map.md](map.md) · In-game checklist: [docs/testing.md § M2](../../docs/testing.md#m2--identity-and-persistence)
-(to be written before implementation starts) · Glossary: [CONTEXT.md](../../CONTEXT.md)
+· Glossary: [CONTEXT.md](../../CONTEXT.md)
 
 ## Goal
 
@@ -263,7 +263,9 @@ REFramework glue stays thin; it may be split under `src/autorun/Retinue/game/` (
 Status marks, slot hooks, restore writes). `tests/run.sh` runs everything; the tests cover every table row and error
 above, the cap, archive naming, and the guard at equal / lower / higher levels.
 
-The experiment scripts stay in `tools/experiments/` and are never deployed with the mod.
+The experiment scripts stay in `tools/experiments/` and are never deployed with the mod. `deploy.sh` gains
+`--probe-only` (the read-only probe without the mod), for the checklist's uninstall checks; `--remove` never touches
+`reframework/data/Retinue/`.
 
 ## Done when
 

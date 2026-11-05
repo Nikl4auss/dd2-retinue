@@ -98,7 +98,7 @@ Settled while charting (2026-11-03):
 
 ## Not yet specified
 
-(none: every decision is made; next is writing `spec.md` and the M2 checklist in `docs/testing.md`)
+(none: destination reached 2026-11-05: [spec.md](spec.md) and `docs/testing.md` § M2; next `/to-tickets`)
 
 ## Out of scope
 
