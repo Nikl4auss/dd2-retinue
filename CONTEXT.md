@@ -32,8 +32,8 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
   level. Equipment and skills are never restored.
 - **Save slot**: one of the game's three playthroughs. Each has its own history of autosaves, inn saves and manual
   saves; loading an older one of them rolls that playthrough back. A new game started over a save slot is a different
-  playthrough.
-  _Avoid_: save file, slot (alone: ambiguous with party slot)
+  playthrough; NG+ over a cleared save slot continues the same playthrough. The game's code calls it a _unit_.
+  _Avoid_: save file, slot (alone: ambiguous with party slot), unit (code only)
 - **Party slot**: one of the three pawn positions in the party (`PawnManager._PartyPawnList`).
 
 ## Identity

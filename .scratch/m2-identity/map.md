@@ -86,9 +86,14 @@ Settled while charting (2026-11-03):
   in the Rift's Previous Hires for members; Return, guard skip and locked/read-only/no-slot as a centred
   `requestNoButtonDialog` notice the mod closes after ~4 s; gear warning in the Adopt confirmation. Findings 0009.
 
+- [Which save slot is loaded, and can a new game be told apart?](issues/14-save-slot-identity-experiment.md): slot =
+  the game's unit (`global slot ÷ 5`), learned from `requestLoadGameData` / `requestStartType(NewGame)` + `UnitNumber`,
+  fallback only if `LastLoadedSlot` and `UnitNumber` agree; `NewGame` / `RedoNewGame` → new playthrough, roster
+  archived; `RedoNewGameSkip` (NG+) keeps it. Findings 0010.
+
 ## Not yet specified
 
-- **The uninstall guarantee**: how it is verified for adopted and away pawns (checklist shape).
+(none: the last patch, the uninstall guarantee, is now a ticket)
 
 ## Out of scope
 
