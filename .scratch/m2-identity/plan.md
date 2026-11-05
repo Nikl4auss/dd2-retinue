@@ -147,6 +147,7 @@ values agree. The start type is classified and kept for later tickets. A missing
    --   seen        boolean  a start or load request was seen this session (disables the fallback for good)
    --   last_start  nil | { name = string|nil, kind = classify(name) }  the last start request
    --   starts      integer  count of start requests seen (later tickets detect a new start by comparing it)
+   --   loads       integer  count of load requests seen (final review: ticket 21 needs a per-load signal)
    function M.new_session() end
    -- requestLoadGameData pre: seen = true; unit = unit_of(global_slot, per_unit); source = unit and "load" or nil.
    function Session:on_load_request(global_slot, per_unit) end

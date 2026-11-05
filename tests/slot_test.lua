@@ -166,3 +166,18 @@ do
     s:on_start_request("Latest", 0)
     assert(s.starts == 2)
 end
+
+-- loads counts load requests only; a death reload (load without start) of the same unit still counts
+do
+    local s = slot.new_session()
+    assert(s.loads == 0)
+    s:on_start_request("Latest", 0)
+    assert(s.loads == 0)
+    s:on_load_request(0, 5)
+    s:on_load_request(0, 5)
+    assert(s.loads == 2 and s.unit == 0 and s.source == "load")
+end
+
+-- to_int: integral floats become integers, anything else nil
+assert(math.type(slot.to_int(2.0)) == "integer" and slot.to_int(2.0) == 2)
+assert(slot.to_int(2.5) == nil and slot.to_int("2") == nil and slot.to_int(nil) == nil)

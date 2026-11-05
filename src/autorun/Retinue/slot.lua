@@ -65,16 +65,20 @@ end
 --   seen        boolean  a start or load request was seen this session (disables the fallback for good)
 --   last_start  nil | { name = string|nil, kind = classify(name) }  the last start request
 --   starts      integer  count of start requests seen (later tickets detect a new start by comparing it)
+--   loads       integer  count of load requests seen (later tickets detect a new load, e.g. a death reload of the
+--               same unit, by comparing it)
 local Session = {}
 Session.__index = Session
 
 function M.new_session()
-    return setmetatable({ unit = nil, source = nil, seen = false, last_start = nil, starts = 0 }, Session)
+    return setmetatable({ unit = nil, source = nil, seen = false, last_start = nil, starts = 0, loads = 0 }, Session)
 end
 
--- requestLoadGameData pre: seen = true; unit = unit_of(global_slot, per_unit); source = unit and "load" or nil.
+-- requestLoadGameData pre: seen = true; loads += 1; unit = unit_of(global_slot, per_unit); source = unit and
+-- "load" or nil.
 function Session:on_load_request(global_slot, per_unit)
     self.seen = true
+    self.loads = self.loads + 1
     self.unit = M.unit_of(global_slot, per_unit)
     self.source = self.unit and "load" or nil
 end
