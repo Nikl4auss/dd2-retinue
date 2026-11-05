@@ -1,7 +1,7 @@
 # Which save slot is loaded, and can a new game be told apart?
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 12
 
 ## Question

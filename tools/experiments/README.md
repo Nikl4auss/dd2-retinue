@@ -580,3 +580,110 @@ collections are written as `{"_empty": true}`.
 - `text_dumps`: per dump `label`, `count`, `truncated` and `texts` `{path, name, message, visible}`: every `via.gui.Text` found under the
   page (fields scanned two levels deep, panels walked).
 - `rift_entries`: the last seen entry per OfflineID. `status_page_last`, `rift_page_last`, `settings_now` (toggles, texts, substitution hits).
+
+## `Retinue_Exp_SaveSlot.lua`: which save slot is loaded, and can a new game be told apart?
+
+Question (M2, ticket `.scratch/m2-identity/issues/14-save-slot-identity-experiment.md`): the mod keeps one roster per save slot, so it
+must know which of the player's three slots is loaded (it activates no roster otherwise). In the game's code the three player-visible
+slots are **units** (`app.GameSystem.UnitNumber`, `UNIT_MAX_COUNT`, `SLOT_PER_UNIT`) and each unit has several internal save **slots**
+(auto, add-auto, manual, back, clear); on disk that is `data000.bin`, `data00-1.bin`, `data001slot.bin` ... `data009slot.bin`. On every
+load and every save the script records every value that could identify the unit and the save type, and every hook that could signal a
+new game or NG+. A run answers:
+
+1. Which value maps to the player's slot 1-3, and how the `dataNNNslot.bin` files group per unit (with the file watcher below).
+2. Whether that value is stable across save types (auto / inn / manual / clear), a reload and a relaunch.
+3. When during a load it is first correct (the `changes` list against `entered-world`: before the world is entered?).
+4. How a **new game** over an existing unit and an **NG+** (`Clear`) can each be detected: a hook, a counter or play time that drops,
+   the slot type.
+
+It is **log-only**: it never changes an argument or a return value and calls only getters (`getLatestSaveSlot`, `getSaveSlotType`,
+`getDetailContents`, ...); its only output is its run file. **Not run in game yet**: every signature was checked against the dump, but
+no hook has been installed in game. Menu: **Retinue Exp SaveSlot (EXPERIMENT)**. It can run together with the mod
+(`./deploy.sh --saveslot`): none of its hooks is a method the mod hooks. **Back up before every run** (`tools/saves.sh backup
+<label>`): the runs load and overwrite the player's real slots.
+
+### What it hooks
+
+| Group | Methods | Notes |
+|---|---|---|
+| `app.GameSystem` | `loadGameSaveData(SaveDataBase)` (pre also reads slot-, unit-, count- and time-like fields of the argument), `saveGameSaveData()` (ret: hash and version), `loadSystemSaveData`, `saveSystemSaveData`, `setLatestSaveSlotNum`, `updateLatestSaveSlot`, `checkLatestSaveSlot` (arg and ret), `setUnitNumber`, `set_UnitNumber`, `updateUnitDataList(Int32, Boolean)`, `updateUnitDataPlayMode`, `setCleared`, `resetCleared`, `clear`, `BootConvertUnitData`, `updateSlotTimeStamp`, `updateSlotCheckCache`, `setGameClearDataMidst`, `setGameLstSave` | cap 300 each, 1000 for load / save |
+| `app.SaveDataManager` | `requestLoad`, `requestLoadAuto`, `requestLoadManual`, `requestLoadSlot`, `requestSave`, `requestSaveAuto`, `requestSaveManual`, `requestSaveSlot` (the Int32 slot and the `UInt32[]`, cap 16), `loadGame`, `loadGameSaveData`, `saveGameSaveData`, `isExistSaveData(Int32)` and `getLoadingGameSlotId()` (chatty: cap 30, ret logged) | request hooks cap 1000 |
+| `app.MainFlowManager` | `requestStartType` (arg and enum name), `requestLoadGameData`, `setContinueSlot`, `set_LastLoadedSlot`, `restart`, `LoadSaveDataSuccess`, `onCompleteSceneLoad`, `onPlayStartEvent`, `addContinueCount` | cap 300, 1000 for `requestStartType` |
+| `app.SaveUnitSelectGUIFlowController` | `setUseUnitNo`, `resetUseUnitNo`, `onDecideUnitList` and `onExecuteGameRestart` (UnitNo, IsEmpty, IsCurrentUnit, IsRestartData, Arisen / Pawn name and level, UnitInfo), `onDecideSaveList` (SaveSlotNo, IsEmpty, IsLatestData, IsRestartData, names and levels, SlotInfo), `set_IsNewGame`, `set_SelectStartType`, `requestStartFlow`, `executeConfirm` (+ enum name), `transitFlow` (+ enum name, cap 200), `onDestroy` (counted only; forgets the remembered instance) | `this` is remembered for the snapshots (it is a component, not a singleton) |
+| `app.ui030901` | `calcSaveSlotNo(SaveDataType)` (enum name and ret, cap 60) | |
+
+The status line says `all N hooks installed` or lists the missing ones. Every pre and post entry of a hook that is not chatty carries
+`state`: the cheap field reads `LatestSaveSlot`, `LatestSaveSlotArray`, `UnitNumber`, `UnitPlayCountList`, `LastLoadedSlot`, `ContinueSlot`,
+`IsNewGameFlow`, `IsContinueFlow`, `CurrentProcess` as they stand just before and just after the call.
+
+### Snapshots
+
+A snapshot is `{label, kind, seq, t, wall, state}` (cap 400 automatic, 100 manual). `state` has the sections `gs` (`app.GameSystem`:
+`LatestSaveSlot`, `LatestSaveSlotArray`, `SlotTimeStampArray`, `UnitNumber`, the per-unit lists, `getLatestSaveSlot()`,
+`getLatestSaveSlotNum(unit)`, `getSaveSlotType(slot)` and `getSlotTimeStamp(slot)` for every slot, the `CachedSlot*` / `CachedExistSlot*`
+values, `detail` = `getDetailContents()` with `SaveCount`, `ActualPlayingTime`, `Difficulty`, `MainPlayer`, `Memo`, and
+`UnitInfoDataList`), `sdm` (`getLoadingGameSlotId()`, `CurrentProcess`, `CurrentRequest`), `mfm` (`LastLoadedSlot`, `ContinueSlot`,
+`IsContinueFlow`, `IsNewGameFlow`, `ContinueCount`, `IsRestart`, `IsTitleMenuPhase`, `IsSuccessLoadSaveData`), `suc` (the last-seen unit-select
+controller: `UseSaveUnitNo`, `UseSaveSlotNo`, `LatestUnitNo`, `IsNewGame`, `SelectStartType`, `CurrFlow`, `CachedExistUnitData`; dropped when a
+read on it errors) and `world` (`in_world`, the party, the player's name). Arrays are lists in index order: element 1 is index 0.
+
+| Kind (`label`) | When |
+|---|---|
+| `poll` (`poll-initial`, `poll-change`) | once a second the script compares a small key (`LatestSaveSlot`, `UnitNumber`, `getLatestSaveSlot()`, `getLoadingGameSlotId()`, `LastLoadedSlot`, `SaveCount`, `in_world`, `IsTitleMenuPhase`, `UnitPlayCountList`); on a change it stores a snapshot and a `changes` entry `{t, wall, from, to}` with only the changed keys. Identical consecutive states are not stored |
+| `world` (`entered-world`, `left-world`) | `in_world` (the main pawn in the party and not the title menu) turns true / false; replaces the `poll-change` snapshot of that second |
+| `hook` (`after:<hook key>`) | the frame after a hook fired, at most one per hook key per 2 s (`after_suppressed` counts the skipped ones); not for the chatty `isExistSaveData`, `getLoadingGameSlotId`, `calcSaveSlotNo` |
+| `manual` | the **Snapshot now** button and **Add marker** (`marker:<text>`) |
+
+### The panel
+
+Status line (hooks, calls logged / dropped / seen, snapshots, changes, errors, flush status), a **Live state** table refreshed every second
+(`UnitNumber`, `LatestSaveSlot`, `getLatestSaveSlot()` and its slot type, `getLatestSaveSlotNum` per unit, `LastLoadedSlot`,
+`getLoadingGameSlotId`, `SaveCount`, `ActualPlayingTime`, `UnitPlayCountList`, `IsGameClearedList`, `in_world`, party, player), a **Marker** text
+input with **Add marker**, **Snapshot now**, **Flush log now** and the last 8 `changes` lines. No button calls a game method with side effects.
+
+### The save-file watcher
+
+`tools/experiments/watch_saves.sh` polls the save folder once a second (the folder `tools/saves.sh where` prints, or `DD2_SAVE_DIR`) in a
+second terminal and appends one line per created / changed / deleted file, plus the full listing as `initial` at start, to
+`reframework/data/Retinue/experiments/savefiles_<timestamp>.log` and stdout:
+
+```
+HH:MM:SS <event> <file> size=<n> mtime=<HH:MM:SS> sha1=<first 12 hex>
+```
+
+Read-only on the save folder; Ctrl-C stops it. Match its timestamps against the run file's `wall` fields to see which `dataNNNslot.bin`
+each save type writes, and whether a load rewrites any file.
+
+### Procedure
+
+Every step that loads, saves or starts a game gets a **Marker** first (e.g. `slot2-load-manual`), so the run file and
+the watcher log can be lined up by wall time.
+
+1. Game closed: `tools/saves.sh backup m2-saveslot`. `./deploy.sh --saveslot`. In a second terminal:
+   `tools/experiments/watch_saves.sh` (leave it running the whole session).
+2. Launch. At the title, before choosing anything, marker `title`. Then for each slot 1, 2, 3 that holds a playthrough:
+   marker `slotN-pick`, choose it, load its latest save; once in the world marker `slotN-in-world`. Back to the title.
+3. In one slot (the one played most): load each save type it offers (latest/auto, inn, manual, "start from the
+   beginning" if listed), one marker per load. In the world make a manual save, rest at an inn (inn save), and let an
+   autosave happen (cross an area), one marker before each. Die once and use "load last save" (marker first).
+4. Quit to desktop, relaunch, load the same slot again (marker `relaunch-load`): stability across relaunch.
+5. New game: game closed, `tools/saves.sh backup m2-saveslot-pre-newgame`. Start a **new game over an occupied slot**
+   (markers at every confirm), play until you can save, save, back to the title. Quit, then
+   `tools/saves.sh restore <the pre-newgame backup>` to get the real playthrough back.
+6. NG+: only if a slot already has a cleared / NG+ save: load it and, if offered, start NG+ from it (markers). Restore
+   the pre-newgame backup again after it.
+7. **Flush log now**, quit, Ctrl-C the watcher. `./deploy.sh --remove` then `./deploy.sh`. The run files
+   (`saveslot_*.json`, `savefiles_*.log` in `reframework/data/Retinue/experiments/`) go to
+   `docs/findings/data/<date>-saveslot/`.
+
+### What the run file contains
+
+`saveslot_<YYYYmmdd_HHMMSS>.json`, one per script session, flushed every 2 s when changed (also via **Flush log now**). Empty collections
+are written as `{"_empty": true}`.
+
+- `constants`: the statics of `app.GameSystem` (`SAVE_SLOT_*`, `SLOT_MAX_COUNT`, `SLOT_PER_UNIT`, `UNIT_MAX_COUNT`), the unit-select
+  controller's `UnitMaxCount` / `UnitPerModelCount`, `app.ui030901.SaveDataTypeCount`, and the caps.
+- `snapshots`, `changes` (the poll's changed keys with times), `markers` (`{t, wall, label}`), `last_state` (the newest poll).
+- `calls`: one entry per hooked call phase (`method`, `phase`, `args`, `ret`, `state`, `pre_seq` on post).
+- `hooks` (installed / missing), `count_by_spec` (every call seen), `dropped*`, `self_calls` (hooks fired by the script's own getters, not
+  logged), `after_suppressed`, `snapshots_dropped`, `summary`, `errors` (empty is the goal).
