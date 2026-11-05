@@ -1,5 +1,5 @@
 -- config.json: reading and writing the saved settings. Pure: no REFramework globals, so it runs under plain
--- Lua in tests; Retinue.lua does the file I/O.
+-- Lua in tests; game/config_store.lua does the file I/O.
 local M = {}
 
 M.PATH = "Retinue/config.json" -- relative to reframework/data (the root for JSON and file access)

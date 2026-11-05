@@ -7,7 +7,7 @@ local M = {}
 -- (these ExpDispenser ones) the first parameter is args[2]. Instance methods have `this` at args[2] and the
 -- first parameter at args[3] (e.g. GuiManager.reqJobRankUp: id_arg = 3).
 -- role: "core" rewrites a hired pawn's ID and pushes an open-call frame; "swap" puts the real ID back for the
--- notification (Retinue.lua).
+-- notification (game/progression_hooks.lua).
 M.SPECS = {
     { key = "checkLevelUp", role = "core", type = "app.ExpDispenser",
       sig = "checkLevelUp(app.CharacterID, app.HumanStatusContext, app.Character.JobEnum, System.Boolean, app.DragonHermitContext)",
