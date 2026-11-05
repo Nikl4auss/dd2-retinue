@@ -47,3 +47,7 @@ pawn?".
   returning→present with "restored Lv a→b" or "skipped: guard", retry timeout), via `log.error` like the rest of the
   mod. Native messages are decided with native roster status.
 - Glossary: `CONTEXT.md` gains **Returning** under Adopted pawn.
+
+**Revised 2026-11-05** by "How is the uninstall guarantee verified for adopted and away pawns?": an away member keeps its
+last `character_id` (not cleared on dismiss); on load, away in the roster and in the party with a different CharacterID
+→ `returning` and restored under the level guard (a Return the mod did not see); same CharacterID → present, no restore.

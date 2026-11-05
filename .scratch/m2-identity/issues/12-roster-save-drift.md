@@ -52,3 +52,7 @@ established by "Which save slot is loaded, and can a new game be told apart?".
 - **Orphan slot directories** (slot deleted in game) are ignored and never deleted automatically.
 - **Logging**: one line per correction, e.g. `Rook: roster away, save has it Lv20 (backup Lv27) → present, save wins`.
 - Glossary: `CONTEXT.md` gains **Save slot**; **Roster** is per save slot.
+
+**Revised 2026-11-05** by "How is the uninstall guarantee verified for adopted and away pawns?": the CharacterID cache
+is also kept for away members and compared on load to tell a rollback (same ID, save wins) from a Return made without
+the mod (new ID, restore under the level guard). It still never identifies a pawn.

@@ -30,6 +30,8 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
   it wore and its skills for display. Mirrors the game while the pawn is present; frozen while it is away.
 - **Restore**: writing a pawn's backup back into it on its Return, because the game brings it back at its first-hire
   level. Equipment and skills are never restored.
+- **Uninstall guarantee**: removing Retinue leaves every save playable and every pawn an ordinary hired pawn at its
+  current level. An away pawn's progress then survives only in its backup, which comes back if Retinue is reinstalled.
 - **Save slot**: one of the game's three playthroughs. Each has its own history of autosaves, inn saves and manual
   saves; loading an older one of them rolls that playthrough back. A new game started over a save slot is a different
   playthrough; NG+ over a cleared save slot continues the same playthrough. The game's code calls it a _unit_.

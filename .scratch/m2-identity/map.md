@@ -91,9 +91,14 @@ Settled while charting (2026-11-03):
   fallback only if `LastLoadedSlot` and `UnitNumber` agree; `NewGame` / `RedoNewGame` → new playthrough, roster
   archived; `RedoNewGameSkip` (NG+) keeps it. Findings 0010.
 
+- [How is the uninstall guarantee verified for adopted and away pawns?](issues/15-uninstall-guarantee-check.md):
+  "playable" and "ordinary" checked against a pre-uninstall probe snapshot, vanilla talk menu and Rift list, and no
+  level-up; away progress survives only in the backup (known limit); data folder never deleted; an away member keeps
+  its CharacterID so a Return made without the mod is restored on reinstall; fixtures for away/returning/released.
+
 ## Not yet specified
 
-(none: the last patch, the uninstall guarantee, is now a ticket)
+(none: every decision is made; next is writing `spec.md` and the M2 checklist in `docs/testing.md`)
 
 ## Out of scope
 
