@@ -1,7 +1,6 @@
 # M2 — Identity and persistence (spec)
 
-Status: ready for `/to-tickets` · Map: [map.md](map.md) · In-game checklist: [docs/testing.md § M2](../../docs/testing.md#m2--identity-and-persistence)
-· Glossary: [CONTEXT.md](../../CONTEXT.md)
+Status: ready for `/to-tickets` · Map: [map.md](map.md) · In-game checklist: [docs/testing.md § M2](../../docs/testing.md#m2--identity-and-persistence) · Glossary: [CONTEXT.md](../../CONTEXT.md)
 
 ## Goal
 
