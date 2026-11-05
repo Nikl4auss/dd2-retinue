@@ -81,6 +81,10 @@ Settled while charting (2026-11-03):
   DD2 has three save slots: one roster and backups per slot (`slots/<slot>/`, still v1); slot unknown → no roster;
   within a slot the save wins (backup lowered, no marker needed); new game → slot archived; cache re-resolved by
   OfflineID; one reconciliation pass per load.
+- [Where does the player see the retinue's status in game?](issues/13-native-roster-status.md): talk row
+  "Release (Retinue · Lv N)" and a "· Retinue" Status page header for present members; "★ name · Lv N" (backup level)
+  in the Rift's Previous Hires for members; Return, guard skip and locked/read-only/no-slot as a centred
+  `requestNoButtonDialog` notice the mod closes after ~4 s; gear warning in the Adopt confirmation. Findings 0009.
 
 ## Not yet specified
 

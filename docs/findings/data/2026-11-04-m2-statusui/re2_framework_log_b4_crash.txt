@@ -1,0 +1,12 @@
+Excerpt of re2_framework_log.txt from the session statusui_20261104_204818 (the log was overwritten on relaunch;
+copied from the terminal output taken at the time). Registers omitted.
+
+[2026-11-04 21:10:42.174] [REFramework] [error] Call stack:
+  dinput8.dll + 0x5dda78 / 0x5bc738 / 0x7c881f / 0x7cc751 / 0x7cc3a7 / 0x7cd0be / 0x7cd126 / 0x7c95f5
+  ntdll.dll + 0x10b19 / 0x58d96 / 0x5b445 / 0x10b4a
+  app.ui022901.Item..ctor              DD2.exe + 0x4f00ea
+  app.ui022901.setMessage              DD2.exe + 0x4efdc0
+  app.GuiManager.setTalkBalloonMessage DD2.exe + 0x4ef6f2
+  Unknown symbol 0xd158cf51
+[2026-11-04 21:10:42.176] [REFramework] [error] Exception thrown in REMethodDefinition::invoke for app.GuiManager.setTalkBalloonMessage
+[2026-11-04 21:10:42.176] [REFramework] [error] 0
