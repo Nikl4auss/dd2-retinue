@@ -26,6 +26,13 @@ M.SPECS = {
 -- Hook argument decoding (args[n] are raw pointer-sized values).
 function M.arg_u32(a) return sdk.to_int64(a) & 0xFFFFFFFF end
 
+-- Signed 32-bit view (System.Int32 and enum arguments).
+function M.arg_i32(a)
+    local v = sdk.to_int64(a) & 0xFFFFFFFF
+    if v >= 0x80000000 then v = v - 0x100000000 end
+    return v
+end
+
 function M.to_u32(v)
     if type(v) == "number" then
         local i = math.tointeger(v)

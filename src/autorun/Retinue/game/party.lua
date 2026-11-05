@@ -2,6 +2,7 @@
 -- The decisions live in Retinue/{targets,status}.lua.
 
 local hooks = require("Retinue.hooks")
+local ids = require("Retinue.ids")
 local targets = require("Retinue.targets")
 
 local M = {}
@@ -11,6 +12,7 @@ local M = {}
 --   refresh()  -- the pcall'd party read; on a throw clears the targets and reports "refresh"
 --   rows()     -- nil when no party is loaded, else an array of read_row results (the status.format input)
 --   failed     -- boolean, last refresh threw
+--   has_main_pawn() -- whether the main pawn is in the party as of the last refresh (false when no party)
 function M.new(state, is_hired, report)
     local td_guibase = sdk.find_type_definition("app.GUIBase")
     local m_gui_name = td_guibase and td_guibase:get_method("getName(app.Character)")
@@ -19,17 +21,18 @@ function M.new(state, is_hired, report)
     -- target_charas: app.Character of each party pawn in state.targets, in party order.
     local party_loaded = false
     local target_charas = {}
+    local main_pawn_in_party = false
 
     local function refresh_targets()
         state.targets = {}
         party_loaded = false
         target_charas = {}
+        main_pawn_in_party = false
         local pm = sdk.get_managed_singleton("app.PawnManager")
         if not pm then return end
         local party_list = pm:get_field("_PartyPawnList")
         if not party_list then return end
         party_loaded = true -- a save is loaded; without isSubPawn there are simply no targets
-        if not is_hired then return end
         local party_ids, party_charas = {}, {}
         for i = 0, party_list:call("get_Count") - 1 do
             local pawn = party_list:call("get_Item", i)
@@ -40,9 +43,12 @@ function M.new(state, is_hired, report)
                     local n = #party_ids + 1
                     party_ids[n] = id
                     party_charas[n] = chara
+                    if id == ids.MAIN_PAWN then main_pawn_in_party = true end
                 end
             end
         end
+        -- After the loop: has_main_pawn() must work without isSubPawn (the slot fallback needs it).
+        if not is_hired then return end
         local set = targets.build(party_ids, is_hired)
         local charas = {}
         for i, id in ipairs(party_ids) do
@@ -82,6 +88,7 @@ function M.new(state, is_hired, report)
             state.targets = {}
             party_loaded = false
             target_charas = {}
+            main_pawn_in_party = false
             report("refresh", err)
         end
     end
@@ -91,6 +98,10 @@ function M.new(state, is_hired, report)
         local rows = {}
         for i, chara in ipairs(target_charas) do rows[i] = read_row(chara) end
         return rows
+    end
+
+    function party.has_main_pawn()
+        return main_pawn_in_party
     end
 
     return party

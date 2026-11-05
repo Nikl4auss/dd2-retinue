@@ -6,17 +6,19 @@
 -- app.ExpDispenser.dispLevelUpUI and app.GuiManager.reqJobRankUp put the real ID back, so the level-up and
 -- rank-up notifications name the hired pawn. The REFramework menu has a "Retinue" section with one checkbox
 -- (saved in reframework/data/Retinue/config.json, on when there is no file) and a status line naming the
--- party pawns progression applies to (name, level, vocation, rank, discipline), read only while the menu is drawn. The
--- four hooks install all or nothing: if any hooked method cannot be found after a game update, no hook is
--- installed and the menu says so.
+-- party pawns progression applies to (name, level, vocation, rank, discipline), read only while the menu is drawn.
+-- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
+-- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
+-- tracked from the game's start and load requests; the decisions live in Retinue/slot.lua.
 --
 -- Do NOT deploy tools/experiments/Retinue_Exp_Hooks.lua alongside this script: both would hook the same
 -- methods and rewrite the same arguments.
 --
 -- Layout: this file is only wiring (requires, the shared state, the three REFramework callbacks and the menu).
--- The decisions live in Retinue/{targets,progression,errlog,status,opencalls,config}.lua (pure, tested by
+-- The decisions live in Retinue/{targets,progression,errlog,status,opencalls,config,slot}.lua (pure, tested by
 -- tests/run.sh). The REFramework glue is Retinue/hooks.lua plus Retinue/game/: config_store (config.json),
--- progression_hooks (the four hooks and the isSubPawn lookup) and party (the party read and status rows).
+-- progression_hooks (the four hooks and the isSubPawn lookup), party (the party read and status rows) and
+-- slot_hooks (the start/load request hooks behind the save slot).
 -- Every hook body runs under pcall.
 
 local errlog = require("Retinue.errlog")
@@ -24,6 +26,8 @@ local status = require("Retinue.status")
 local config_store = require("Retinue.game.config_store")
 local progression_hooks = require("Retinue.game.progression_hooks")
 local party_reader = require("Retinue.game.party")
+local slot = require("Retinue.slot")
+local slot_hooks = require("Retinue.game.slot_hooks")
 
 local state = { enabled = true, available = false, targets = {} }
 
@@ -38,6 +42,8 @@ state.available = prog_hooks.available
 
 local party = party_reader.new(state, prog_hooks.is_hired, report)
 
+local tracker = slot_hooks.install(report)
+
 -- Clear the open-call stack at the start of each game update, on the game thread: re.on_frame may run on
 -- the render thread, where a clear could fall between a rewritten core pre-hook and its notification.
 re.on_pre_application_entry("UpdateBehavior", function()
@@ -46,6 +52,8 @@ end)
 
 re.on_frame(function()
     party.refresh()
+    local ok, err = pcall(tracker.update, party.has_main_pawn())
+    if not ok then report("slot", err) end
 end)
 
 local function draw()
@@ -58,6 +66,10 @@ local function draw()
     for _, w in ipairs(store.warnings) do imgui.text((w:gsub("^%[Retinue%] ", ""))) end
     local rows = party.rows()
     imgui.text(party.failed and "Status unavailable (see log)" or status.format(rows))
+    imgui.text(slot.label(tracker.unit()))
+    for _, method_name in ipairs(tracker.missing) do
+        imgui.text("Slot tracking unavailable: " .. method_name .. " not found (game update?)")
+    end
     for _, method_name in ipairs(prog_hooks.missing) do
         imgui.text("Progression unavailable: " .. method_name .. " not found (game update?)")
     end

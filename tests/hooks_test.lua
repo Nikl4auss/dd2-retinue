@@ -98,5 +98,6 @@ end
 do
     assert(hooks.arg_u32(-2011938949) == 2283028347)
     assert(hooks.to_u32(-2011938949) == 2283028347)
+    assert(hooks.arg_i32(0xFFFFFFFF) == -1 and hooks.arg_i32(9) == 9)
     assert(math.type(hooks.to_u32(2283028347.0)) == "integer")
 end

@@ -6,7 +6,7 @@ tests; [findings 0010](../../docs/findings/0010-m2-save-slot-identity.md). Base 
 Two slices, sequential (slice 2 edits files slice 1 creates).
 
 - [x] Slice 1: Prefactor the entry script into `Retinue/game/` modules (no behaviour change). Tier: **Sonnet** (`implementer`).
-- [ ] Slice 2: Save-slot tracking: pure `slot` module + tests, slot hooks, fallback, menu line. Tier: **Sonnet** (`implementer`).
+- [x] Slice 2: Save-slot tracking: pure `slot` module + tests, slot hooks, fallback, menu line. Tier: **Sonnet** (`implementer`).
 
 Facts the design rests on (from the experiment run files in `docs/findings/data/2026-11-05-saveslot/`):
 
