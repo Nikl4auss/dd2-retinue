@@ -26,3 +26,11 @@ not show whether `FlowPhase` has left `InGame` by then. Check 14's "No false abs
 
 From the final review, unverified: `PawnManager.keepPartyPawn`, `comebackPartyPawn` and `standbyPartyPawn` exist in the dump and no doc mentions them. If one takes
 hired pawns out of `_PartyPawnList` with the main pawn still there, that is a false away. A diff held by an unreadable party logs nothing.
+
+In game (2026-11-06, user, Slot 2, `m2-adopted-folken`), check 14 lost part: passed. *Kill pawns* at 09:46:21 (`in the world: no`, Folken stays `present`). The user revived
+the main pawn: `in the world: yes` at 09:46:53.002, `Folken: present→away (absence)` at 09:46:56.106, 3.1 s later. Re-hire: `away→returning (backup Lv 28)`, 26 ms later
+`returning→present restored Lv 23→28`. Roster `present`, backup Lv 28.
+
+No false absence, title exit: passed once. `in the world: no (phase 43)` at 09:48:24, no `absence` line up to the end of the log, roster `present`. The ferrystone and the
+death reload have no evidence yet: this launch has one load request, and the previous log is the 08:54 session. 76 `get_IsDrawedWeapon` exceptions during that exit come
+from other mods (Retinue never calls it), not a crash.

@@ -156,7 +156,7 @@ Restore `fixture-levelled-pawn`, adopt Folken (Lv 27), grant exp until Lv 28. Sn
     Cancel: nothing changes. Again, choose Folken → "Release Folken? Their progress will be lost." → Yes: Folken's
     member is gone, its backup gone or 0 bytes (as in check 7), the new pawn is adopted.
 14. **Lost**: restore `m2-adopted-folken`. *Kill pawns* (Nick's Devtools): the main pawn leaves too, so the log shows
-    `in the world: no` and Folken stays `present`. Travel to a Rift stone: within ~3 s of the main pawn's return
+    `in the world: no` and Folken stays `present`. Revive the main pawn (or travel to a Rift stone): within ~3 s of its return
     (`in the world: yes`), log `present→away (absence)`; backup = the last poll (Lv 28). Re-hire: restored as in
     check 12. Natural lost (down timer or rest) *(opportunistic)*: the main pawn stays, so away comes ~3 s after the
     pawn leaves.
