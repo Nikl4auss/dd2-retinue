@@ -15,4 +15,4 @@ when a value changed, deleted on release. Within a slot the save wins: a member 
 - [ ] A missing or damaged backup affects only its pawn (warning), never locks the roster.
 - [ ] A present member below its backup (rollback): the poll lowers the backup, one warning with both levels.
 - [ ] Backups run with the progression toggle off; nothing written when locked, read-only or slot unknown.
-- [ ] Verified in game: level an adopted pawn, the file follows within ~10 s; a fight with no change leaves the file untouched.
+- [ ] Verified in game: level an adopted pawn, the file follows within ~10 s; 30 s idle, or a fight with no kill, leaves the file untouched.

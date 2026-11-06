@@ -42,7 +42,7 @@ function M.to_u32(v)
 end
 
 -- Method lookup: the full signature string first, then name + parameter type names (last segment).
-local function find_method(td, sig)
+function M.find_method(td, sig)
     local m = td:get_method(sig)
     if m then return m end
     local name, plist = sig:match("^([^%(]+)%((.*)%)$")
@@ -74,7 +74,7 @@ function M.install(entries, report)
     for i, entry in ipairs(entries) do
         local ok, m = pcall(function()
             local td = sdk.find_type_definition(entry.type)
-            return td and find_method(td, entry.sig)
+            return td and M.find_method(td, entry.sig)
         end)
         if ok and m then
             resolved[i] = m

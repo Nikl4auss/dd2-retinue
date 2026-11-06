@@ -9,9 +9,11 @@ local slot = require("Retinue.slot")
 
 local M = {}
 
+local READ_FAILED = "read failed"
+
 -- Returns backups (read_pawn(view) -> snapshot | nil, why is game/pawn_state's read):
 --   backups.last     { [offline_id] = backup }   this activation's view of each member's file (nil: none usable)
---   backups.problem  { [offline_id] = string }   backup.resolve's problem, or "write failed"; cleared on a good write
+--   backups.problem  { [offline_id] = string }   backup.resolve's problem, "read failed" or "write failed"; cleared on a good write
 --   backups.activate(unit, r)   -- on every roster (re)load: clears both, then reads each member's file
 --   backups.capture(unit, m, view, opts)  -- reads the pawn and writes its file when something changed (opts.force:
 --                                            always write, never lowered)
@@ -20,6 +22,7 @@ local M = {}
 --   backups.level(id) -> the backup's level | nil;  backups.note(id) -> the problem text | nil
 -- Away and returning members are never captured here: that is the freeze. Lines go to log.error with the [Retinue]
 -- prefix; repeatable failures go through report.
+
 function M.new(report, read_pawn)
     local backups = { last = {}, problem = {} }
     local poll = backup.new_poll(backup.POLL_SECONDS)
@@ -50,14 +53,13 @@ function M.new(report, read_pawn)
     function backups.capture(unit, m, view, opts)
         local id = m.offline_id
         local ok, fresh, why = pcall(read_pawn, view)
-        if not ok then
-            report("backup read", m.name .. ": " .. tostring(fresh))
+        if not (ok and fresh) then
+            -- A note that says more (missing, damaged) stays.
+            backups.problem[id] = backups.problem[id] or READ_FAILED
+            report("backup read", m.name .. ": " .. tostring(ok and why or fresh))
             return
         end
-        if not fresh then
-            report("backup read", m.name .. ": " .. tostring(why))
-            return
-        end
+        if backups.problem[id] == READ_FAILED then backups.problem[id] = nil end
         local last = backups.last[id]
         fresh.name = m.name
         backup.carry_recorded(fresh, last)

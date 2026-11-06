@@ -127,12 +127,14 @@ is entered, a fight, a save and a reload work, the Rift hires and dismisses, and
 4. **Adopted status**: talking again shows "Release (Retinue · Lv N)"; the Status page header reads "<name> · Retinue"
    for that pawn only (not the Arisen, the main pawn or the other hired pawn).
 5. **Progression**: in a fight (or *Grant exp*) the adopted pawn levels with its own notification; the other hired pawn
-   does not. Within ~10 s of the level-up the backup file shows the new level; a fight with no change leaves the file's
-   modification time alone.
+   does not. Within ~10 s of the level-up the backup file shows the new level; 30 s idle (or a fight with no kill: any exp
+   gain changes the file) leaves the file's modification time alone. The log shows `in the world: yes` after the
+   load and never `in the world: no (phase N)` during normal play.
 6. **Toggle off**: untick progression. The adopted pawn stops levelling (exp banks), its backup still follows exp
    changes. Tick it again.
 7. **Release**: pick "Release (Retinue · Lv N)" → "Release <name>? Their progress will be lost." *Yes*: the pawn stays in
-   the party at its level, the row reads "Adopt" again, the member and its backup file are gone, it no longer levels.
+   the party at its level, the row reads "Adopt" again, the member is gone and its backup file is gone or 0 bytes (log: `(backup removed)` or `(backup emptied)`;
+   `(backup left in place)` is a failure), it no longer levels.
 8. **Cap**: adopt both hired pawns. Mod menu lists two members. (The full-retinue flow is check 13.)
 9. **Not adoptable** *(opportunistic)*: an online pawn (owner not `CAPCOM`) in the party gets no fifth row.
 
@@ -152,7 +154,7 @@ Restore `fixture-levelled-pawn`, adopt Folken (Lv 27), grant exp until Lv 28. Sn
 13. **Retinue full**: from `m2-adopted-folken`, adopt the second hired pawn too, dismiss Folken, hire a fresh pawn into
     the free slot and pick Adopt. Dialog "Your retinue is full." with "Release Folken (away, Lv 28)" and Cancel.
     Cancel: nothing changes. Again, choose Folken → "Release Folken? Their progress will be lost." → Yes: Folken's
-    member and backup are gone, the new pawn is adopted.
+    member is gone, its backup gone or 0 bytes (as in check 7), the new pawn is adopted.
 14. **Lost**: restore `m2-adopted-folken`. *Kill pawns* (Nick's Devtools) and leave Folken down until he leaves the
     party. Within ~3 s of leaving: log `present→away (absence)`; backup = the last poll (Lv 28). Re-hire: restored as
     in check 12. Natural lost (down timer or rest) *(opportunistic)*.
@@ -193,8 +195,9 @@ Use a test slot, never the real save's slot, for 21 and 22.
     load (save wins); `"name": 5` → "(unknown)" until refreshed.
 25. **Read-only**: `"version": 2`. Notice on load; present members level; Adopt/Release refused with the reason; no file
     under `slots/<n>/` changes (roster or backups) through a fight and a dismiss.
-26. **Damaged backup**: `not json` in one backup: warning for that pawn only; on its Return no restore; the other member
-    works.
+26. **Damaged backup**: `not json` in an **away** member's backup: warning for that pawn only; on its Return no restore;
+    the other member works. In a **present** member's backup: warning and a note in the menu, rewritten within ~10 s
+    (the game is the authority while present).
 
 ### Uninstall guarantee
 

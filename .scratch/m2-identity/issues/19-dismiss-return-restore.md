@@ -17,3 +17,13 @@ level guard), and it becomes present again with its progress. The menu shows eac
 - [ ] Runs with the toggle off; locked: nothing; read-only: no writes, no restore; ambiguous: excluded.
 - [ ] One log line per transition (away with cause, returning, restored Lv a→b / skipped: guard, timeout).
 - [ ] Verified in game (checklist 10, 12, 15): Folken Lv 28 dismissed and re-hired comes back at Lv 28 with identical Status page, through save, reload and relaunch.
+
+## Comments
+
+From ticket 18's final review:
+
+- `backups.capture` writes unconditionally: the gates (writable roster, `PRESENT`, in `found`) live in `backups.poll`.
+  The `dismissPawn` pre forced read needs those gates too (a read-only roster must not write): extract them into one
+  function that both call.
+- Until this ticket lands, dismissing and re-hiring a member lowers its backup (the pawn comes back present at its
+  first-hire level and the poll follows it).

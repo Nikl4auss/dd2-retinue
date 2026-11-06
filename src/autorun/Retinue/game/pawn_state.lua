@@ -1,8 +1,9 @@
 -- REFramework glue: reads a party pawn's backup snapshot (uses sdk). The shape and the validity rules of the
--- snapshot live in Retinue/backup.lua. The readers are copied from tools/experiments (Retinue_Exp_Restore: find_method,
+-- snapshot live in Retinue/backup.lua. The readers are copied from tools/experiments (Retinue_Exp_Restore:
 -- read_num_array, the equipment read; Retinue_Exp_Lifecycle: str, read_int_array for skills).
 
 local backup = require("Retinue.backup")
+local hooks = require("Retinue.hooks")
 local party = require("Retinue.game.party")
 local roster = require("Retinue.roster")
 local slot = require("Retinue.slot")
@@ -25,29 +26,6 @@ local function str(v)
         if ok and s then return tostring(s) end
     end
     return tostring(v)
-end
-
-local function find_method(td, sig)
-    local m = td:get_method(sig)
-    if m then return m end
-    local name, plist = sig:match("^([^%(]+)%((.*)%)$")
-    if not name then return nil end
-    local want = {}
-    for p in plist:gmatch("[^,%s]+") do want[#want + 1] = p:match("([^%.]+)$") end
-    for _, cand in ipairs(td:get_methods()) do
-        if cand:get_name() == name then
-            local ok, types = pcall(function() return cand:get_param_types() end)
-            if ok and type(types) == "table" and #types == #want then
-                local same = true
-                for i, t in ipairs(types) do
-                    local full = t:get_full_name() or ""
-                    if full:match("([^%.]+)$") ~= want[i] then same = false; break end
-                end
-                if same then return cand end
-            end
-        end
-    end
-    return nil
 end
 
 -- Int32[] -> plain Lua integers. get_elements() hands back boxed elements (they come out as strings via str()), so
@@ -121,7 +99,7 @@ function M.new(report)
     local function equip_method()
         if not equip_resolved then
             equip_resolved = true
-            m_get_equip = td_im and find_method(td_im, "getEquipData(app.CharacterID)") or nil
+            m_get_equip = td_im and hooks.find_method(td_im, "getEquipData(app.CharacterID)") or nil
         end
         return m_get_equip
     end

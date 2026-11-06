@@ -14,3 +14,9 @@ the loaded party, including a Return made while the mod was not installed (recog
 - [ ] Switching slots in one session cancels the previous slot's pending work without writing to it.
 - [ ] Read-only: in memory only; locked: no pass; slot unknown: none. One log line per correction.
 - [ ] Verified in game (checklist 19, 20): rollback keeps the save's level; each hand-edited roster case gives the expected result.
+
+## Comments
+
+From ticket 18's final review: the reconciliation row present / in party has no CharacterID discriminator. A member
+dismissed and re-hired with the mod removed comes back on reinstall as present at its first-hire level, and the poll lowers
+its backup. Compare the CharacterID there, as the away rows do.

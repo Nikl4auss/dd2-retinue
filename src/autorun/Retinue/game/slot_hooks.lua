@@ -163,7 +163,8 @@ function M.install(report)
         if world ~= last_world then
             last_world = world
             log.error(world and "[Retinue] in the world: yes"
-                or string.format("[Retinue] in the world: no (phase %s)", tostring(phase)))
+                or string.format("[Retinue] in the world: no (phase %s, IsInGamePhase %s)", tostring(phase),
+                    tostring(select(2, pcall(call_on, MFM, "get_IsInGamePhase")))))
         end
         return world
     end
