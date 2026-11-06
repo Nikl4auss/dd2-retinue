@@ -155,9 +155,13 @@ Restore `fixture-levelled-pawn`, adopt Folken (Lv 27), grant exp until Lv 28. Sn
     the free slot and pick Adopt. Dialog "Your retinue is full." with "Release Folken (away, Lv 28)" and Cancel.
     Cancel: nothing changes. Again, choose Folken → "Release Folken? Their progress will be lost." → Yes: Folken's
     member is gone, its backup gone or 0 bytes (as in check 7), the new pawn is adopted.
-14. **Lost**: restore `m2-adopted-folken`. *Kill pawns* (Nick's Devtools) and leave Folken down until he leaves the
-    party. Within ~3 s of leaving: log `present→away (absence)`; backup = the last poll (Lv 28). Re-hire: restored as
-    in check 12. Natural lost (down timer or rest) *(opportunistic)*.
+14. **Lost**: restore `m2-adopted-folken`. *Kill pawns* (Nick's Devtools): the main pawn leaves too, so the log shows
+    `in the world: no` and Folken stays `present`. Travel to a Rift stone: within ~3 s of the main pawn's return
+    (`in the world: yes`), log `present→away (absence)`; backup = the last poll (Lv 28). Re-hire: restored as in
+    check 12. Natural lost (down timer or rest) *(opportunistic)*: the main pawn stays, so away comes ~3 s after the
+    pawn leaves.
+    **No false absence**: from a save with Folken present, use a ferrystone, die and load the last save, then go to
+    the title and load: no `absence` line in the log, `present` in the roster.
 15. **Level guard**: restore `m2-adopted-folken`, dismiss Folken, save, quit; hand-edit his backup's level to 22 (below the
     first-hire 23), launch, re-hire. Notice "Folken returned — kept Lv 23, newer than the backup"; log `skipped: guard`;
     the backup is then overwritten by the poll with Lv 23.

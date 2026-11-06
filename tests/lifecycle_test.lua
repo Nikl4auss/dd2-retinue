@@ -72,12 +72,13 @@ local function setup(statuses, opts)
         return t.read_result or t.backups_by_id[view.offline_id]
     end
 
-    t.party = { failed = false, main = true }
+    t.party = { failed = false, main = true, all_read = true }
     local party = { }
     setmetatable(party, { __index = function(_, k)
         if k == "failed" then return t.party.failed end
     end })
     function party.has_main_pawn() return t.party.main end
+    function party.all_read() return t.party.all_read end
     function party.level(view) return t.party_levels[view.offline_id] end
 
     t.flow = lifecycle.new{
@@ -605,6 +606,141 @@ do
     t.push(dismiss(B, nil))
     t.flow.update()
     assert(t.status(B) == roster.AWAY and #t.reports == 1 and t.reports[1].what == "lifecycle")
+end
+
+-- the party diff: a present member missing for 3 checks (a second apart, in the world) becomes away
+-- ticks(t, from, to): flow.update(now, true) at each second from..to
+local function ticks(t, from, to, in_world)
+    if in_world == nil then in_world = true end
+    for now = from, to do t.flow.update(now, in_world) end
+end
+
+do
+    local t = setup{ [A] = roster.PRESENT }
+    ticks(t, 0, 2) -- the first check is a second after entering the world
+    assert(t.status(A) == roster.PRESENT and #t.lines == 0)
+    ticks(t, 3, 3)
+    assert(t.status(A) == roster.AWAY and t.member(A).character_id == 11)
+    assert(#t.lines == 1 and t.lines[1] == "Ana: present→away (absence)")
+    assert(table.concat(t.order, ",") == "mark_away" and #t.stores == 0 and #t.reports == 0)
+    ticks(t, 4, 8) -- away members never go through it
+    assert(#t.lines == 1 and #t.order == 1)
+end
+
+-- found again before the third check: stays present, and the count restarts
+do
+    local t = setup{ [A] = roster.PRESENT }
+    ticks(t, 0, 2)
+    t.view(A)
+    ticks(t, 3, 3)
+    t.retinue.found[A] = nil
+    ticks(t, 4, 5)
+    assert(t.status(A) == roster.PRESENT)
+    ticks(t, 6, 6)
+    assert(t.status(A) == roster.AWAY)
+end
+
+-- returning and away members never go through it
+do
+    local t = setup{ [A] = roster.RETURNING, [B] = roster.AWAY }
+    ticks(t, 0, 6)
+    assert(t.status(A) == roster.RETURNING and t.status(B) == roster.AWAY)
+    assert(#t.order == 0 and #t.lines == 0)
+end
+
+-- ambiguous is never missing
+do
+    local t = setup{ [A] = roster.PRESENT }
+    t.retinue.ambiguous[A] = true
+    ticks(t, 0, 6)
+    assert(t.status(A) == roster.PRESENT and #t.order == 0)
+end
+
+-- read-only: away in memory
+do
+    local t = setup({ [A] = roster.PRESENT }, { mode = roster.READ_ONLY })
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.AWAY and t.lines[1] == "Ana: present→away (absence)")
+end
+
+-- locked and no roster: no check
+do
+    local t = setup({ [A] = roster.PRESENT }, { mode = roster.LOCKED })
+    ticks(t, 0, 6)
+    assert(#t.order == 0 and #t.lines == 0)
+    local u = setup{ [A] = roster.PRESENT }
+    u.retinue.roster = nil
+    ticks(u, 0, 6)
+    assert(#u.order == 0 and #u.lines == 0 and #u.reports == 0)
+end
+
+-- no check without the world, with a failed party or without the main pawn; each drops the counts
+do
+    local cases = {
+        function(t) ticks(t, 3, 3, false) end,
+        function(t) t.party.failed = true; ticks(t, 3, 3) end,
+        function(t) t.party.main = false; ticks(t, 3, 3) end,
+    }
+    for _, drop in ipairs(cases) do
+        local t = setup{ [A] = roster.PRESENT }
+        ticks(t, 0, 2)
+        drop(t)
+        t.party.failed, t.party.main = false, true
+        ticks(t, 4, 6) -- re-armed at 4: the counts start over, checks at 5, 6, 7
+        assert(t.status(A) == roster.PRESENT and #t.order == 0)
+        ticks(t, 7, 7)
+        assert(t.status(A) == roster.AWAY)
+    end
+    -- in_world nil (update() without arguments) is no check
+    local t = setup{ [A] = roster.PRESENT }
+    for _ = 1, 10 do t.flow.update() end
+    assert(#t.order == 0)
+end
+
+-- an unreadable party holds the diff and drops the counts
+do
+    local t = setup{ [A] = roster.PRESENT }
+    ticks(t, 0, 2) -- arm, two misses
+    t.party.all_read = false
+    ticks(t, 3, 3)
+    t.party.all_read = true
+    ticks(t, 4, 6) -- re-armed at 4: checks 5, 6 are misses 1, 2
+    assert(t.status(A) == roster.PRESENT and #t.order == 0)
+    ticks(t, 7, 7)
+    assert(t.status(A) == roster.AWAY)
+end
+
+-- a new generation drops the counts
+do
+    local t = setup{ [A] = roster.PRESENT }
+    ticks(t, 0, 2)
+    t.retinue.generation = 2
+    ticks(t, 3, 5)
+    assert(t.status(A) == roster.PRESENT)
+    ticks(t, 6, 6)
+    assert(t.status(A) == roster.AWAY)
+end
+
+-- a queued dismiss in the same update wins: only (dismiss) is logged
+do
+    local t = setup{ [A] = roster.PRESENT }
+    ticks(t, 0, 2)
+    t.push(dismiss(A, nil))
+    ticks(t, 3, 3)
+    assert(t.status(A) == roster.AWAY and #t.lines == 1 and t.lines[1] == "Ana: present→away (dismiss)")
+end
+
+-- a throwing mark_away is reported and the other member still goes away
+do
+    local t = setup{ [A] = roster.PRESENT, [B] = roster.PRESENT }
+    t.retinue.mark_away = function(self, id)
+        if id == A then error("save failed") end
+        return roster.mark_away(self.roster, id)
+    end
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.PRESENT and t.status(B) == roster.AWAY)
+    assert(#t.reports == 1 and t.reports[1].what == "lifecycle")
+    assert(#t.lines == 1 and t.lines[1] == "Bo: present→away (absence)")
 end
 
 print("lifecycle_test ok")

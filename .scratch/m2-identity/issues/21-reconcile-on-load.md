@@ -25,3 +25,6 @@ From ticket 19's in-game run: **a re-hire can keep the same CharacterID** (Folke
 party, same CharacterID → rollback, present, no restore" is not safe alone: a Return made with the mod absent that lands on the same ID would read as a
 rollback and stay at its first-hire level. Find a better discriminator before building that row, or compare levels too (a pawn at or below the first-hire
 state with exp 0 and a higher backup).
+
+From ticket 20: a false away (a member in the party, marked away by the diff during a temporary absence) stays away for the session; this ticket's row
+"away, in party, same CharacterID → present" is its only repair.

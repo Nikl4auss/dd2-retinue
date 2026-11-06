@@ -19,6 +19,8 @@
 -- Dismissing a member at the Rift (the pawn leaves the party) stores its last backup and marks it away. Hiring it again
 -- marks it returning, and about a frame later, in the game's update, its progress is written back from the backup
 -- (retried for about 10 seconds; the menu shows a note when that fails). Both run whatever the progression checkbox says.
+-- A member that leaves any other way (lost) is noticed by a party check about every second in the world and marked away
+-- after 3 misses; its backup is the last poll.
 -- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
 -- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
 -- tracked from the game's start and load requests; the decisions live in Retinue/slot.lua.
@@ -99,7 +101,7 @@ re.on_frame(function()
     local world = false
     if ok_roster then
         world = tracker.in_world(party.has_main_pawn())
-        local ok_l, err_l = pcall(flow.update)
+        local ok_l, err_l = pcall(flow.update, os.clock(), world)
         if not ok_l then report("lifecycle", err_l) end
         local ok_b, err_b = pcall(backups.poll, retinue, world, os.clock())
         if not ok_b then report("backup", err_b) end

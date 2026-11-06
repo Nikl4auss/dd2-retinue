@@ -1,12 +1,14 @@
 -- Departure and Return decisions. Pure: no REFramework globals, so it runs under plain Lua in tests; lifecycle.lua
 -- drives it and game/ does the hooks and the writes. Here: what a restore attempt does next, the retry budget of
--- a Return, and the log texts of the transitions. (Ticket 20 adds the miss counter here.)
+-- a Return, the miss counts of the party diff (a member that left unseen), and the log texts of the transitions.
 local backup = require("Retinue.backup")
 local slot = require("Retinue.slot")
 
 local M = {}
 
 M.RETRY_SECONDS = 10
+M.CHECK_SECONDS = 1
+M.MISS_LIMIT = 3
 M.WAIT, M.RESTORE, M.SKIP_GUARD, M.SKIP_NO_BACKUP, M.TIMEOUT = "wait", "restore", "skip_guard", "skip_no_backup", "timeout"
 
 -- step{ in_party = boolean, game_level = number|nil, backup = table|nil, expired = boolean } -> action
@@ -74,6 +76,38 @@ function Budget:note(id)
     local e = self.entries[id]
     if e == nil then return nil end
     return e.closed or "pending"
+end
+
+-- new_diff(interval, limit) -> diff; the counts of the party diff, per member.
+-- diff:check(now, in_world, generation, missing) -> ids that just became absent, in missing's order (usually {})
+--   missing() -> array of ids missing right now; called only when a check is due.
+--   A check is due every `interval` in the world (backup.new_poll: re-armed on entering the world and on a new generation).
+--   Each id in missing gains 1; an id not in it loses its count (a reappearance resets); an id reaching `limit` is returned
+--   and loses its count. Not in the world, or a new generation: every count is dropped.
+local Diff = {}
+Diff.__index = Diff
+
+function M.new_diff(interval, limit)
+    return setmetatable({ poll = backup.new_poll(interval), limit = limit, generation = nil, counts = {} }, Diff)
+end
+
+function Diff:check(now, in_world, generation, missing)
+    if generation ~= self.generation or not in_world then
+        self.generation = generation
+        self.counts = {}
+    end
+    if not self.poll:tick(now, in_world, generation) then return {} end
+    local counts, gone = {}, {}
+    for _, id in ipairs(missing()) do
+        local n = (self.counts[id] or 0) + 1
+        if n >= self.limit then
+            gone[#gone + 1] = id
+        else
+            counts[id] = n
+        end
+    end
+    self.counts = counts
+    return gone
 end
 
 -- Log texts, without the [Retinue] prefix. docs/testing.md reads these lines.

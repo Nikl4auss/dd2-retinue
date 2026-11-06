@@ -51,6 +51,8 @@ end
 --   level(view)    -- the pawn's level read now (nil on failure), for the menu
 --   failed         -- boolean, last refresh threw
 --   has_main_pawn() -- whether the main pawn is in the party as of the last refresh (false when no party)
+--   all_read()     -- true only when a party is loaded, the last refresh completed every identity read and no list
+--                     entry with a pawn was unreadable (no character, or no CharaID); an empty entry is not unread
 function M.new(report)
     local td_guibase = sdk.find_type_definition("app.GUIBase")
     local m_gui_name = td_guibase and td_guibase:get_method("getName(app.Character)")
@@ -66,6 +68,8 @@ function M.new(report)
     local party_views = {}
     local main_pawn_in_party = false
     local was_changed = false
+    -- A list entry with a pawn but no readable character or CharaID in the last refresh.
+    local unread_entry = false
     -- The cached part, keyed by the party's CharacterID list: cache_key = "slot:id,..." of the last read (nil =
     -- none valid), cache[n] = { owner, offline_id, name } for views[n]. A CharacterID can only be reused by another
     -- pawn across a dismiss, which changes the list, so the key is safe.
@@ -110,6 +114,7 @@ function M.new(report)
         party_loaded = false
         main_pawn_in_party = false
         was_changed = false
+        unread_entry = false
         local pm = sdk.get_managed_singleton("app.PawnManager")
         local party_list = pm and pm:get_field("_PartyPawnList")
         if not party_list then
@@ -127,7 +132,11 @@ function M.new(report)
                     party_views[#party_views + 1] = { slot = i, character_id = id, chara = chara }
                     key_parts[#key_parts + 1] = i .. ":" .. tostring(id)
                     if id == ids.MAIN_PAWN then main_pawn_in_party = true end
+                else
+                    unread_entry = true
                 end
+            elseif pawn then
+                unread_entry = true
             end
         end
         local key = table.concat(key_parts, ",")
@@ -176,6 +185,7 @@ function M.new(report)
             party_loaded = false
             main_pawn_in_party = false
             was_changed = false
+            unread_entry = false
             cache_key, cache = nil, {}
             report("refresh", err)
         end
@@ -205,6 +215,10 @@ function M.new(report)
 
     function party.has_main_pawn()
         return main_pawn_in_party
+    end
+
+    function party.all_read()
+        return party_loaded and cache_key ~= nil and not unread_entry
     end
 
     return party

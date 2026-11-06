@@ -2,6 +2,7 @@ local departure = require("Retinue.departure")
 
 assert(departure.RETRY_SECONDS == 10)
 assert(departure.WAIT == "wait" and departure.RESTORE == "restore" and departure.SKIP_GUARD == "skip_guard")
+assert(departure.CHECK_SECONDS == 1 and departure.MISS_LIMIT == 3)
 assert(departure.SKIP_NO_BACKUP == "skip_no_backup" and departure.TIMEOUT == "timeout")
 
 -- step
@@ -89,6 +90,91 @@ do
         == "Ana: restored, differs from its backup in current_job, skills")
     assert(departure.still_here_text("Ana", "present") == "Ana: dismissed but still in the party, stays present")
     assert(departure.still_here_text("Ana", "returning") == "Ana: dismissed but still in the party, stays returning")
+end
+
+-- new_diff
+do
+    local function ids(...) local t = { ... } return function() return t end end
+    local function eq(got, ...)
+        local want = { ... }
+        assert(#got == #want, #got .. " ids, want " .. #want)
+        for i = 1, #want do assert(got[i] == want[i]) end
+    end
+
+    -- the first check is due only after a full interval; three misses return the id once, on the third
+    do
+        local d = departure.new_diff(1, 3)
+        local calls = 0
+        local function missing() calls = calls + 1 return { "a" } end
+        eq(d:check(0, true, 1, missing))
+        eq(d:check(0.5, true, 1, missing))
+        assert(calls == 0)
+        eq(d:check(1, true, 1, missing))
+        eq(d:check(1.5, true, 1, missing)) -- not due between checks
+        assert(calls == 1)
+        eq(d:check(2, true, 1, missing))
+        eq(d:check(3, true, 1, missing), "a")
+        assert(calls == 3)
+        -- the count is gone: it takes three more misses
+        eq(d:check(4, true, 1, missing))
+        eq(d:check(5, true, 1, missing))
+        eq(d:check(6, true, 1, missing), "a")
+    end
+
+    -- a reappearance resets the count
+    do
+        local d = departure.new_diff(1, 3)
+        eq(d:check(0, true, 1, ids("a")))
+        eq(d:check(1, true, 1, ids("a")))
+        eq(d:check(2, true, 1, ids("a")))
+        eq(d:check(3, true, 1, ids()))
+        eq(d:check(4, true, 1, ids("a")))
+        eq(d:check(5, true, 1, ids("a")))
+    end
+
+    -- out of the world: missing is not called and the counts are dropped
+    do
+        local d = departure.new_diff(1, 3)
+        local called = false
+        eq(d:check(0, true, 1, ids("a")))
+        eq(d:check(1, true, 1, ids("a")))
+        eq(d:check(2, true, 1, ids("a")))
+        eq(d:check(3, false, 1, function() called = true return {} end))
+        assert(not called)
+        eq(d:check(4, true, 1, ids("a"))) -- re-armed
+        eq(d:check(5, true, 1, ids("a")))
+        eq(d:check(6, true, 1, ids("a")))
+    end
+
+    -- a new generation drops the counts
+    do
+        local d = departure.new_diff(1, 3)
+        eq(d:check(0, true, 1, ids("a")))
+        eq(d:check(1, true, 1, ids("a")))
+        eq(d:check(2, true, 1, ids("a")))
+        eq(d:check(3, true, 2, ids("a")))
+        eq(d:check(4, true, 2, ids("a")))
+        eq(d:check(5, true, 2, ids("a")))
+        eq(d:check(6, true, 2, ids("a")), "a")
+    end
+
+    -- two ids count independently and return in missing's order
+    do
+        local d = departure.new_diff(1, 3)
+        eq(d:check(0, true, 1, ids("b", "a")))
+        eq(d:check(1, true, 1, ids("b", "a")))
+        eq(d:check(2, true, 1, ids("a")))
+        eq(d:check(3, true, 1, ids("b", "a")), "a")
+        eq(d:check(4, true, 1, ids("b", "a")))
+        eq(d:check(5, true, 1, ids("b", "a")), "b")
+        eq(d:check(6, true, 1, ids("b", "a")), "a")
+        -- both reaching the limit together come back in missing's order
+        local e = departure.new_diff(1, 3)
+        eq(e:check(0, true, 1, ids("b", "a")))
+        eq(e:check(1, true, 1, ids("b", "a")))
+        eq(e:check(2, true, 1, ids("b", "a")))
+        eq(e:check(3, true, 1, ids("b", "a")), "b", "a")
+    end
 end
 
 print("departure_test ok")

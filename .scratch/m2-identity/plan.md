@@ -5,7 +5,7 @@ Source: [issues/20-lost-member-away.md](issues/20-lost-member-away.md), [spec.md
 
 One slice.
 
-- [ ] Slice 1: the party diff (pure, tests), wiring, docs. Tier: **Sonnet** (`implementer`).
+- [x] Slice 1: the party diff (pure, tests), wiring, docs. Tier: **Sonnet** (`implementer`).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 
@@ -29,6 +29,7 @@ Decided here (the spec leaves them open):
 - `retinue.found` is the diff's input. It matches any party slot, which equals slots 1–2 because the main pawn has no Offline ID.
 - **Read-only**: the diff runs in memory, like the dismiss transition; `save` writes nothing. **Locked** or no roster: no check. **Ambiguous**: never missing.
 - **Only `present` counts.** A `returning` member that is absent is ticket 21's row.
+- **An unreadable party holds the diff** (reviewer, round 1): an identity read that did not complete, or a list entry with a pawn but no readable character or ID, is not an absence. The check counts as out of the world, so the counts drop. `party.lua` gains `all_read()`. A zero GUID (online pawn) is a complete read, and an empty list entry is not unread.
 - **A false away is not repaired within the session** (a pawn in the party with status away): out of scope, ticket 21 repairs it on the next load.
 
 ---
@@ -99,4 +100,4 @@ Decided here (the spec leaves them open):
 
 **Verify**: `tests/run.sh`; `luac5.4 -p src/autorun/Retinue.lua src/autorun/Retinue/*.lua` if `luac5.4` exists.
 
-**Out of scope**: ticket 21's reconciliation; a same-session repair of a false away; hooks on `lost` or `unregistPawn`; `lifecycle_hooks.lua`, `party.lua`, `roster_store.lua`; the title-exit guard (only if the in-game check needs it).
+**Out of scope**: ticket 21's reconciliation; a same-session repair of a false away; hooks on `lost` or `unregistPawn`; `lifecycle_hooks.lua`, `roster_store.lua`; the title-exit guard (only if the in-game check needs it).

@@ -24,7 +24,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Departure and Return (M2): dismissing a member at the Rift stores its last backup and marks it away; hiring it
   again marks it returning and restores its progress (level, exp, stat increases, discipline, vocation exp) from the
   backup, unless the game's level is already above it. A `Departure tracking unavailable` notice shows when a hooked
-  method is missing.
+  method is missing. A member that leaves any other way (lost) is marked away after 3 party checks, about a second
+  apart in the world, that do not find it; its backup is the last poll.
 
 ### Changed
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is

@@ -1,7 +1,8 @@
 -- The Departure and Return driver. Pure: no REFramework globals, everything is injected, so
--- tests/lifecycle_test.lua drives it with fakes. It applies the hook events (a dismiss, a hire) to the roster
--- and runs the restore attempts. Decisions live in departure.lua, roster.lua and backup.lua; the game thread,
--- the hooks and the writes are the glue's (game/lifecycle_hooks.lua, game/pawn_state.lua).
+-- tests/lifecycle_test.lua drives it with fakes. It applies the hook events (a dismiss, a hire) to the roster,
+-- runs the party diff (a present member missing from the party becomes away) and runs the restore attempts.
+-- Decisions live in departure.lua, roster.lua and backup.lua; the game thread, the hooks and the writes are the
+-- glue's (game/lifecycle_hooks.lua, game/pawn_state.lua).
 local backup = require("Retinue.backup")
 local departure = require("Retinue.departure")
 local roster = require("Retinue.roster")
@@ -13,7 +14,7 @@ local M = {}
 --              retinue:mark_returning(id) -> member | nil, err; retinue:mark_present(id, character_id) -> member | nil, err
 --   backups:   .store(unit, m, snapshot), .get(id) -> backup | nil, .note(id) -> problem | nil
 --   pawns:     .restore(view, b) -> "done" | "wait", why | "mismatch", field;  .read(view) -> snapshot | nil, why
---   party:     .failed, .has_main_pawn(), .level(view) -> number | nil
+--   party:     .failed, .has_main_pawn(), .all_read(), .level(view) -> number | nil
 --   drain():   returns and empties the hook queue (array of events, oldest first):
 --              { kind = "dismiss", id = <canonical>, generation = n, snapshot = table|nil }
 --              { kind = "hire",    id = <canonical>, generation = n }
@@ -22,6 +23,7 @@ function M.new(deps)
     local retinue, backups, pawns, party = deps.retinue, deps.backups, deps.pawns, deps.party
     local log_line, report = deps.log_line, deps.report
     local budget = departure.new_budget(departure.RETRY_SECONDS)
+    local diff = departure.new_diff(departure.CHECK_SECONDS, departure.MISS_LIMIT)
     local fifo = {}
     local flow = {}
 
@@ -69,8 +71,7 @@ function M.new(deps)
         end
     end
 
-    -- on_frame, after retinue.update, before the backup poll.
-    function flow.update()
+    local function apply_events()
         for _, e in ipairs(deps.drain()) do fifo[#fifo + 1] = e end
         local kept = {}
         for _, e in ipairs(fifo) do
@@ -89,6 +90,41 @@ function M.new(deps)
                 end
             end
             local ok, err = pcall(apply, e, rehired)
+            if not ok then report("lifecycle", err) end
+        end
+    end
+
+    -- Present members that are in no party slot and not ambiguous, in roster order.
+    local function missing()
+        local ids = {}
+        for _, m in ipairs(retinue.roster.members) do
+            local id = m.offline_id
+            if m.status == roster.PRESENT and not retinue.found[id] and not retinue.ambiguous[id] then
+                ids[#ids + 1] = id
+            end
+        end
+        return ids
+    end
+
+    -- A member missing for MISS_LIMIT checks left unseen (a loss): away, whatever the progression toggle says. Its
+    -- backup stays the last poll.
+    local function absence(id)
+        local m = roster.find(retinue.roster, id)
+        if m == nil then return end
+        local member, from = retinue:mark_away(id)
+        if member == nil then return end
+        log_line(departure.away_text(m.name, from, "absence"))
+    end
+
+    -- on_frame, after retinue.update, before the backup poll: the hook events, then the party diff (in the world only;
+    -- a queued dismiss wins and logs its own cause).
+    function flow.update(now, in_world)
+        apply_events()
+        local r = retinue.roster
+        local ready = in_world and r ~= nil and r.mode ~= roster.LOCKED and not party.failed and party.has_main_pawn()
+            and party.all_read()
+        for _, id in ipairs(diff:check(now, ready, retinue.generation, missing)) do
+            local ok, err = pcall(absence, id)
             if not ok then report("lifecycle", err) end
         end
     end
