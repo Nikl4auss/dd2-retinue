@@ -92,7 +92,7 @@ Afterwards: restore `m1-checklist` only if you do not want to keep the gains.
 Spec: [.scratch/m2-identity/spec.md](../.scratch/m2-identity/spec.md). Record results in a findings note with the probe's
 snapshots, the roster and backup files at each step (`reframework/data/Retinue/slots/`), and the REFramework log lines
 of each transition. Items marked *(opportunistic)* pass when the situation comes up; record each as passed or not
-reached. "**Snapshot X**" means the probe's *Save snapshot* with label X.
+reached. "**Snapshot X**" means the lifecycle panel's *Snapshot label* X, then *Snapshot* (the probe's *Save snapshot* takes no label: where only the probe is linked, note the X and the time of the press).
 
 **Ordinary** (used in checks 27–32): the pawn's level, exp, discipline and Status page equal the snapshot taken before
 the step; its talk menu has the four vanilla entries (Talk / Dismiss / Add to Favorites / Never mind); Previous Hires
