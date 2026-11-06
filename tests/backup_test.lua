@@ -29,7 +29,7 @@ end
 assert(backup.VERSION == 1 and backup.POLL_SECONDS == 10)
 assert(backup.EQUAL == "equal" and backup.LOWER == "lower" and backup.HIGHER == "higher")
 assert(backup.NONE == "none" and backup.WRITE == "write" and backup.LOWERED == "lowered")
-assert(#backup.INCREASE_KEYS == 8 and #backup.RECORDED_KEYS == 6)
+assert(#backup.INCREASE_KEYS == 8 and #backup.RECORDED_KEYS == 7)
 assert(backup.path(0, A) == "Retinue/slots/1/backups/" .. A .. ".json")
 assert(backup.path(2, B) == "Retinue/slots/3/backups/" .. B .. ".json")
 

@@ -36,6 +36,12 @@ Decided here:
 - **Read-only:** corrections apply in memory (`save` writes nothing). Locked: no plan, the gate still opens. Unknown slot: no roster, the gate still opens.
 - **Returning / in party** is not a correction: no change and no line, `flow.tick` retries once the gate opens (its budget was dropped by the new generation).
 - **Ambiguous** members get no correction.
+- **Equal hire times are not proof of "save wins".** After an unseen Return the poll stamps the new hire time onto a backup that holds restored progress, while the disk save still has that hire at first-hire level until the next game
+  save; a load of that save reads equal times and the poll would lower the backup for good. So the backup also records `restored_from` (the game's level the last restore started from, set when a restore is done): on equal
+  times a save at or below it and below the backup is a Return; otherwise the first-hire signature decides.
+- **The backup is written right after a restore** (final review, reversing this plan's first note): the hire time and the floor reach the disk at once, so a load before the next poll finds them, and the "≤10 s of exp" gap is gone.
+- **A member with a queued dismiss is left to the dismiss.** The pass runs before the held events; it would mark the member away first, so the dismiss would drop its snapshot and the log would say "not in the save's party".
+  The events are collected before the gate check, and the pass skips every member with a queued dismiss; the dismiss applies after the pass and logs its own cause. Its snapshot is dropped: taken before the pass, it may be a save that predates a restore, and storing it would lower the backup for good. The cost is a member dismissed in those 3 s keeping its previous backup.
 - One roster write per pass (`store:correct`), not one per correction.
 
 ## Slice 1: Pure decisions
@@ -206,4 +212,4 @@ Decided here:
 
 **Verify**: `tests/run.sh`; `luac5.4 -p src/autorun/Retinue.lua src/autorun/Retinue/*.lua src/autorun/Retinue/game/*.lua` if `luac5.4` exists.
 
-**Out of scope**: ticket 22's archive; notices (ticket 23: restored ones stay log lines); forcing a backup right after a restore (the poll covers it within 10 s, and a false Return from that gap restores equal values); `_HireInGameTime`; `party.lua`.
+**Out of scope**: ticket 22's archive; notices (ticket 23: restored ones stay log lines); `_HireInGameTime`; `party.lua`.

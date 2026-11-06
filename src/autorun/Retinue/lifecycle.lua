@@ -15,7 +15,7 @@ local M = {}
 --   retinue:   .unit .generation .roster .found .ambiguous, retinue:mark_away(id) -> member, from | nil, err;
 --              retinue:mark_returning(id) -> member | nil, err; retinue:mark_present(id, character_id) -> member | nil, err;
 --              retinue:correct(corrections) -> count; retinue:settle() (the reconciliation is over)
---   backups:   .store(unit, m, snapshot), .get(id) -> backup | nil, .note(id) -> problem | nil
+--   backups:   .store(unit, m, snapshot), .capture(unit, m, view, opts), .get(id) -> backup | nil, .note(id) -> problem | nil
 --   pawns:     .restore(view, b) -> "done" | "wait", why | "mismatch", field;  .read(view) -> snapshot | nil, why
 --   party:     .failed, .has_main_pawn(), .all_read(), .level(view) -> number | nil
 --   drain():   returns and empties the hook queue (array of events, oldest first):
@@ -76,13 +76,18 @@ function M.new(deps)
         end
     end
 
-    local function apply_events()
+    -- The hook queue into the fifo, the events of an old generation dropped. Runs before the reconciliation, which has to
+    -- see the queued dismisses.
+    local function collect_events()
         for _, e in ipairs(deps.drain()) do fifo[#fifo + 1] = e end
         local kept = {}
         for _, e in ipairs(fifo) do
             if e.generation == retinue.generation then kept[#kept + 1] = e end
         end
         fifo = kept
+    end
+
+    local function apply_events()
         -- An empty party must not read as "the pawn left", and the old party's state is not the save's: the events wait.
         if gate.pending or party.failed or not party.has_main_pawn() then return end
         local todo = fifo
@@ -144,6 +149,14 @@ function M.new(deps)
         -- and a false rollback lowers the backup. (A different CharacterID is evidence enough and goes through the plan.)
         local skip = {}
         for id in pairs(retinue.ambiguous) do skip[id] = true end
+        -- A queued dismiss is applied after the pass and logs its own cause. Its snapshot goes: taken before the pass, it
+        -- may be a save that predates a restore, and storing it would lower the backup for good.
+        for _, e in ipairs(fifo) do
+            if e.kind == "dismiss" then
+                skip[e.id] = true
+                e.snapshot = nil
+            end
+        end
         for _, m in ipairs(r.members) do
             local view = retinue.found[m.offline_id]
             if view ~= nil then
@@ -164,6 +177,7 @@ function M.new(deps)
     -- then the party diff (in the world only; a queued dismiss wins and logs its own cause). All of them wait for the
     -- reconciliation after a load.
     function flow.update(now, in_world)
+        collect_events()
         local complete = not party.failed and party.has_main_pawn() and party.all_read()
         if gate:check(now, in_world, complete, retinue.generation) then
             local ok, err = pcall(reconcile_pass)
@@ -222,7 +236,12 @@ function M.new(deps)
         local result, detail = pawns.restore(view, b)
         if result == "done" then
             if not present(m, view) then return end
+            -- A save at or below this level predates the restore (reconcile.rehired). Written now, with the new hire time:
+            -- a load before the next poll must find both.
+            b.restored_from = game_level
             log_line(departure.restored_text(m.name, game_level, b.level))
+            local ok_c, err_c = pcall(backups.capture, retinue.unit, m, view, { force = true })
+            if not ok_c then report("backup", err_c) end
             local ok, err = pcall(function()
                 local fresh, why = pawns.read(view)
                 if fresh == nil then

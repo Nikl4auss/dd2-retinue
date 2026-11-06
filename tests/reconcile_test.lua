@@ -81,6 +81,21 @@ do
     assert(re(member(P, 1), p({ level = 30, exp = 0, discipline = 0 }), b()) == true)
     assert(re(member(AW, 1), p({ level = 5, exp = 3, discipline = 0 }), b()) == false)
     assert(re(member(AW, 1), p(), b()) == false)
+    -- equal hire times: the restore floor, then the first-hire signature
+    local function eq(pe, be) return re(member(AW, 1), p(pe), b(be)) end
+    assert(eq({ hire_time = 5, level = 23 }, { hire_time = 5, level = 28, restored_from = 23 }) == true) -- at the floor
+    assert(eq({ hire_time = 5, level = 20 }, { hire_time = 5, level = 28, restored_from = 23 }) == true) -- below it
+    assert(eq({ hire_time = 5, level = 24 }, { hire_time = 5, level = 28, restored_from = 23 }) == false) -- above it
+    assert(eq({ hire_time = 5, level = 23 }, { hire_time = 5, level = 23, restored_from = 23 }) == false) -- not below the backup
+    assert(eq({ hire_time = 5, level = 23, exp = 50 }, { hire_time = 5, level = 23, exp = 7000, restored_from = 23 }) == true) -- equal level, less exp
+    assert(eq({ hire_time = 5, level = 23, exp = 7000 }, { hire_time = 5, level = 23, exp = 7000, restored_from = 23 }) == false)
+    assert(eq({ hire_time = 5, level = 23, exp = 0, discipline = 0 }, { hire_time = 5, level = 23, exp = 9, restored_from = 23 })
+        == true) -- ... unless the first-hire signature says so
+    assert(eq({ hire_time = 5, level = 23, restored_from = nil }, { hire_time = 5, level = 28 }) == false) -- no floor, exp > 0
+    assert(eq({ hire_time = 5, level = 23, exp = 0, discipline = 0 }, { hire_time = 5, level = 28 }) == true) -- no floor, first hire
+    assert(eq({ hire_time = 5, level = 23, exp = 3, discipline = 0 }, { hire_time = 5, level = 28 }) == false)
+    assert(eq({ hire_time = 5, level = 23 }, { hire_time = 5, level = 28, restored_from = 23.0 }) == true) -- to_int
+    assert(eq({ hire_time = 5, level = 23 }, { hire_time = 5, level = 28, restored_from = "x" }) == false)
     -- no backup
     assert(re(member(AW, 1), p({ level = 5, exp = 0, discipline = 0 }), nil) == false)
     assert(re(member(AW, 1), p({ hire_time = 5 }), nil) == false)

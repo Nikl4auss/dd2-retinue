@@ -65,6 +65,11 @@ local function setup(statuses, opts)
         t.stores[#t.stores + 1] = { unit = unit, m = m, snap = snap }
         if t.store_throws then error("disk full") end
     end
+    t.captures = {}
+    function backups.capture(unit, m, view, opts)
+        t.captures[#t.captures + 1] = { unit = unit, m = m, view = view, opts = opts }
+        if t.capture_throws then error("capture boom") end
+    end
     function backups.get(id) return t.backups_by_id[id] end
     function backups.note(id) return t.notes[id] end
 
@@ -978,6 +983,94 @@ do
     assert(t.flow.settled() == false)
     t.flow.tick(6, true)
     assert(t.flow.note(A) == nil)
+end
+
+-- a restore that is done leaves the level it started from on the backup (a save at or below it predates the restore)
+do
+    local t = setup{ [A] = roster.RETURNING }
+    t.backups_by_id[A] = snapshot(27)
+    t.view(A)
+    t.party_levels[A] = 3
+    t.flow.tick(0, true)
+    assert(t.status(A) == roster.PRESENT and t.backups_by_id[A].restored_from == 3)
+    -- a guard skip or a timeout does not
+    local u = setup{ [A] = roster.RETURNING }
+    u.backups_by_id[A] = snapshot(27)
+    u.view(A)
+    u.party_levels[A] = 40
+    u.flow.tick(0, true)
+    assert(u.status(A) == roster.PRESENT and u.backups_by_id[A].restored_from == nil)
+end
+
+-- a load after an unseen Return, before the next game save: the hire times are equal (the poll stamped the backup), but
+-- the save is at the level the restore started from and below the backup: still a Return, restored again
+do
+    local t = gated{ [A] = roster.PRESENT }
+    t.view(A, 11)
+    t.backups_by_id[A] = snapshot(28, { hire_time = 1000, restored_from = 23 })
+    t.reads[A] = snapshot(23, { hire_time = 1000 })
+    t.party_levels[A] = 23
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.RETURNING)
+    assert(#t.lines == 1 and t.lines[1] == "Ana: roster present, save has it Lv23 (backup Lv28) → returning, re-hired unseen")
+    t.flow.tick(4, true)
+    assert(#t.restores == 1 and t.status(A) == roster.PRESENT)
+    -- above the floor it is a rollback or a plain save: untouched
+    local u = gated{ [A] = roster.PRESENT }
+    u.view(A, 11)
+    u.backups_by_id[A] = snapshot(28, { hire_time = 1000, restored_from = 23 })
+    u.reads[A] = snapshot(25, { hire_time = 1000 })
+    ticks(u, 0, 3)
+    assert(u.status(A) == roster.PRESENT and #u.order == 0)
+end
+
+-- a dismiss queued before the pass is applied after it: the line names the dismiss, and the snapshot is dropped
+do
+    local t = gated{ [A] = roster.PRESENT }
+    t.push(dismiss(A, snapshot(35)))
+    ticks(t, 0, 2)
+    assert(t.status(A) == roster.PRESENT and #t.stores == 0 and #t.lines == 0)
+    ticks(t, 3, 3)
+    assert(t.status(A) == roster.AWAY and #t.stores == 0)
+    assert(#t.lines == 1 and t.lines[1] == "Ana: present→away (dismiss)")
+    assert(table.concat(t.order, ",") == "mark_away" and t.settles == 1)
+end
+
+-- the same over a save that predates a restore: the snapshot would lower the backup for good
+do
+    local t = gated{ [A] = roster.PRESENT }
+    t.view(A, 11)
+    t.backups_by_id[A] = snapshot(28, { offline_id = A, hire_time = 1000, restored_from = 23 })
+    t.reads[A] = snapshot(23, { offline_id = A, hire_time = 1000 })
+    t.push(dismiss(A, snapshot(23)))
+    ticks(t, 0, 3)
+    assert(#t.stores == 0 and #t.corrections == 0 and t.backups_by_id[A].level == 28)
+end
+
+-- a restore writes the backup at once (forced), and a throw there leaves the member present and is reported
+do
+    local t = gated{ [A] = roster.AWAY }
+    t.view(A, 4242)
+    t.party_levels[A] = 3
+    t.backups_by_id[A] = snapshot(27, { offline_id = A, hire_time = 1000 })
+    t.reads[A] = snapshot(3, { offline_id = A, hire_time = 2000 })
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.RETURNING)
+    t.flow.tick(4, true)
+    assert(t.status(A) == roster.PRESENT and #t.captures == 1)
+    local c = t.captures[1]
+    assert(c.unit == 0 and c.m == t.member(A) and c.view == t.retinue.found[A] and c.opts.force == true)
+    assert(t.backups_by_id[A].restored_from == 3) -- set before the write, so the write carries it
+
+    local u = gated{ [A] = roster.AWAY }
+    u.view(A, 4242)
+    u.party_levels[A] = 3
+    u.capture_throws = true
+    u.backups_by_id[A] = snapshot(27, { offline_id = A, hire_time = 1000 })
+    u.reads[A] = snapshot(3, { offline_id = A, hire_time = 2000 })
+    ticks(u, 0, 3)
+    u.flow.tick(4, true)
+    assert(u.status(A) == roster.PRESENT and u.reports[1].what == "backup" and u.reports[1].err:find("capture boom"))
 end
 
 -- a throwing correct is reported, no lines, and the pass still settles

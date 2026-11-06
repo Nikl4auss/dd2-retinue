@@ -37,6 +37,12 @@ Decisions beyond the spec (plan: [plan.md](../plan.md)):
 - **The present row uses the same test** (ticket 18's comment): a present member that was re-hired unseen goes `returning`, so the poll never lowers its backup. A present member with no hire times and no kept CharacterID stays present.
 - **Gate**: the pass runs once per generation, after the game left the world since the generation changed (or after a 20 s grace) and after 3 s in the world with a complete party read. Until then the hook events, the party diff,
   the restore attempts, the backup poll and the cache refresh wait (the refresh would overwrite the kept CharacterID the fallback compares). This also covers a load from the pause menu, where the old party is still in the list.
+- **Equal hire times are not proof of "save wins"**: after an unseen Return the restore writes the new hire time onto a backup holding restored progress, while the disk save still has that hire at first-hire level until the next game
+  save. The backup therefore records `restored_from` (the game's level the last restore started from); on equal times a save at or below it and behind the backup (lower level, or equal level with less exp) is a Return, else the first-hire signature decides.
+- **A queued dismiss is left to the dismiss**: the events are collected before the gate check and the pass skips every member with a queued dismiss, so the dismiss logs its own cause after the pass. Its snapshot is dropped: taken before the pass, it may be a save that predates a restore, and storing it would lower the backup for good.
+- **The backup is written right after a restore**, so the hire time and the floor are on disk for a load before the next poll.
 - A failed pawn read for a member does not hold the pass (its level, exp and hire time count as unknown, reported), but with the CharacterID it kept it gets no correction: nothing proves a rollback or a re-hire, and a false rollback lowers the backup. A failed pass still releases the hold. Ambiguous members get no correction. One roster write per pass.
 - Ticket 20's false away (a member marked away by the diff during a temporary absence) is repaired by the `away, in party, same hire time → present` row, as that ticket's comment expected.
 - Open for the in-game run: whether a re-hire that keeps its CharacterID changes `_HireTime` (the design assumes it does; check 29b records it).
+
+Commits: `45e1471` (pure), `fd0126b` (the pass in the game), then the final review's fixes. Plan: [../plan.md](../plan.md).

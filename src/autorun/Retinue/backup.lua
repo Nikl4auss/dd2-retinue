@@ -12,7 +12,7 @@ M.POLL_SECONDS = 10
 M.EQUAL, M.LOWER, M.HIGHER = "equal", "lower", "higher"
 M.NONE, M.WRITE, M.LOWERED = "none", "write", "lowered"
 M.INCREASE_KEYS = { "hit_point", "stamina", "attack", "defence", "magic_attack", "magic_defence", "blow", "weight" }
-M.RECORDED_KEYS = { "current_job", "qualified_job_bits", "changed_job_bits", "item_ids", "skills", "hire_time" }
+M.RECORDED_KEYS = { "current_job", "qualified_job_bits", "changed_job_bits", "item_ids", "skills", "hire_time", "restored_from" }
 
 -- The backup / snapshot (one flat table; also the file's content):
 --   { version = 1, offline_id = <canonical>, name = string,
@@ -22,7 +22,8 @@ M.RECORDED_KEYS = { "current_job", "qualified_job_bits", "changed_job_bits", "it
 --     -- recorded, never restored (any may be nil)
 --     current_job = int, qualified_job_bits = int, changed_job_bits = int,
 --     item_ids = { int, ... }, skills = { { string|int, ... }, ... },   -- skills: one list per EquipedSkills entry
---     hire_time = int }   -- SubPawnDataContext._HireTime in ms; marks one hire
+--     hire_time = int,    -- SubPawnDataContext._HireTime in ms; marks one hire
+--     restored_from = int }   -- the game's level the last restore started from; a save at or below it predates that restore
 
 function M.path(unit, offline_id)
     return slot.dir(unit) .. "/backups/" .. offline_id .. ".json"

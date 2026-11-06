@@ -22,12 +22,24 @@ function M.first_hire_state(p, b)
 end
 
 -- rehired(m, p, b) -> boolean. m member, p party entry, b backup|nil.
---   hire = slot.to_int(b and b.hire_time), seen = slot.to_int(p.hire_time). Both non-nil: hire ~= seen.
+--   hire = slot.to_int(b and b.hire_time), seen = slot.to_int(p.hire_time). Both non-nil and different: true.
+--   Both non-nil and equal: the same hire, unless the save predates a restore. After an unseen Return the poll stamps the
+--   new hire time on a backup that holds restored progress while the disk save still has that hire at first-hire level, so
+--   a save at or below the level the restore started from (b.restored_from) and behind the backup (lower level, or equal
+--   level with less exp) is that earlier state: true. Without a floor, first_hire_state(p, b) decides.
 --   Otherwise: m.character_id nil -> m.status ~= roster.PRESENT. p.character_id ~= m.character_id -> true. Else first_hire_state(p, b).
 function M.rehired(m, p, b)
     local hire = slot.to_int(b and b.hire_time)
     local seen = slot.to_int(p.hire_time)
-    if hire ~= nil and seen ~= nil then return hire ~= seen end
+    if hire ~= nil and seen ~= nil then
+        if hire ~= seen then return true end
+        local floor = slot.to_int(b.restored_from)
+        if p.level ~= nil and floor ~= nil and b.level ~= nil and p.level <= floor
+            and (p.level < b.level or (p.level == b.level and (p.exp or 0) < (b.exp or 0))) then
+            return true
+        end
+        return M.first_hire_state(p, b)
+    end
     if m.character_id == nil then return m.status ~= roster.PRESENT end
     if p.character_id ~= m.character_id then return true end
     return M.first_hire_state(p, b)

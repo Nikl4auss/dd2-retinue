@@ -119,7 +119,8 @@ Path `slots/<n>/backups/<offline_id>.json`, own `version: 1`. One file per membe
 - **Recorded, never restored**: `CurrentJob`, `QualifiedJobBits`, `ChangedJobBits` (verification), equipped item IDs
   (display, log), equipped skills per vocation (compared on Return, a mismatch logged; kept for M3), and the **hire
   time** (`SubPawnDataContext._HireTime`, integer milliseconds so the file verifies with `==`), which marks one hire
-  (see Reconciliation).
+  (see Reconciliation), and **`restored_from`**, the game's level the last restore started from (a save at or below it
+  predates that restore; see Reconciliation).
 - **Display**: name, current vocation, level.
 - **Written**: on adopt; by a **poll every ~10 s** while present and in the world, only if a value changed; a forced read
   at `PawnManager.dismissPawn` pre. **Frozen** while away or returning: nothing writes it.
@@ -172,10 +173,16 @@ diff, the poll and the restore attempts act; matching by OfflineID. "Rehired" is
 | returning | absent | | away, backup untouched (save from before the re-hire) |
 
 - **The discriminator is the hire time**, kept in the backup (recorded, never restored, frozen while away): a different
-  hire time than the backup's means the pawn was hired again since, an equal one means the same hire. Not "later": a
+  hire time than the backup's means the pawn was hired again since, an equal one means the same hire (but see the floor
+  below). Not "later": a
   false Return only gives a pawn its backup back, while a false rollback lowers the backup for good, so a rollback to
   before an earlier Return restores the backup, the one case that departs from "save wins". The hire time is the save's
   clock, so it rolls back with the save.
+- **Equal hire times with a floor**: after an unseen Return the restore writes the new hire time onto a backup that holds
+  restored progress, while the disk save still has that hire at first-hire level until the next game save. So the backup
+  records `restored_from`, the game's level the last restore started from, and on equal times a save at or below it and
+  behind the backup (lower level, or equal level with less exp) is a re-hire too (restored again). Without a floor the first-hire signature below decides
+  (exp 0, discipline 0 and behind the backup).
 - **Fallback when either hire time is unknown** (a backup written before it was recorded, an unreadable context): the
   CharacterID as kept. A different one is a re-hire; none kept is a re-hire for an away or returning member and nothing
   for a present one; the same one is a re-hire only in the first-hire state: exp 0, discipline 0 and behind the backup
@@ -184,6 +191,8 @@ diff, the poll and the restore attempts act; matching by OfflineID. "Rehired" is
   a 20 s grace, so a start request that never leaves the world cannot hold the session), and after 3 s in the world with
   a complete party read. While it is pending the hook events wait, and the party diff, the restore attempts, the backup
   poll and the cache refresh hold (the refresh would overwrite the kept CharacterID the fallback compares).
+- A member with a dismiss queued behind the gate is left to the dismiss: it applies after the pass and logs its own
+  cause. Its snapshot is dropped: it may be a save that predates a restore, and storing it would lower the backup.
 - A member whose pawn read fails does not hold the pass: its level, exp and hire time count as unknown, and the failure
   is reported. With the CharacterID it kept it gets no correction: nothing proves a rollback or a re-hire, and a false
   rollback lowers the backup. Ambiguous members get no correction.

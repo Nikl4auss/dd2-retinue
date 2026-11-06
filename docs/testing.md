@@ -219,7 +219,9 @@ removal. To reinstall: quit, `./deploy.sh --remove`, `./deploy.sh --probe --life
     name; re-hired he comes back at Lv 23, exp 0, ordinary (known limit).
 29. **Reinstall after a Return without the mod**: continue 28: save with Folken re-hired at Lv 23, quit, reinstall
     (`./deploy.sh --probe --lifecycle`), load. Log: `Folken: roster away, save has it Lv23 (backup Lv28) → returning,
-    re-hired unseen`, then restored Lv 23→28, notice shown. Snapshot equals `m2-a` except equipment.
+    re-hired unseen`, then restored Lv 23→28, notice shown. Snapshot equals `m2-a` except equipment. Then wait 15 s in the
+    world without saving, go to the title and load the same save: the log shows `re-hired unseen` again, Folken is
+    restored again, and his backup is still Lv 28.
 29b. **Hire time of a re-hire** *(records a fact)*: in 29, note `hire_time` in `backups/<offline_id>.json` before the
     dismiss and read the new one from the backup after the re-hire and the next poll. If the re-hire kept Folken's
     CharacterID, record whether the time changed (the pass assumes it does).
