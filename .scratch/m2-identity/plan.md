@@ -1,232 +1,251 @@
-# M2 plan: ticket 18 (Adopted pawns are backed up)
+# M2 plan: ticket 19 (Dismiss and Return restore an adopted pawn's progress)
 
-Source: [issues/18-adopted-pawns-backed-up.md](issues/18-adopted-pawns-backed-up.md), [spec.md](spec.md) § Backups,
-§ Mod menu, § Code layout. Base commit: `ee1ab2d`. (Plans of earlier tickets are in git history.)
+Source: [issues/19-dismiss-return-restore.md](issues/19-dismiss-return-restore.md), [spec.md](spec.md) § Departure and
+Return, § Backups, § Code layout. Base commit: `ef43795`. (Plans of earlier tickets are in git history.)
 
-Two slices, sequential (slice 2 uses slice 1's module).
+Two slices, sequential (slice 2 uses slice 1's modules).
 
-- [x] Slice 1: Pure `backup` module and the menu's backup note, with tests. Tier: **Sonnet** (`implementer`).
-- [x] Slice 2: Game glue: pawn read, backup store, delete, in-the-world signal, wiring. Tier: **Sonnet** (`implementer`).
+- [ ] Slice 1: Pure decisions: roster transitions, `departure`, read-back compare, the `lifecycle` driver, with tests. Tier: **Sonnet** (`implementer`).
+- [ ] Slice 2: Game glue: the four hooks, the restore writes, backup and roster store changes, wiring, menu, docs. Tier: **Sonnet** (`implementer`).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 
-Facts the design rests on:
+Facts the design rests on (checked in the findings, the run files and the dump):
 
-- **No file delete is confirmed in REFramework.** The installed LeovvayGore mod states "REFramework has no os.rename/os.remove"
-  (`core/log.lua`); the delete path of the restore experiment never ran (no `delete_backup` action in any run file). The
-  sandbox wraps `fs.read`/`fs.write`/`io.open`, and `jsonfile.read` already counts an empty file as missing. So "deleted"
-  means: `os.remove` when it exists, else **emptied** with `fs.write(path, "")`: a 0-byte file reads as missing, and an
-  orphan is ignored anyway. Deviation from the spec's "Release deletes the file" in the worst case only; the release log
-  line says which path ran. Ticket 22's "move to archive" has the same problem (noted in that ticket).
-- Field types (dump): `_Level`, `_Exp`, `_AcquiredExtraStatusBoost`, the eight `_IncreaseParams`, `ConsumableExp` and
-  `CulmativeExp` elements are Int32; `QualifiedJobBits`, `ChangedJobBits` UInt32; `CurrentJob` enum (reads as a number).
-  So a snapshot is all integers plus strings, and JSON round-trips it exactly.
-- `HumanSkillContext.EquipedSkills` elements have `Skills: app.HumanCustomSkillID[]`. The lifecycle reader
-  (`get_elements`, then `ToString` per element) gave real names (`Job01_BlinkStrike`, `None`), 6 per entry; the restore
-  experiment's `read_numbers_any` stored `"nil"` for all of them on the same pawn. Copy the **lifecycle** reader, not that one.
-- `ItemManager.hasEquipData(id)` then `getEquipData(app.CharacterID)` then `getItemIds()` (`List<Int32>`); the overload needs
-  the experiment's `find_method` fallback (`td:get_method` may fail on the enum parameter).
-- REFramework's json writes an empty `{}`/`[]` as `null`, which reads back as nil: an empty `item_ids` must compare
-  equal to a missing one.
-- "No load in progress" (spec § Terms): `MainFlowManager.get_FlowPhase()` equals the `Phase.InGame` static. **Unverified that
-  it holds during normal play**: fails closed (no backups), the in-game check catches it, and a log line per change of
-  in-the-world names the phase.
-- A load request can precede the phase change by a few frames, and a just-loaded party may still settle: the poll timer
-  re-arms on every roster reload and on entering the world, so the first poll is a full interval later.
+- `dismissPawn(CharacterID)` calls `dismissPawn(Pawn)`: nested, one dismiss fires both (run `2026-11-03-m2-lifecycle/b`). The `Character`
+  overload never fired in a run but exists; hook all three. All the work is synchronous inside: `unregistPawn` is done when the
+  inner call returns, and the `pre` of the outermost call still reads the full state (findings 0006).
+- `hirePawn(app.Character, System.Boolean) : bool` fires only on a hire: no call in the runs that only loaded a save
+  (`2026-11-04-m2-restore/c`). It returned true in the one recorded Return. The OfflineID is readable in its post (findings 0008).
+- The restore worked one frame after `hirePawn` post, in the `UpdateBehavior` callback; nothing overwrote it at +1 s or +10 s
+  (0008). `setExtraStatusBoost` is proven only with value 0: keep the experiment's `set_field` fallback for it and for discipline.
+  `arr:call("SetValue", ...)` silently does nothing; index assignment `arr[i] = v`, 0-based, works.
+- `re.on_frame` may run on the render thread, and hooks and `UpdateBehavior` on the game thread. So game **writes** go in `UpdateBehavior`,
+  as the experiment did. Between a `pre` and its `post`, `on_frame` can run: a queue fed by `pre` could see the pawn still in the party. Feed it from `post`.
+- `FlowPhase` stayed `InGame` through 22 minutes of play (ticket 18); not observed during a Rift hire, so the restore budget
+  only counts in the world, and a stuck Return shows in the log rather than failing silently.
 
 Decided here (the spec leaves them open):
 
-- A damaged, missing or newer-version backup of a **present** member is rewritten by the poll (the game is the authority
-  while present); warning once. Of an away or returning member it stays untouched (frozen).
-- A failed recorded-only read (skills, items, vocation bits) never blocks a backup: the value is carried from the last
-  backup, reported once. A failed restored-field read writes nothing (never replace a good backup with a bad one).
-- A failed backup at adopt does not undo the adopt: no `last`, so the next poll writes it.
+- **No file I/O inside a hook** (the spec's rule for new-game archiving). `dismissPawn` pre reads the snapshot; the update loop writes it.
+- **A Return with no usable backup** (missing, damaged, newer version) becomes present with a warning, `skipped: no backup`: the
+  game wins and the pawn progresses again. The poll then rewrites the file, as ticket 18 decided for any present member.
+  A damaged file is therefore not kept for repair by hand.
+- **A failed restore does not retry within the session** after a read-back mismatch: it stays `returning` with a warning until the next
+  load. A thrown write counts as "not ready" and retries until the budget ends. A `CulmativeExp` length different from the backup's is a
+  mismatch, found before anything is written.
+- **A member dismissed while `returning`** becomes away, its backup untouched.
+- **Retry on the next load** needs no extra code: a `returning` member in the party is picked up after any roster reload. Ticket 21 adds "returning / absent → away".
+- A `dismissPawn` on an **ambiguous** pawn, or a hire of one, does nothing (excluded). Ticket 20's diff catches what a missing hook misses.
+- Read-only: the transitions happen in memory, `save` already writes nothing, no restore runs. A Return there stays `returning` for the session.
+
+Known until ticket 20: a member lost without a dismiss stays `present`, so re-hiring it still lowers its backup.
 
 ---
 
-## Slice 1: Pure backup module and the menu's backup note
+## Slice 1: Pure decisions
 
-**Goal**: the decisions behind backups exist as a pure, tested module: the file's shape, validating a file read
-from disk, "did anything change", the level guard, and the poll timing. `roster.member_text` can show a backup note. No
-game code changes.
+**Goal**: everything Departure and Return decide exists as pure, tested code: which transitions are legal, what a restore attempt does
+next, the retry budget, whether a read-back matches, the log lines, and the driver that applies hook events and runs restore attempts.
+No game code changes.
 
-**Context** (read first): spec § Backups; `src/autorun/Retinue/roster.lua` (`resolve`/`serialize`/`matches` pattern,
-`canonical_id`), `src/autorun/Retinue/slot.lua` (`dir`, `to_int`), `tests/roster_test.lua` (test style: plain `assert`s in
-`do ... end` blocks, `LUA_PATH` = `src/autorun/?.lua`, run by `tests/run.sh`, Lua 5.4). Pure means no REFramework globals.
+**Context** (read first): spec § Departure and Return; `src/autorun/Retinue/roster.lua`, `backup.lua`, `tests/roster_test.lua`,
+`tests/backup_test.lua` (style: plain `assert`s in `do ... end`, Lua 5.4, `tests/run.sh`). Pure means no REFramework globals (`log`, `sdk`, `re`).
 
-**Design**: new `src/autorun/Retinue/backup.lua` requiring `Retinue.slot` and `Retinue.roster`.
+**Design**:
 
-```lua
-M.VERSION = 1
-M.POLL_SECONDS = 10
-M.EQUAL, M.LOWER, M.HIGHER = "equal", "lower", "higher"
-M.NONE, M.WRITE, M.LOWERED = "none", "write", "lowered"
-M.INCREASE_KEYS = { "hit_point", "stamina", "attack", "defence", "magic_attack", "magic_defence", "blow", "weight" }
-M.RECORDED_KEYS = { "current_job", "qualified_job_bits", "changed_job_bits", "item_ids", "skills" }
+1. `roster.lua`, after `release`. All three: LOCKED → `nil, "locked"`; not a member → `nil, "not_adopted"`. They work in memory for READ_ONLY.
+   They never touch files.
+   ```lua
+   -- mark_away(r, id) -> member, previous_status | nil, err. PRESENT or RETURNING -> AWAY; AWAY -> nil, "already_away". character_id is kept.
+   -- mark_returning(r, id) -> member | nil, err. AWAY -> RETURNING; else nil, "not_away". character_id is kept.
+   -- mark_present(r, id, character_id) -> member | nil, err. RETURNING -> PRESENT; else nil, "not_returning".
+   --    character_id goes through valid_character_id; nil or invalid leaves the old value.
+   ```
+   `member_text`: `info` gains optional `restore_note` (string), appended after the ambiguous / not-in-party note and before the backup
+   note as `", restore <note>"`.
 
-function M.path(unit, offline_id) end   -- slot.dir(unit) .. "/backups/" .. offline_id .. ".json"
-```
+2. `backup.lua`:
+   ```lua
+   -- restored_mismatch(b, back) -> nil | field. Compares level, exp, each increase_params key, extra_status_boost, discipline and
+   -- culmative_exp (length and elements), numbers by ==. field: "level", "increase_params.attack", "culmative_exp[3]", "culmative_exp length"...
+   -- recorded_mismatch(b, fresh) -> { key, ... } the keys among current_job, qualified_job_bits, changed_job_bits, skills that are non-nil on
+   -- both sides and not M.same, in that order; empty when none. item_ids are not compared (regenerated on every hire).
+   ```
 
-The backup / snapshot (one flat table; also the file's content):
+3. New `src/autorun/Retinue/departure.lua` (spec § Code layout; ticket 20 adds the miss counter here):
+   ```lua
+   M.RETRY_SECONDS = 10
+   M.WAIT, M.RESTORE, M.SKIP_GUARD, M.SKIP_NO_BACKUP, M.TIMEOUT = "wait", "restore", "skip_guard", "skip_no_backup", "timeout"
 
-```lua
--- { version = 1, offline_id = <canonical>, name = string,
---   -- restored
---   level = int, exp = int, increase_params = { <M.INCREASE_KEYS> = int }, extra_status_boost = int,
---   discipline = int, culmative_exp = { int, ... },
---   -- recorded, never restored (any may be nil)
---   current_job = int, qualified_job_bits = int, changed_job_bits = int,
---   item_ids = { int, ... }, skills = { { string|int, ... }, ... } }   -- skills: one list per EquipedSkills entry
-```
+   -- step{ in_party = boolean, game_level = number|nil, backup = table|nil, expired = boolean } -> action
+   --   not in_party, or game_level nil or < 1 -> TIMEOUT when expired, else WAIT
+   --   backup nil -> SKIP_NO_BACKUP
+   --   backup.guard(game_level, backup.level) == HIGHER -> SKIP_GUARD; else RESTORE
+   -- (expired only ends the wait: a pawn that is ready on the last frame still restores.)
 
-Functions:
+   -- new_budget(seconds) -> budget; one entry per member, all of them dropped when the generation changes:
+   --   budget:sync(generation)
+   --   budget:expired(id, now) -> boolean   the first call for an id starts its deadline; true once now >= deadline
+   --   budget:close(id, note)               no more attempts this generation; note says why
+   --   budget:closed(id) -> boolean
+   --   budget:forget(id)                    drops the entry
+   --   budget:note(id) -> nil | "pending" | the close note   nil: never started
 
-- `M.invalid(b) -> nil | why`: nil when `b` is a usable backup: table; `offline_id` is `roster.canonical_id`-valid;
-  `level`, `exp`, `extra_status_boost`, `discipline` integers (`slot.to_int`), `level >= 1`; `increase_params` a table with
-  all eight integer; `culmative_exp` a non-empty sequence of integers. `why` is a short phrase naming the first bad field
-  (`"level is missing or invalid"`). Recorded fields are not checked. The glue calls it on a fresh read too.
-- `M.resolve(status, data, offline_id) -> backup | nil, problem`. `status`/`data` as `jsonfile.read`:
-  `"missing"` → `nil, "missing"`; `"unparseable"` → `nil, "damaged: not valid JSON"`; any other non-`"ok"` status →
-  `nil, "damaged: cannot be read"`; `"ok"`: non-table → `"damaged: not an object"`; `version` not an integer ≥ 1 →
-  `"damaged: version is missing or invalid"`; `version > M.VERSION` → `"newer version <n>"`; `M.invalid` → `"damaged: <why>"`;
-  `data.offline_id`'s canonical form ≠ `offline_id` → `"damaged: belongs to another pawn"`. On success returns `data`.
-- `M.same(a, b) -> boolean`: deep comparison; numbers by `==` (1 and 1.0 are equal), strings by `==`, tables recursively over
-  the union of keys, and nil equals an empty table at any depth (the json null caveat). Different types → false.
-- `M.carry_recorded(fresh, last)`: mutates and returns `fresh`: each `M.RECORDED_KEYS` key that is nil in `fresh` is copied
-  from `last` (`last` nil → unchanged).
-- `M.guard(game_level, backup_level) -> M.EQUAL | M.LOWER | M.HIGHER`: the game's level relative to the backup's.
-- `M.decide(last, fresh) -> M.NONE | M.WRITE | M.LOWERED`: `same` → NONE; `last` non-nil and `guard(fresh.level, last.level) ==
-  LOWER` → LOWERED; else WRITE (a nil `last` is WRITE).
-- `M.lowered_text(name, game_level, backup_level)` →
-  `"<name>: save has Lv <g>, backup had Lv <b> -> backup lowered, save wins"`.
-- `M.new_poll(interval) -> poll` with `poll:tick(now, in_world, generation) -> boolean`. Rules, in order:
-  `generation` differs from the stored one (first call included) → store it, clear the deadline. Not `in_world` → clear
-  the deadline, false. No deadline → deadline = `now + interval`, false. `now >= deadline` → deadline = `now + interval`,
-  true. Else false.
+   -- Log texts, without the [Retinue] prefix:
+   --   away_text(name, from, cause)          "<name>: <from>→away (<cause>)"
+   --   returning_text(name, level)           "<name>: away→returning (backup Lv <n>)"; "(no backup)" when level is nil
+   --   restored_text(name, a, b)             "<name>: returning→present restored Lv <a>→<b>"
+   --   guard_text(name, game, backup)        "<name>: returning→present skipped: guard (game Lv <g>, backup Lv <b>)"
+   --   no_backup_text(name, problem)         "<name>: returning→present skipped: no backup (<problem>)"
+   --   timeout_text(name)                    "<name>: restore timed out, stays returning"
+   --   mismatch_text(name, field)            "<name>: restore read-back differs at <field>, stays returning"
+   --   recorded_text(name, keys)             "<name>: restored, differs from its backup in <k1, k2>"
+   --   still_here_text(name, status)         "<name>: dismissed but still in the party, stays <status>"
+   ```
+   Integral floats print without `.0` (`slot.to_int`, like `lowered_text`). `→` is UTF-8 in the source: `docs/testing.md` reads these lines.
 
-`src/autorun/Retinue/roster.lua`: `member_text`'s `info` gains optional `backup_note` (string): appended last as
-`", backup <note>"` after every other part, ambiguous included. Update the comment above it.
+4. New `src/autorun/Retinue/lifecycle.lua`: pure, everything injected, so `tests/lifecycle_test.lua` drives it with fakes.
+   ```lua
+   -- M.new{ retinue, backups, pawns, party, drain, log_line, report } -> flow
+   --   retinue:   .unit .generation .roster .found .ambiguous, retinue:mark_away(id) -> member, from | nil, err
+   --              retinue:mark_returning(id) -> member | nil, err; retinue:mark_present(id, character_id) -> member | nil, err
+   --   backups:   .store(unit, m, snapshot), .get(id) -> backup | nil, .note(id) -> problem | nil
+   --   pawns:     .restore(view, b) -> "done" | "wait", why | "mismatch", field;  .read(view) -> snapshot | nil, why
+   --   party:     .failed, .has_main_pawn(), .level(view) -> number | nil
+   --   drain():   returns and empties the hook queue (array of events, oldest first):
+   --              { kind = "dismiss", id = <canonical>, generation = n, snapshot = table|nil }
+   --              { kind = "hire",    id = <canonical>, generation = n }
+   --   log_line(text): the [Retinue] prefix is the caller's.
+   --
+   -- flow.update()  -- on_frame, after retinue.update, before the backup poll. Calls drain() each time and keeps what it got in its own FIFO; a new
+   --                   generation drops queued events of the old one. Processes the FIFO in order, only when party.failed is false and
+   --                   party.has_main_pawn() is true (else they wait: an empty party must not read as "the pawn left").
+   -- flow.tick(now, in_world)  -- UpdateBehavior, game thread: runs the restore attempts.
+   -- flow.note(id)  -- budget:note(id): the menu's restore note.
+   ```
+   Event rules (event dropped when `generation ~= retinue.generation`, or no member with that id, or `retinue.roster` nil):
+   - `dismiss`: `snapshot` present → `pcall(backups.store, retinue.unit, m, snapshot)`, failure through `report("backup", err)`; the
+     transition still runs. `retinue.ambiguous[id]` or `retinue.found[id]` → `log_line(still_here_text)`, no transition. Else `mark_away`,
+     `budget:forget(id)`, `log_line(away_text(m.name, from, "dismiss"))`. `already_away`: nothing.
+   - `hire`: ambiguous → nothing. `mark_returning` succeeds → `budget:forget(id)`, `log_line(returning_text(m.name, backup's level))`. Any other
+     status: nothing (a member that is present stays present: ticket 20's limit).
+
+   `flow.tick`: `budget:sync(retinue.generation)` first. Then return unless `in_world` and `roster.writable(retinue.roster)`. For each
+   member with status RETURNING, not ambiguous, not `budget:closed`: `view = found[id]`; `action = departure.step{ in_party = view ~= nil,
+   game_level = view and party.level(view), backup = backups.get(id), expired = budget:expired(id, now) }`.
+   - WAIT: nothing.
+   - TIMEOUT: `budget:close(id, "timed out")`, `log_line(timeout_text)`.
+   - SKIP_NO_BACKUP: `mark_present(id, view.character_id)`, `forget`, `log_line(no_backup_text(m.name, backups.note(id) or "missing"))`.
+   - SKIP_GUARD: `mark_present`, `forget`, `log_line(guard_text)`.
+   - RESTORE: `pawns.restore(view, b)`. `"done"`: `mark_present`, `forget`, `log_line(restored_text(m.name, game_level, b.level))`, then under pcall
+     `pawns.read(view)` and `backup.recorded_mismatch`: non-empty → `log_line(recorded_text)`. `"wait"`: `report("restore", m.name .. ": " .. why)`.
+     `"mismatch"`: `budget:close(id, "differs at " .. field)`, `log_line(mismatch_text)`.
+   Each member's attempt runs under its own pcall, failure
+   through `report("restore", err)`; one member never blocks the other.
 
 **Acceptance criteria**:
-- [ ] `tests/backup_test.lua` (new) covers: `path`; `resolve` for every status and each problem above, one case per
-  missing restored field, the other-pawn case, recorded fields absent still valid; `invalid`: `level = 0`, float `1.5`,
-  integral float `27.0` valid; `same`: equal, one field differs (top, nested in `increase_params`, in `culmative_exp`, in
-  `skills`), nil vs `{}` equal at top and nested, `1` vs `1.0`, a list of different length; `carry_recorded` including a
-  nil `last` and a real value left alone, an empty `item_ids` not replaced; `guard` at equal / lower / higher; `decide` on
-  all four paths (nil last, same, higher, lower; and exp lower at the same level is WRITE); `lowered_text`; `poll:tick`:
-  first in-world tick false then true after the interval and false until the next, leaving the world and coming
-  back re-arms, a generation change re-arms.
-- [ ] `tests/roster_test.lua` covers `backup_note` alone and with level, `not in party` and ambiguous; existing cases unchanged.
+- [ ] `tests/roster_test.lua`: each `mark_*` from each status, locked, unknown id, read-only in memory, the kept `character_id` on away and
+  returning, `mark_present` with new / nil / invalid id; `member_text` with `restore_note` alone and next to a backup note.
+- [ ] `tests/backup_test.lua`: `restored_mismatch` equal, each kind of field different, array length, `1` vs `1.0`; `recorded_mismatch` equal, one different,
+  nil on either side ignored, `item_ids` ignored.
+- [ ] `tests/departure_test.lua` (new): `step` on every row, the guard at equal / lower / higher level, ready at expiry restores; the budget's deadline start,
+  expiry, close, forget, note, generation change; every text, with `27.0` printing `27`.
+- [ ] `tests/lifecycle_test.lua` (new), with fakes built on the real `roster`: dismiss with the pawn gone → away, roster mark called, snapshot stored first, kept
+  `character_id`; dismiss with the pawn still in `found` → no transition, the snapshot still stored; a store that throws still transitions; a dismiss
+  while returning → away; events held while `party.failed` or no main pawn, then applied in order (dismiss then hire of one id ends returning); stale generation dropped;
+  hire of away / present / unknown / ambiguous; tick: out of the world nothing runs and the budget does not start, read-only nothing runs, ambiguous skipped,
+  restore next tick after the hire, wait until ready then done with `character_id` set, timeout closes once with one line and no later attempts, a new generation retries it,
+  mismatch closes, guard, no backup, equal level restores, one member's throw leaves the other restored, recorded mismatch logged.
 - [ ] `tests/run.sh` passes.
 
 **Verify**: `tests/run.sh`.
 
-**Out of scope**: any glue, file I/O, restore, `dismissPawn`, away transitions (ticket 19).
+**Out of scope**: anything under `game/`, `Retinue.lua`, docs, the party diff (ticket 20), reconciliation (ticket 21), notices (ticket 23).
 
 ---
 
 ## Slice 2: Game glue
 
-**Goal**: every present member in the party has a backup file: written on adopt, refreshed about every 10 s only if a
-value changed, emptied or deleted on release. A member below its backup lowers it, with one warning. The menu shows a
-member's level from the backup when it is not in the party, and a note when its backup is missing or damaged. Runs with
-the progression toggle off; nothing written when locked, read-only or slot unknown.
+**Goal**: dismissing a member at the Rift saves a last backup and marks it away; hiring it again restores its progress one frame later;
+the menu shows the status. Nothing else changes for ordinary pawns.
 
-**Context** (read first): spec § Backups, § Mod menu, § Terms ("in the world"); `src/autorun/Retinue.lua`,
-`game/party.lua`, `game/roster_store.lua`, `game/roster_menu.lua`, `game/jsonfile.lua`, `game/slot_hooks.lua`;
-`tools/experiments/Retinue_Exp_Restore.lua` (`find_method`, `read_num_array`, `read_equip`, `read_fields`) and
-`tools/experiments/Retinue_Exp_Lifecycle.lua` (`read_int_array`, `str`, the skills read at `context_fields`). The plan's
-Facts above are binding. Lines go to `log.error` with the `[Retinue]` prefix, like the rest of the mod; repeatable failures
-go through `report` (logs once).
+**Context** (read first): this plan's Facts; `src/autorun/Retinue.lua`, `game/progression_hooks.lua`, `game/slot_hooks.lua` (hook entry shape, `tracker.missing`),
+`game/party.lua`, `game/pawn_state.lua`, `game/backup_store.lua`, `game/roster_store.lua`, `game/roster_menu.lua`, `hooks.lua`;
+`tools/experiments/Retinue_Exp_Restore.lua` lines 760-950 (`write_array`, `do_restore`) and 1088-1160 (pre/post of hire and dismiss).
 
 **Design**:
 
-1. `game/jsonfile.lua` gains `delete(path) -> "removed" | "emptied" | nil, err`:
+1. `game/party.lua`: export `M.offline_id(chara) -> canonical | nil`: `get_Context`, `M.holder_context(holder, OWNER_CONTEXT)`, `_OfflineID` through `as_string`, `roster.canonical_id`;
+   nil when the holder or context is absent, throws when a read fails. `read_identity` is unchanged.
+
+2. `game/pawn_state.lua`: `reader.restore(view, b) -> "done" | "wait", why | "mismatch", field`, for the game thread only:
+   - Under pcall get `get_Human`, status and job contexts, `_IncreaseParams`, `CulmativeExp`. Anything nil or a throw → `"wait", why`, nothing written.
+   - `arr:call("get_Length") ~= #b.culmative_exp` → `"mismatch", "culmative_exp length"`, nothing written.
+   - Under one pcall (a throw → `"wait", why`; writes are idempotent): `st:call("set_Level", ...)`, `st:call("set_Exp", ...)`; on `ip`: `was_ro = ip:get_field("ReadOnly") == true`, `setReadOnly(false)` if
+     so, `ip:set_field(INCREASE_FIELDS[key], v)` per key, `setReadOnly(true)` if so; `setExtraStatusBoost` then, when `_AcquiredExtraStatusBoost` differs,
+     `set_field`; `set_ConsumableExpProp` then, when `ConsumableExp` differs, `set_field`; `for i = 0, n - 1 do arr[i] = b.culmative_exp[i + 1] end`. Every value through `slot.to_int`.
+   - Read back with `read_restored(chara, back)` (a throw → `"wait"`), then `backup.restored_mismatch(b, back)`: a field → `"mismatch", field`; else `"done"`.
+
+3. `game/backup_store.lua`: split `capture`, with no behaviour change for its callers:
    ```lua
-   -- REFramework may have no os.remove (paths are relative to the game folder there, reframework/data here).
-   if os and os.remove then pcall(os.remove, "reframework/data/" .. path) end
-   -- without fs.read: nil, "cannot verify"
-   -- fs.read returns "" for missing and empty alike: a file that is gone reads "" -> "removed".
-   -- else, with fs.write: pcall(fs.write, path, ""), read again, "" -> "emptied". Else nil, "file still there".
+   -- backups.eligible(retinue, m) -> view | nil   writable roster, unit known, m PRESENT, in retinue.found. The one gate of poll and dismiss.
+   -- backups.read(m, view) -> snapshot | nil      the read half of capture: the note and report on failure, fresh.name, carry_recorded.
+   -- backups.store(unit, m, fresh, opts)          the write half: decide (or opts.force), write, last, problem, the lowered line.
+   -- backups.capture(unit, m, view, opts)         read then store.
+   -- backups.get(id) -> last[id]
    ```
+   `poll` uses `eligible`. Update the header comment.
 
-2. `game/party.lua`: export `M.holder_context(holder, type_name)` (the `Contexts` dictionary lookup → `get_CurrentContext`,
-   nil when absent; throws like the experiment's) and use it in `read_identity`. No behaviour change.
+4. `game/roster_store.lua`: add `store:mark_away(id)`, `store:mark_returning(id)`, `store:mark_present(id, character_id)`: call `roster.mark_*(self.roster, ...)`, on success `save()`, return
+   the roster function's results unchanged (`nil, err` passes through). `self.roster` nil → `nil, "no_slot"`. Update the header comment.
 
-3. New `game/pawn_state.lua`, `M.new(report)` → `{ read = function(view) -> snapshot | nil, why }`. Field reads:
-   - `chara:call("get_Human")`, `:call("get_StatusContext")`, `:call("get_JobContext")`. Status: `get_Level`, `get_Exp`,
-     `_IncreaseParams` (`get_field`) with `_HitPoint _Stamina _Attack _Defence _MagicAttack _MagicDefence _Blow _Weight`
-     to `backup.INCREASE_KEYS`, `_AcquiredExtraStatusBoost`. Job: `ConsumableExp`, `CulmativeExp` (the restore experiment's
-     `read_num_array`, boxed elements), `CurrentJob`, `QualifiedJobBits`, `ChangedJobBits`.
-   - Items: as `read_equip` (`find_method` fallback for `getEquipData(app.CharacterID)`, resolved once), `{}` when
-     `hasEquipData` is false.
-   - Skills: `party.holder_context(chara:call("get_Context"), "app.HumanSkillContext")`, then per `EquipedSkills` element
-     the lifecycle's `read_int_array(e:get_field("Skills"))` (keep its `str`). Do not read `getEnableNormalSkillIDs`.
-   - Restored reads under one pcall; each recorded read (the three job fields, items, skills) under its own: on failure
-     that key stays nil and `report("backup <key>", err)`.
-   - Fills `version`, `offline_id` (canonical from `view`), `name` (`view.name`; the store overrides it, see below); integer
-     values through `slot.to_int`. Runs `backup.invalid`: returns `nil, why` when not usable.
-
-4. New `game/backup_store.lua`, `M.new(report, read_pawn)`:
+5. New `game/lifecycle_hooks.lua`, `M.install(report, retinue, backups)`, returning `{ available, missing, begin_update(), drain() }`. Own entries through `hooks.install`, all or nothing:
    ```lua
-   -- backups.last     { [offline_id] = backup }   this activation's view of each member's file (nil: none usable)
-   -- backups.problem  { [offline_id] = string }   backup.resolve's problem, or "write failed"; cleared on a good write
-   -- backups.activate(unit, r)   clear both, then for each member read the file (jsonfile.read strict, backup.resolve),
-   --                             log "[Retinue] <Slot n> backup of <name>: <problem>" once per problem. Reads for any r
-   --                             with members (read-only too). r nil or locked: stays empty.
-   -- backups.capture(unit, m, view, opts) -> nothing. pcall'd read_pawn(view) (failure: report("backup read", why)
-   --                             and return). fresh.name = m.name; backup.carry_recorded(fresh, last[id]);
-   --                             opts.force skips decide (always writes, never LOWERED); else decide: NONE -> return.
-   --                             jsonfile.write(path, fresh, function(back) return backup.same(fresh, back) end).
-   --                             ok: last[id] = fresh, problem[id] = nil, on LOWERED one log.error(backup.lowered_text(...)).
-   --                             Fail: problem[id] = "write failed", report("backup write", err); last unchanged.
-   -- backups.poll(retinue, in_world, now)  poll:tick(now, in_world, retinue.generation); when due and
-   --                             roster.writable(retinue.roster): capture every member with status PRESENT in
-   --                             retinue.found (found already excludes ambiguous members).
-   -- backups.remove(unit, id) -> how | nil, err   clear last/problem; jsonfile.delete(backup.path(unit, id)).
-   -- backups.level(id)        last[id] and last[id].level
-   -- backups.note(id)         problem[id]
+   { key = "dismissPawn(CharacterID)", type = "app.PawnManager", sig = "dismissPawn(app.CharacterID)", pre, post }
+   { key = "dismissPawn(Character)",   ... sig = "dismissPawn(app.Character)",   pre, post }
+   { key = "dismissPawn(Pawn)",        ... sig = "dismissPawn(app.Pawn)",        pre, post }
+   { key = "hirePawn",                 ... sig = "hirePawn(app.Character, System.Boolean)", pre, post }
    ```
-   Away and returning members are never captured here: that is the freeze.
+   Instance methods: the first parameter is `args[3]`. Hooks only read the game and never change an argument.
+   - `dismissing` (one table or nil), `hiring` (a Character or nil), `queue` (array).
+   - Dismiss pre: `if dismissing then return end` (the nested overload). Character ID of the argument: `hooks.arg_u32(args[3])`; `sdk.to_managed_object(args[3]):call("get_CharaID")` through `hooks.to_u32`; or
+     `:call("get_CachedCharacter")` first for the `Pawn` overload (a nil object: return). Find the `id, view` in `retinue.found` with that `character_id`; `m = roster.find(retinue.roster, id)`. No
+     member or `m.status == roster.AWAY`: return. Set `dismissing = { kind = "dismiss", id = id, generation = retinue.generation }` **before** reading, so a failed read still departs. When
+     `backups.eligible(retinue, m)`: `dismissing.snapshot = backups.read(m, view)`.
+   - Dismiss post: `if dismissing then queue it; dismissing = nil end`.
+   - Hire pre: `hiring = sdk.to_managed_object(args[3])`.
+   - Hire post: take and clear `hiring`. Nil, or `sdk.to_int64(retval) & 1 ~= 1`: return. `id = party.offline_id(chara)`; when `roster.find(retinue.roster, id)`, queue `{ kind = "hire", id = id, generation = retinue.generation }`.
+   - `begin_update()` clears `dismissing` and `hiring`: a game exception skips a post, and the next `pre` would be taken for a nested one.
+   - `drain()` returns the queue and starts a new one.
+   - Missing methods: `log.error("[Retinue] departure tracking unavailable: <method> not found")` per method, like `slot_hooks`.
 
-5. `game/roster_store.lua`: `M.new(report, backups)`.
-   - In `update`, in the reload branch, after the state is assigned: `backups.activate(unit, r)`.
-   - `store:adopt`: after `save()`: `backups.capture(self.unit, m, view, { force = true })` (an orphan file of a re-adopted
-     pawn is overwritten without a rollback warning). Under pcall, reported, never fails the adopt.
-   - `store:release`: after `save()`: `backups.remove`; log line `released <name> (backup removed)` /
-     `(backup emptied)`; on failure `report("backup delete", err)` and the line says `(backup left in place)`.
-     `store:release` still returns true (an orphan is ignored).
+6. `Retinue.lua`:
+   - Build order: `backups`, `retinue`, then `life_hooks = lifecycle_hooks.install(report, retinue, backups)`, `flow = lifecycle.new{ retinue = retinue, backups = backups, pawns = pawns, party = party, drain = life_hooks.drain,
+     log_line = function(text) log.error("[Retinue] " .. text) end, report = report }`.
+   - `state.in_world = false`. In `re.on_frame`, after the roster update and only if `ok_roster`: `local world = tracker.in_world(party.has_main_pawn())`, `state.in_world = world`, `pcall(flow.update)` (failure:
+     `report("lifecycle", err)`), then the existing poll with `world`. A failed roster update sets `state.in_world = false`.
+   - In the `UpdateBehavior` callback, after `clear_calls`: `life_hooks.begin_update()`, then `pcall(flow.tick, os.clock(), state.in_world)`, failure `report("lifecycle", err)`.
+   - Independent of `state.enabled`. Pass `flow` to `menu:draw`. Menu: `for _, method_name in ipairs(life_hooks.missing)` a line "Departure tracking unavailable: <method> not found (game update?)".
+   - Update the header comment (dismiss, Return and restore, in two or three sentences) and the layout paragraph.
 
-6. `game/slot_hooks.lua`: `tracker.in_world(has_main_pawn) -> boolean`: main pawn present and `get_IsTitleMenuPhase() ==
-   false` and `get_FlowPhase() ==` the `InGame` value (static field of `app.MainFlowManager.Phase`, cached once read; unreadable
-   → false + `report`). Under pcall; a throw is false. One `log.error` per change: `[Retinue] in the world: yes` /
-   `no (phase <n>)`.
+7. `game/roster_menu.lua`: `draw` gains `flow`; the member line passes `restore_note = m.status == roster.RETURNING and flow.note(m.offline_id) or nil`. Update the signature comment.
 
-7. `Retinue.lua`: require and build `pawn_state`, `backup_store` (before `roster_store.new(report, backups)`). In `re.on_frame`,
-   after the roster update and only if `ok_roster`: `pcall(backups.poll, retinue, tracker.in_world(party.has_main_pawn()),
-   os.clock())`, failure `report("backup", err)`. Independent of `state.enabled`. Pass `backups` to `menu:draw`. Update the
-   header comment and the layout paragraph.
-
-8. `game/roster_menu.lua`: `menu:draw` takes `backups`. In the member line: `level = (view and party.level(view)) or
-   backups.level(m.offline_id)`, `backup_note = backups.note(m.offline_id)`. Update the `draw` signature comment.
-
-9. Docs: `CHANGELOG.md` Unreleased → Added, one entry for backups. `spec.md` § Backups: "Release deletes the file" gains
-   "(emptied when REFramework has no file delete: an empty file reads as missing)". `issues/22-…md`: a `## Comments` note that
-   REFramework likely has no `os.rename`/`os.remove`, so the archive is copy + empty.
+8. Docs:
+   - `CHANGELOG.md` Unreleased → Added: dismiss marks away, Return restores.
+   - `spec.md` § Departure and Return: "A Return with no usable backup becomes present with a warning; the poll then rewrites the file." and "A dismiss while `returning` → away, backup untouched."
+   - `docs/testing.md` check 26: after "on its Return no restore", add "it becomes present at the game's level (log `skipped: no backup`) and the poll rewrites the file".
+   - `CONTEXT.md` only if a term changes (none expected).
 
 **Acceptance criteria**:
-- [ ] Adopt writes `slots/<n>/backups/<offline_id>.json`; a failed read or write there does not fail the adopt.
-- [ ] The poll runs about every 10 s, only in the world, for present members in the party, whatever the progression toggle.
-- [ ] A poll with no change writes nothing (no `json.dump_file` call).
-- [ ] A member below its backup: file lowered, exactly one `lowered_text` line.
-- [ ] Release empties or deletes the file and the log says which; a failure leaves the release done.
-- [ ] Nothing written when locked, read-only or slot unknown; away and returning members never written.
-- [ ] A missing or damaged backup: one log line, a note in the menu, the roster and the other member unaffected.
-- [ ] Unit switch or reload re-reads `last`, and pending polls wait a full interval.
-- [ ] `tests/run.sh` passes; `luac5.4 -p` (or `lua5.4 -e "loadfile(...)"`) parses every changed glue file.
+- [ ] A dismiss of a present member stores its last state from the frame loop, not the hook, and marks it away only when it left the party; `character_id` kept.
+- [ ] A hire whose OfflineID is an away member's makes it `returning`, roster written, backup frozen (the poll skips it).
+- [ ] The restore runs in `UpdateBehavior`, one frame later at the earliest, retried up to ~10 s, with the writes and read-back of findings 0008, and the fallbacks for boost and discipline.
+- [ ] Nothing depends on the progression toggle. Locked: nothing happens. Read-only: no file written, no restore. Ambiguous: excluded.
+- [ ] A missing hook method installs none of the four, says so in the log and menu, and leaves the rest of the mod working.
+- [ ] The hooks do no file I/O and never change an argument or a return value.
+- [ ] `tests/run.sh` passes; every changed glue file parses.
 
-**Verify**: `tests/run.sh`; `for f in src/autorun/Retinue.lua src/autorun/Retinue/game/*.lua; do lua5.4 -e "assert(loadfile('$f'))"; done`.
-There is no harness for the glue: it is verified in game after the final pass.
+**Verify**: `tests/run.sh`; `for f in src/autorun/Retinue.lua src/autorun/Retinue/*.lua src/autorun/Retinue/game/*.lua; do lua5.4 -e "assert(loadfile('$f'))"; done`. There is no harness for the glue: it is verified in game after the final pass.
 
-**Out of scope**: `dismissPawn` hooks, departure, Return, restore (ticket 19); native row and dialogs; archive on new game
-(ticket 22); reconciliation (ticket 21). No new `report` wrappers, no atomic write.
+**Out of scope**: party diff, `PawnManager.lost` (ticket 20); reconciliation (ticket 21); notices, `labels` (ticket 23); Rift marks (ticket 26); new-game archive (ticket 22).
