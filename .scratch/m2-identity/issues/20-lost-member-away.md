@@ -7,12 +7,12 @@ check every ~1 s in the world; its backup is the last poll.
 
 **Blocked by:** [19: Dismiss and Return restore an adopted pawn's progress](19-dismiss-return-restore.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Pure tests of the miss counter: 3 consecutive misses → away; a reappearance resets; no counting outside the world.
 - [x] Diff compares party slots 1–2 OfflineIDs with present members; independent of the toggle.
 - [x] Log line `present→away (absence)`.
-- [ ] Verified in game (checklist 14): *Kill pawns* until Folken leaves; away within ~3 s; re-hire restores him.
+- [x] Verified in game (checklist 14): *Kill pawns* until Folken leaves; away within ~3 s; re-hire restores him.
 
 ## Comments
 
@@ -34,3 +34,7 @@ the main pawn: `in the world: yes` at 09:46:53.002, `Folken: present→away (abs
 No false absence, title exit: passed once. `in the world: no (phase 43)` at 09:48:24, no `absence` line up to the end of the log, roster `present`. The ferrystone and the
 death reload have no evidence yet: this launch has one load request, and the previous log is the 08:54 session. 76 `get_IsDrawedWeapon` exceptions during that exit come
 from other mods (Retinue never calls it), not a crash.
+
+Check 14, no false absence, finished (2026-11-06, user, Slot 2): ferrystone (the user's report; it leaves no line) and a death reload: `in the world: no (phase 40)` at
+10:05:50, roster re-read at 10:06:11, `in the world: yes` at 10:06:38. No `absence` line in the 94 s in the world before the death or the 9 s after it, roster `present`. Each exit
+was seen once, so `keepPartyPawn` and story events that take pawns away remain unverified.
