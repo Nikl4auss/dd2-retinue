@@ -12,7 +12,8 @@ local PM = "app.PawnManager"
 
 -- Installs (hooks.install, all or nothing, own entries; does not touch hooks.SPECS):
 --   app.PawnManager dismissPawn(app.CharacterID | app.Character | app.Pawn)   instance methods: the argument is args[3]
---   app.PawnManager hirePawn(app.Character, System.Boolean) : bool            fires only on a hire
+--   app.PawnManager hirePawn(app.Character, System.Boolean) : bool            on a hire; also fires for the main pawn after a
+--                                                                             loss (no Offline ID: no member)
 -- One dismiss fires the CharacterID overload and, nested inside it, the Pawn one; the pre of the outermost call reads
 -- the full state (the pawn still in the party). Events are queued from post, so on_frame never sees a pawn that is
 -- still in the party as gone.

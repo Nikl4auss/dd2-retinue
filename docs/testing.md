@@ -158,7 +158,7 @@ Restore `fixture-levelled-pawn`, adopt Folken (Lv 27), grant exp until Lv 28. Sn
 14. **Lost**: restore `m2-adopted-folken`. *Kill pawns* (Nick's Devtools) and leave Folken down until he leaves the
     party. Within ~3 s of leaving: log `present→away (absence)`; backup = the last poll (Lv 28). Re-hire: restored as
     in check 12. Natural lost (down timer or rest) *(opportunistic)*.
-15. **Level guard**: restore `m2-adopted-folken`, dismiss Folken, quit; hand-edit his backup's level to 22 (below the
+15. **Level guard**: restore `m2-adopted-folken`, dismiss Folken, save, quit; hand-edit his backup's level to 22 (below the
     first-hire 23), launch, re-hire. Notice "Folken returned — kept Lv 23, newer than the backup"; log `skipped: guard`;
     the backup is then overwritten by the poll with Lv 23.
 16. **Return by another route** *(opportunistic)*: an away member hired from the regular Rift list or met in the world

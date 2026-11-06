@@ -136,6 +136,7 @@ From [How does the mod notice a member leaving and returning…?](issues/11-depa
 - **Any other departure** (lost, unknown): a **party diff** every ~1 s, only in the world, compares the OfflineIDs in
   party slots 1–2 with the present members; a present member missing for **3 consecutive checks** becomes away. The
   last backup is the last poll: up to ~10 s of progress can be lost (known limit, documented).
+- A hire of a member still marked present means it left unseen (a pawn in the party cannot be hired): away with cause `hire`, then a normal Return.
 - **Return**: `PawnManager.hirePawn` post where the hired pawn's OfflineID is an away member's → `returning` (roster
   written, backup frozen). Any route counts (Previous Hires, the regular list, a pawn met in the world).
 - **Restore**: one frame after `hirePawn` post, retried every frame for up to ~10 s while the actor or contexts are not

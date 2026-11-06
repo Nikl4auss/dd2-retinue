@@ -47,7 +47,12 @@ function M.new(deps)
     local function apply_hire(e, m)
         local id = e.id
         if retinue.ambiguous[id] then return end
-        if retinue:mark_returning(id) == nil then return end -- any other status: nothing
+        -- A pawn in the party cannot be hired: a present member left unseen (a missed dismiss, a loss).
+        if m.status == roster.PRESENT then
+            local _, from = retinue:mark_away(id)
+            log_line(departure.away_text(m.name, from, "hire"))
+        end
+        if retinue:mark_returning(id) == nil then return end -- returning: nothing
         budget:forget(id)
         local b = backups.get(id)
         log_line(departure.returning_text(m.name, b and b.level))

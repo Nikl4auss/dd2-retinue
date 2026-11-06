@@ -15,7 +15,7 @@ Facts the design rests on (checked in the findings, the run files and the dump):
 - `dismissPawn(CharacterID)` calls `dismissPawn(Pawn)`: nested, one dismiss fires both (run `2026-11-03-m2-lifecycle/b`). The `Character`
   overload never fired in a run but exists; hook all three. All the work is synchronous inside: `unregistPawn` is done when the
   inner call returns, and the `pre` of the outermost call still reads the full state (findings 0006).
-- `hirePawn(app.Character, System.Boolean) : bool` fires only on a hire: no call in the runs that only loaded a save
+- `hirePawn(app.Character, System.Boolean) : bool` never fires on a load: no call in the runs that only loaded a save; it also fires for the main pawn after a loss (no Offline ID, so no member)
   (`2026-11-04-m2-restore/c`). It returned true in the one recorded Return. The OfflineID is readable in its post (findings 0008).
 - The restore worked one frame after `hirePawn` post, in the `UpdateBehavior` callback; nothing overwrote it at +1 s or +10 s
   (0008). `setExtraStatusBoost` is proven only with value 0: keep the experiment's `set_field` fallback for it and for discipline.
@@ -39,7 +39,7 @@ Decided here (the spec leaves them open):
 - A `dismissPawn` on an **ambiguous** pawn, or a hire of one, does nothing (excluded). Ticket 20's diff catches what a missing hook misses.
 - Read-only: the transitions happen in memory, `save` already writes nothing, no restore runs. A Return there stays `returning` for the session.
 
-Known until ticket 20: a member lost without a dismiss stays `present`, so re-hiring it still lowers its backup.
+A hire of a member still `present` proves it left unseen (a pawn in the party cannot be hired): it goes away (cause `hire`) then `returning`, so its backup is never lowered, ticket 20 or not.
 
 ---
 
@@ -128,8 +128,8 @@ No game code changes.
    - `dismiss`: `snapshot` present → `pcall(backups.store, retinue.unit, m, snapshot)`, failure through `report("backup", err)`; the
      transition still runs. `retinue.ambiguous[id]` or `retinue.found[id]` → `log_line(still_here_text)`, no transition. Else `mark_away`,
      `budget:forget(id)`, `log_line(away_text(m.name, from, "dismiss"))`. `already_away`: nothing.
-   - `hire`: ambiguous → nothing. `mark_returning` succeeds → `budget:forget(id)`, `log_line(returning_text(m.name, backup's level))`. Any other
-     status: nothing (a member that is present stays present: ticket 20's limit).
+   - `hire`: ambiguous → nothing. `mark_returning` succeeds → `budget:forget(id)`, `log_line(returning_text(m.name, backup's level))`. A present member
+     first goes through `mark_away` (`away_text(m.name, from, "hire")`). Returning: nothing.
 
    `flow.tick`: `budget:sync(retinue.generation)` first. Then return unless `in_world` and `roster.writable(retinue.roster)`. For each
    member with status RETURNING, not ambiguous, not `budget:closed`: `view = found[id]`; `action = departure.step{ in_party = view ~= nil,

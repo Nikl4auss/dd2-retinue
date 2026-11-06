@@ -27,3 +27,13 @@ From ticket 18's final review:
   function that both call.
 - Until this ticket lands, dismissing and re-hiring a member lowers its backup (the pawn comes back present at its
   first-hire level and the poll follows it).
+
+Implemented: `f6a9d10` (pure), `1d52e38` (glue), then the final review's fix. Plan: [../plan.md](../plan.md). In-game checks 10, 12 and 15 are pending,
+so the ticket stays open.
+
+Decisions beyond the spec: a Return with no usable backup becomes present with a warning (`skipped: no backup`) and the poll rewrites the
+file; a read-back mismatch stays `returning` until the next load; a dismiss while `returning` goes away, backup untouched; a hire of a
+member still `present` goes away (cause `hire`) then `returning`; no file I/O in the hooks: the update loop writes the dismiss snapshot.
+
+Watch at check 10: the line `dismissed but still in the party` would mean the pawn leaves `_PartyPawnList` later than one frame after
+`dismissPawn`. That is untested at one frame (earliest sample +0.3 s). The next hire still restores it, but until then the member stays present.

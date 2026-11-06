@@ -220,15 +220,38 @@ do
     assert(#t.stores == 0 and #t.lines == 0 and #t.order == 0)
 end
 
--- hire: away -> returning; present / returning / unknown / ambiguous do nothing
+-- hire of a present member: it left unseen, so it is a Return, restored like any other
 do
-    local t = setup{ [A] = roster.AWAY, [B] = roster.PRESENT }
+    local t = setup{ [A] = roster.PRESENT }
+    t.backups_by_id[A] = snapshot(28)
+    t.push(hire(A))
+    t.flow.update()
+    assert(t.status(A) == roster.RETURNING)
+    assert(#t.lines == 2 and t.lines[1] == "Ana: present→away (hire)" and t.lines[2] == "Ana: away→returning (backup Lv 28)")
+    t.view(A)
+    t.flow.tick(0, true)
+    assert(t.status(A) == roster.PRESENT and #t.restores == 1)
+
+    -- a dismiss that found the pawn still there, then the hire in a later batch
+    local u = setup{ [A] = roster.PRESENT }
+    u.backups_by_id[A] = snapshot(28)
+    u.view(A)
+    u.push(dismiss(A, nil))
+    u.flow.update()
+    assert(u.status(A) == roster.PRESENT)
+    u.push(hire(A))
+    u.flow.update()
+    assert(u.status(A) == roster.RETURNING)
+end
+
+-- hire: away -> returning; returning / unknown / ambiguous do nothing
+do
+    local t = setup{ [A] = roster.AWAY }
     t.backups_by_id[A] = snapshot(27.0)
     t.push(hire(A))
-    t.push(hire(B))
     t.push(hire(X))
     t.flow.update()
-    assert(t.status(A) == roster.RETURNING and t.status(B) == roster.PRESENT)
+    assert(t.status(A) == roster.RETURNING)
     assert(#t.lines == 1 and t.lines[1] == "Ana: away→returning (backup Lv 27)")
     -- hire of a returning member: nothing more
     t.push(hire(A))
