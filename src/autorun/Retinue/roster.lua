@@ -284,6 +284,46 @@ function M.release(r, offline_id)
     return nil, "not_adopted"
 end
 
+-- The transitions of Departure and Return. All three: LOCKED -> "locked"; not a member -> "not_adopted". They work in
+-- memory for READ_ONLY too (the glue never writes it), and never touch files. character_id is kept on away and returning.
+local function member_for_transition(r, offline_id)
+    if r.mode == M.LOCKED then return nil, "locked" end
+    local m = M.find(r, offline_id)
+    if m == nil then return nil, "not_adopted" end
+    return m
+end
+
+-- mark_away(r, id) -> member, previous_status | nil, err. PRESENT or RETURNING -> AWAY; AWAY -> nil, "already_away".
+function M.mark_away(r, offline_id)
+    local m, err = member_for_transition(r, offline_id)
+    if m == nil then return nil, err end
+    if m.status == M.AWAY then return nil, "already_away" end
+    local from = m.status
+    m.status = M.AWAY
+    return m, from
+end
+
+-- mark_returning(r, id) -> member | nil, err. AWAY -> RETURNING; anything else -> nil, "not_away".
+function M.mark_returning(r, offline_id)
+    local m, err = member_for_transition(r, offline_id)
+    if m == nil then return nil, err end
+    if m.status ~= M.AWAY then return nil, "not_away" end
+    m.status = M.RETURNING
+    return m
+end
+
+-- mark_present(r, id, character_id) -> member | nil, err. RETURNING -> PRESENT; anything else -> nil,
+-- "not_returning". character_id goes through valid_character_id; nil or invalid leaves the old value.
+function M.mark_present(r, offline_id, character_id)
+    local m, err = member_for_transition(r, offline_id)
+    if m == nil then return nil, err end
+    if m.status ~= M.RETURNING then return nil, "not_returning" end
+    m.status = M.PRESENT
+    local cid = M.valid_character_id(character_id)
+    if cid ~= nil then m.character_id = cid end
+    return m
+end
+
 -- refresh_cache(r, views) -> changed (boolean). For each PRESENT member in match(r, views).found (so never an
 -- ambiguous one): set character_id = valid_character_id(view.character_id) when non-nil and different, and name =
 -- view.name when a non-empty string and different. Away and returning members are left alone (an away member keeps
@@ -346,8 +386,9 @@ function M.pawn_text(name, level)
     return string.format("%s (Lv %s)", name, num(level))
 end
 
--- member_text(m, info) -> "<name>: <status>[, Lv <level>][, <note>][, backup <backup_note>]"
---   info = { level = number|nil, in_party = boolean, ambiguous = boolean, backup_note = string|nil }
+-- member_text(m, info) -> "<name>: <status>[, Lv <level>][, <note>][, restore <restore_note>][, backup <backup_note>]"
+--   info = { level = number|nil, in_party = boolean, ambiguous = boolean, restore_note = string|nil,
+--            backup_note = string|nil }
 function M.member_text(m, info)
     local text = m.name .. ": " .. m.status
     if info.level ~= nil then text = text .. ", Lv " .. num(info.level) end
@@ -356,6 +397,7 @@ function M.member_text(m, info)
     elseif m.status == M.PRESENT and not info.in_party then
         text = text .. ", not in party"
     end
+    if info.restore_note ~= nil then text = text .. ", restore " .. info.restore_note end
     if info.backup_note ~= nil then text = text .. ", backup " .. info.backup_note end
     return text
 end

@@ -5,7 +5,7 @@ Return, § Backups, § Code layout. Base commit: `ef43795`. (Plans of earlier ti
 
 Two slices, sequential (slice 2 uses slice 1's modules).
 
-- [ ] Slice 1: Pure decisions: roster transitions, `departure`, read-back compare, the `lifecycle` driver, with tests. Tier: **Sonnet** (`implementer`).
+- [x] Slice 1: Pure decisions: roster transitions, `departure`, read-back compare, the `lifecycle` driver, with tests. Tier: **Sonnet** (`implementer`).
 - [ ] Slice 2: Game glue: the four hooks, the restore writes, backup and roster store changes, wiring, menu, docs. Tier: **Sonnet** (`implementer`).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
@@ -23,7 +23,7 @@ Facts the design rests on (checked in the findings, the run files and the dump):
 - `re.on_frame` may run on the render thread, and hooks and `UpdateBehavior` on the game thread. So game **writes** go in `UpdateBehavior`,
   as the experiment did. Between a `pre` and its `post`, `on_frame` can run: a queue fed by `pre` could see the pawn still in the party. Feed it from `post`.
 - `FlowPhase` stayed `InGame` through 22 minutes of play (ticket 18); not observed during a Rift hire, so the restore budget
-  only counts in the world, and a stuck Return shows in the log rather than failing silently.
+  starts on the first tick in the world (then runs on the clock; a load resets it), and a stuck Return shows in the log rather than failing silently.
 
 Decided here (the spec leaves them open):
 

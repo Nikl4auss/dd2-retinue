@@ -221,4 +221,59 @@ do
     assert(p2:tick(1010, true, 1) == true)
 end
 
+-- restored_mismatch
+do
+    local b = good()
+    assert(backup.restored_mismatch(b, good()) == nil)
+    assert(backup.restored_mismatch(b, good({ level = 27.0, exp = 1000.0 })) == nil) -- 1 vs 1.0
+    assert(backup.restored_mismatch(b, good({ level = 28 })) == "level")
+    assert(backup.restored_mismatch(b, good({ exp = 999 })) == "exp")
+    assert(backup.restored_mismatch(b, good({ extra_status_boost = 0 })) == "extra_status_boost")
+    assert(backup.restored_mismatch(b, good({ discipline = 501 })) == "discipline")
+    assert(backup.restored_mismatch(b, good({ level = NIL })) == "level")
+    for _, key in ipairs(backup.INCREASE_KEYS) do
+        local back = good()
+        back.increase_params[key] = back.increase_params[key] + 1
+        assert(backup.restored_mismatch(b, back) == "increase_params." .. key, key)
+    end
+    local back = good()
+    back.increase_params.attack = back.increase_params.attack + 0.0 -- 30.0 equals 30
+    assert(backup.restored_mismatch(b, back) == nil)
+    assert(backup.restored_mismatch(b, good({ increase_params = NIL })) == "increase_params.hit_point")
+    assert(backup.restored_mismatch(b, good({ culmative_exp = { 10, 20, 31 } })) == "culmative_exp[3]")
+    assert(backup.restored_mismatch(b, good({ culmative_exp = { 10.0, 20.0, 30.0 } })) == nil)
+    assert(backup.restored_mismatch(b, good({ culmative_exp = { 10, 20 } })) == "culmative_exp length")
+    assert(backup.restored_mismatch(b, good({ culmative_exp = { 10, 20, 30, 40 } })) == "culmative_exp length")
+    assert(backup.restored_mismatch(b, good({ culmative_exp = NIL })) == "culmative_exp length")
+    -- the first difference in the documented order
+    assert(backup.restored_mismatch(b, good({ level = 1, exp = 1 })) == "level")
+    -- recorded fields and the name are not compared
+    assert(backup.restored_mismatch(b, good({ current_job = 9, name = "Bo", item_ids = { 1 } })) == nil)
+end
+
+-- recorded_mismatch
+do
+    local b = good()
+    local function eq(got, want)
+        assert(#got == #want, table.concat(got, ","))
+        for i, k in ipairs(want) do assert(got[i] == k, k) end
+    end
+    eq(backup.recorded_mismatch(b, good()), {})
+    eq(backup.recorded_mismatch(b, good({ current_job = 6 })), { "current_job" })
+    eq(backup.recorded_mismatch(b, good({ qualified_job_bits = 1 })), { "qualified_job_bits" })
+    eq(backup.recorded_mismatch(b, good({ changed_job_bits = 0 })), { "changed_job_bits" })
+    eq(backup.recorded_mismatch(b, good({ skills = { { "x" } } })), { "skills" })
+    eq(backup.recorded_mismatch(b, good({ current_job = 6.0 })), { "current_job" })
+    eq(backup.recorded_mismatch(b, good({ current_job = 5.0 })), {})
+    -- several, in order
+    eq(backup.recorded_mismatch(b, good({ skills = { { "x" } }, current_job = 6, changed_job_bits = 0 })),
+        { "current_job", "changed_job_bits", "skills" })
+    -- nil on either side is ignored
+    eq(backup.recorded_mismatch(b, good({ current_job = NIL, skills = NIL })), {})
+    eq(backup.recorded_mismatch(good({ current_job = NIL, qualified_job_bits = NIL }), good({ current_job = 1, qualified_job_bits = 2 })), {})
+    -- item_ids are ignored
+    eq(backup.recorded_mismatch(b, good({ item_ids = { 99 } })), {})
+    eq(backup.recorded_mismatch(b, good({ item_ids = NIL })), {})
+end
+
 print("backup_test ok")

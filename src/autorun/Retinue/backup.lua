@@ -97,6 +97,40 @@ function M.same(a, b)
     return true
 end
 
+-- restored_mismatch(b, back) -> nil | field. Compares what a restore writes (level, exp, each increase_params key,
+-- extra_status_boost, discipline, culmative_exp: length, then elements) between the backup b and the values read
+-- back from the pawn; numbers by ==. field names the first difference: "level", "increase_params.attack",
+-- "culmative_exp[3]", "culmative_exp length".
+function M.restored_mismatch(b, back)
+    for _, key in ipairs({ "level", "exp" }) do
+        if b[key] ~= back[key] then return key end
+    end
+    local ip = back.increase_params or {}
+    for _, key in ipairs(M.INCREASE_KEYS) do
+        if b.increase_params[key] ~= ip[key] then return "increase_params." .. key end
+    end
+    for _, key in ipairs({ "extra_status_boost", "discipline" }) do
+        if b[key] ~= back[key] then return key end
+    end
+    local a, c = b.culmative_exp, back.culmative_exp or {}
+    if #a ~= #c then return "culmative_exp length" end
+    for i = 1, #a do
+        if a[i] ~= c[i] then return "culmative_exp[" .. i .. "]" end
+    end
+    return nil
+end
+
+-- recorded_mismatch(b, fresh) -> { key, ... }: the keys among current_job, qualified_job_bits, changed_job_bits and
+-- skills that are non-nil on both sides and not same, in that order; empty when none. item_ids are not compared
+-- (the game regenerates them on every hire).
+function M.recorded_mismatch(b, fresh)
+    local out = {}
+    for _, key in ipairs({ "current_job", "qualified_job_bits", "changed_job_bits", "skills" }) do
+        if b[key] ~= nil and fresh[key] ~= nil and not M.same(b[key], fresh[key]) then out[#out + 1] = key end
+    end
+    return out
+end
+
 -- carry_recorded(fresh, last): each recorded key that is nil in fresh is copied from last (last nil: unchanged).
 -- Mutates and returns fresh.
 function M.carry_recorded(fresh, last)

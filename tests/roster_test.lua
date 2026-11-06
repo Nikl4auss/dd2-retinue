@@ -599,3 +599,76 @@ end
 assert(roster.pawn_text("Folken", 12) == "Folken (Lv 12)")
 assert(roster.pawn_text("Folken", 12.0) == "Folken (Lv 12)")
 assert(roster.pawn_text("Folken", nil) == "Folken")
+
+-- member_text: restore_note
+do
+    local m = { name = "Cy", status = roster.RETURNING }
+    assert(roster.member_text(m, { in_party = true, ambiguous = false, restore_note = "pending" }) == "Cy: returning, restore pending")
+    assert(roster.member_text(m, { level = 4, in_party = true, ambiguous = false, restore_note = "timed out" })
+        == "Cy: returning, Lv 4, restore timed out")
+    assert(roster.member_text(m, { in_party = true, ambiguous = false, restore_note = "pending", backup_note = "missing" })
+        == "Cy: returning, restore pending, backup missing")
+    assert(roster.member_text({ name = "Ana", status = roster.PRESENT },
+        { level = 3, in_party = false, ambiguous = true, restore_note = "pending", backup_note = "missing" })
+        == "Ana: present, Lv 3, ambiguous: two party pawns share its Offline ID, excluded, restore pending, backup missing")
+end
+
+-- mark_away / mark_returning / mark_present
+do
+    local function with(status, cid)
+        return ok_roster({ { offline_id = A, name = "Ana", status = status, character_id = cid or 7 } })
+    end
+    -- mark_away
+    local r = with(roster.PRESENT)
+    local m, from = roster.mark_away(r, A)
+    assert(m == r.members[1] and m.status == roster.AWAY and from == roster.PRESENT and m.character_id == 7)
+    r = with(roster.RETURNING)
+    m, from = roster.mark_away(r, A:upper())
+    assert(m and m.status == roster.AWAY and from == roster.RETURNING and m.character_id == 7)
+    r = with(roster.AWAY)
+    local none, err = roster.mark_away(r, A)
+    assert(none == nil and err == "already_away" and r.members[1].status == roster.AWAY)
+    -- mark_returning
+    r = with(roster.AWAY)
+    m = roster.mark_returning(r, A)
+    assert(m == r.members[1] and m.status == roster.RETURNING and m.character_id == 7)
+    for _, st in ipairs({ roster.PRESENT, roster.RETURNING }) do
+        r = with(st)
+        none, err = roster.mark_returning(r, A)
+        assert(none == nil and err == "not_away" and r.members[1].status == st)
+    end
+    -- mark_present
+    r = with(roster.RETURNING)
+    m = roster.mark_present(r, A, 99)
+    assert(m == r.members[1] and m.status == roster.PRESENT and m.character_id == 99)
+    r = with(roster.RETURNING)
+    assert(roster.mark_present(r, A, nil).character_id == 7)
+    r = with(roster.RETURNING)
+    assert(roster.mark_present(r, A, "junk").character_id == 7)
+    r = with(roster.RETURNING)
+    assert(roster.mark_present(r, A, -5).character_id == 7)
+    r = with(roster.RETURNING)
+    assert(roster.mark_present(r, A, 99.0).character_id == 99)
+    for _, st in ipairs({ roster.PRESENT, roster.AWAY }) do
+        r = with(st)
+        none, err = roster.mark_present(r, A, 99)
+        assert(none == nil and err == "not_returning" and r.members[1].status == st and r.members[1].character_id == 7)
+    end
+    -- unknown id, locked, read-only
+    r = with(roster.PRESENT)
+    for _, id in ipairs({ B, "nope", ZERO }) do
+        assert(select(2, roster.mark_away(r, id)) == "not_adopted")
+        assert(select(2, roster.mark_returning(r, id)) == "not_adopted")
+        assert(select(2, roster.mark_present(r, id, 1)) == "not_adopted")
+    end
+    local lk = roster.resolve("unparseable")
+    assert(select(2, roster.mark_away(lk, A)) == "locked")
+    assert(select(2, roster.mark_returning(lk, A)) == "locked")
+    assert(select(2, roster.mark_present(lk, A, 1)) == "locked")
+    -- read-only works in memory
+    local ro = with(roster.PRESENT)
+    ro.mode = roster.READ_ONLY
+    assert(select(2, roster.mark_away(ro, A)) == roster.PRESENT and ro.members[1].status == roster.AWAY)
+    assert(roster.mark_returning(ro, A).status == roster.RETURNING)
+    assert(roster.mark_present(ro, A, 5).status == roster.PRESENT)
+end
