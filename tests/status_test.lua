@@ -1,7 +1,7 @@
 local status = require("Retinue.status")
 
 assert(status.format(nil) == "Load a save")
-assert(status.format({}) == "No hired pawns in party")
+assert(status.format({}) == "No adopted pawns in party")
 
 -- one row
 assert(status.format({ { name = "Ana", level = 12, job = 1, rank = 3 } }) == "Applies to: Ana (Lv 12, Fighter R3, Disc ?)")

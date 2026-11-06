@@ -31,7 +31,7 @@ end
 --   { name = string|nil, level = number|nil, job = number|nil, rank = number|nil, discipline = number|nil }.
 function M.format(rows)
     if rows == nil then return "Load a save" end
-    if #rows == 0 then return "No hired pawns in party" end
+    if #rows == 0 then return "No adopted pawns in party" end
     local parts = {}
     for i, row in ipairs(rows) do parts[i] = row_text(row) end
     return "Applies to: " .. table.concat(parts, ", ")

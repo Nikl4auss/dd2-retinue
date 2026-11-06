@@ -5,7 +5,7 @@ Source: [issues/17-adopt-release-mod-menu.md](issues/17-adopt-release-mod-menu.m
 
 Two slices, sequential (slice 2 uses slice 1's modules).
 
-- [ ] Slice 1: Pure `roster` module and the narrowed `targets` predicate, with tests. Tier: **Sonnet** (`implementer`).
+- [x] Slice 1: Pure `roster` module and the narrowed `targets` predicate, with tests. Tier: **Sonnet** (`implementer`).
 - [ ] Slice 2: Game glue: party views, per-slot roster store, menu with Adopt/Release, wiring. Tier: **Sonnet** (`implementer`).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
