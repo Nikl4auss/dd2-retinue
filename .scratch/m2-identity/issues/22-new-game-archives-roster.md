@@ -16,6 +16,6 @@ and starts empty; NG+ keeps the roster, and members not in the party become away
 
 ## Comments
 
-- REFramework likely has no `os.rename` / `os.remove` (the LeovvayGore mod says so; ticket 18's release falls back to
-  emptying the file). So the archive is a copy of each file into `archive-<yyyymmdd-hhmmss>/` plus emptying the original
+- REFramework has no working `os.remove` here (verified in ticket 18: release ran the emptying fallback; the LeovvayGore
+  mod says `os.rename` is missing too). So the archive is a copy of each file into `archive-<yyyymmdd-hhmmss>/` plus emptying the original
   (an empty file reads as missing).
