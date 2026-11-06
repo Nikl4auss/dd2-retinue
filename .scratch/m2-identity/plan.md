@@ -20,7 +20,7 @@ Facts the design rests on (run files `docs/findings/data/2026-11-03-m2-lifecycle
 - On a load the hired pawns register with the main pawn (ticket 20's plan), but a zero GUID reads as a complete identity read, and the pass has no 3-miss protection of its own.
 - `roster_store.update` refreshes the cache on the frame of the load request and on every party change, so by world entry the present member's kept CharacterID has been overwritten by the loaded one.
   The present row cannot compare anything unless that refresh waits for the pass.
-- A load request bumps `generation` at once, while the old party can still be in the list and `in_world` still true (a load from the pause menu). A pass on that frame would judge the old party.
+- A load request bumps `generation` at once, while the old party can still be in the list and `in_world` still true if the request comes from inside the world (the user reports the game has no load in the pause menu: loads go through the title, so this guards the death reload and any other in-world request). A pass on that frame would judge the old party.
 
 Decided here:
 
