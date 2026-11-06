@@ -21,6 +21,9 @@ local M = {}
 --                                    the tracker's start + load request count (a change means a new load)
 --   store:adopt(view) -> true | nil, err      -- err: roster's errors, plus "no_slot"
 --   store:release(offline_id) -> true | nil, err
+--   store:mark_away(id) -> member, previous_status | nil, err;  store:mark_returning(id) -> member | nil, err;
+--   store:mark_present(id, character_id) -> member | nil, err
+--                      -- the roster.mark_* transitions, saved on success (no file in read-only); "no_slot" without a roster
 -- roster.json is read when the active unit changes or a new start/load request was seen (a reload of the same
 -- unit: the frame loop may never see the unit go nil in between, so the unit alone would miss it). It is written
 -- only by save(), only while the roster is writable.
@@ -110,6 +113,21 @@ function M.new(report, backups)
         log.error(string.format("[Retinue] %s: released %s (backup %s)", slot.label(self.unit), m.name, result))
         return true
     end
+
+    -- A transition of Departure and Return: roster.mark_* on the active roster, saved on success; the roster
+    -- function's results pass through unchanged.
+    local function transition(fn)
+        return function(self, ...)
+            if self.roster == nil then return nil, "no_slot" end
+            local a, b = fn(self.roster, ...)
+            if a == nil then return nil, b end
+            save()
+            return a, b
+        end
+    end
+    store.mark_away = transition(roster.mark_away)
+    store.mark_returning = transition(roster.mark_returning)
+    store.mark_present = transition(roster.mark_present)
 
     return store
 end

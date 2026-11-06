@@ -21,6 +21,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   in the world, only when a value changed. A member below its backup lowers it (the save wins). Release empties or
   deletes the file. The menu shows an away member's level from its backup and a note when the backup is missing or
   damaged.
+- Departure and Return (M2): dismissing a member at the Rift stores its last backup and marks it away; hiring it
+  again marks it returning and restores its progress (level, exp, stat increases, discipline, vocation exp) from the
+  backup, unless the game's level is already above it. A `Departure tracking unavailable` notice shows when a hooked
+  method is missing.
 
 ### Changed
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is

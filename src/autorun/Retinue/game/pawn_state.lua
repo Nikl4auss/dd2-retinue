@@ -87,7 +87,9 @@ local function int(v)
     return v
 end
 
--- Returns { read = function(view) -> snapshot | nil, why }. The snapshot is backup.lua's table of a live party pawn
+-- Returns { read = function(view) -> snapshot | nil, why,
+--           restore = function(view, b) -> "done" | "wait", why | "mismatch", field   (game thread only) }.
+-- The snapshot is backup.lua's table of a live party pawn
 -- (view as party.views() builds it; name is view.name, the store overrides it with the roster's). nil + why when a
 -- restored field cannot be read or the snapshot is not usable (backup.invalid). A recorded field that cannot be read
 -- (the three job fields, items, skills) stays nil and is reported through report("backup <key>", err).
@@ -176,6 +178,81 @@ function M.new(report)
         local why = backup.invalid(b)
         if why then return nil, why end
         return b
+    end
+
+    -- The contexts a restore writes into; throws when one is missing.
+    local function restore_targets(chara)
+        local human = chara:call("get_Human")
+        if not human then error("no Human") end
+        local st = human:call("get_StatusContext")
+        if not st then error("no HumanStatusContext") end
+        local jc = human:call("get_JobContext")
+        if not jc then error("no JobContext") end
+        local ip = st:get_field("_IncreaseParams")
+        if ip == nil then error("_IncreaseParams is nil") end
+        local arr = jc:get_field("CulmativeExp")
+        if arr == nil then error("CulmativeExp is nil") end
+        return st, jc, ip, arr
+    end
+
+    local function need_int(v, what)
+        local n = slot.to_int(v)
+        if n == nil then error("backup value is not an integer: " .. what .. "=" .. str(v)) end
+        return n
+    end
+
+    -- Writes the backup into the live pawn, game thread only (findings 0008): level, exp, the increase params, the
+    -- extra status boost, the discipline and the per-vocation exp; then reads them back and compares.
+    -- "done" | "wait", why (a context missing or a write threw: nothing proven, retry; every write is idempotent) |
+    -- "mismatch", field (the read-back differs: retrying would not help).
+    function reader.restore(view, b)
+        local chara = view.chara
+        local okt, st, jc, ip, arr = pcall(restore_targets, chara)
+        if not okt then return "wait", tostring(st) end
+        local okl, len = pcall(function() return arr:call("get_Length") end)
+        local n = okl and slot.to_int(len) or nil
+        if n == nil then return "wait", "CulmativeExp length unreadable: " .. str(len) end
+        if n ~= #b.culmative_exp then return "mismatch", "culmative_exp length" end
+
+        local okw, errw = pcall(function()
+            st:call("set_Level", need_int(b.level, "level"))
+            st:call("set_Exp", need_int(b.exp, "exp"))
+
+            -- ReadOnly is put back even when a field write throws.
+            local was_ro = ip:get_field("ReadOnly") == true
+            if was_ro then ip:call("setReadOnly", false) end
+            local oki, erri = pcall(function()
+                for _, key in ipairs(backup.INCREASE_KEYS) do
+                    ip:set_field(INCREASE_FIELDS[key], need_int(b.increase_params[key], "increase_params." .. key))
+                end
+            end)
+            if was_ro then ip:call("setReadOnly", true) end
+            if not oki then error(erri, 0) end
+
+            -- setExtraStatusBoost is proven only with 0 and set_ConsumableExpProp may touch other state: read back and
+            -- fall back to the field write when the method did not leave the value.
+            local boost = need_int(b.extra_status_boost, "extra_status_boost")
+            st:call("setExtraStatusBoost", boost)
+            if int(st:get_field("_AcquiredExtraStatusBoost")) ~= boost then
+                st:set_field("_AcquiredExtraStatusBoost", boost)
+            end
+            local discipline = need_int(b.discipline, "discipline")
+            jc:call("set_ConsumableExpProp", discipline)
+            if int(jc:get_field("ConsumableExp")) ~= discipline then
+                jc:set_field("ConsumableExp", discipline)
+            end
+
+            -- Index assignment, 0-based: arr:call("SetValue", ...) silently does nothing.
+            for i = 0, n - 1 do arr[i] = need_int(b.culmative_exp[i + 1], "culmative_exp[" .. (i + 1) .. "]") end
+        end)
+        if not okw then return "wait", tostring(errw) end
+
+        local back = {}
+        local okr, errr = pcall(read_restored, chara, back)
+        if not okr then return "wait", tostring(errr) end
+        local field = backup.restored_mismatch(b, back)
+        if field then return "mismatch", field end
+        return "done"
     end
 
     return reader

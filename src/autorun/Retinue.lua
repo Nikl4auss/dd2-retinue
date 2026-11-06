@@ -16,6 +16,9 @@
 -- changed (whatever the checkbox says; nothing is written when the roster is locked or read-only, or the slot is
 -- unknown). Release empties or deletes the file. A member below its backup lowers it (the save wins). The menu shows
 -- the level of a member that is not in the party from its backup, and a note when its backup is missing or damaged.
+-- Dismissing a member at the Rift (the pawn leaves the party) stores its last backup and marks it away. Hiring it again
+-- marks it returning, and about a frame later, in the game's update, its progress is written back from the backup
+-- (retried for about 10 seconds; the menu shows a note when that fails). Both run whatever the progression checkbox says.
 -- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
 -- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
 -- tracked from the game's start and load requests; the decisions live in Retinue/slot.lua.
@@ -23,13 +26,15 @@
 -- Do NOT deploy tools/experiments/Retinue_Exp_Hooks.lua alongside this script: both would hook the same
 -- methods and rewrite the same arguments.
 --
--- Layout: this file is only wiring (requires, the shared state, the three REFramework callbacks and the menu).
--- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot,backup}.lua (pure, tested
--- by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus Retinue/game/: jsonfile (verified JSON file
+-- Layout: this file is only wiring (requires, the shared state, the REFramework callbacks and the menu).
+-- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot,backup,departure,
+-- lifecycle}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus Retinue/game/:
+-- jsonfile (verified JSON file
 -- reads and writes and deletes), config_store (config.json), roster_store (the active slot's roster.json),
 -- backup_store and pawn_state (the member backups and the pawn read behind them), roster_menu (the roster part of
--- the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views and status rows)
--- and slot_hooks (the start/load request hooks behind the save slot, and the in-the-world signal).
+-- the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views and status rows),
+-- slot_hooks (the start/load request hooks behind the save slot, and the in-the-world signal) and lifecycle_hooks
+-- (the dismiss and hire hooks; pawn_state also does the restore writes).
 -- Every hook body runs under pcall.
 
 local errlog = require("Retinue.errlog")
@@ -44,8 +49,10 @@ local roster_menu = require("Retinue.game.roster_menu")
 local targets = require("Retinue.targets")
 local slot = require("Retinue.slot")
 local slot_hooks = require("Retinue.game.slot_hooks")
+local lifecycle_hooks = require("Retinue.game.lifecycle_hooks")
+local lifecycle = require("Retinue.lifecycle")
 
-local state = { enabled = true, available = false, targets = {} }
+local state = { enabled = true, available = false, targets = {}, in_world = false }
 
 local report = errlog.new(function(msg) log.error(msg) end)
 
@@ -63,11 +70,20 @@ local pawns = pawn_state.new(report)
 local backups = backup_store.new(report, pawns.read)
 local retinue = roster_store.new(report, backups)
 local menu = roster_menu.new()
+local life_hooks = lifecycle_hooks.install(report, retinue, backups)
+local flow = lifecycle.new{
+    retinue = retinue, backups = backups, pawns = pawns, party = party, drain = life_hooks.drain,
+    log_line = function(text) log.error("[Retinue] " .. text) end, report = report,
+}
 
 -- Clear the open-call stack at the start of each game update, on the game thread: re.on_frame may run on
--- the render thread, where a clear could fall between a rewritten core pre-hook and its notification.
+-- the render thread, where a clear could fall between a rewritten core pre-hook and its notification. The restore
+-- writes run here for the same reason; they do not depend on the progression checkbox.
 re.on_pre_application_entry("UpdateBehavior", function()
     prog_hooks.clear_calls()
+    life_hooks.begin_update()
+    local ok, err = pcall(flow.tick, os.clock(), state.in_world)
+    if not ok then report("lifecycle", err) end
 end)
 
 re.on_frame(function()
@@ -78,11 +94,17 @@ re.on_frame(function()
     local ok_roster, err_roster = pcall(retinue.update, tracker.unit(), party,
         tracker.session.starts + tracker.session.loads)
     if not ok_roster then report("roster", err_roster) end
-    -- The backup poll runs whatever the progression toggle says; it only needs the roster and the world.
+    -- The lifecycle events and the backup poll run whatever the progression toggle says; they only need the roster
+    -- and the world.
+    local world = false
     if ok_roster then
-        local ok_b, err_b = pcall(backups.poll, retinue, tracker.in_world(party.has_main_pawn()), os.clock())
+        world = tracker.in_world(party.has_main_pawn())
+        local ok_l, err_l = pcall(flow.update)
+        if not ok_l then report("lifecycle", err_l) end
+        local ok_b, err_b = pcall(backups.poll, retinue, world, os.clock())
         if not ok_b then report("backup", err_b) end
     end
+    state.in_world = world
     local targets_set = {}
     if ok_roster and prog_hooks.is_hired then
         local ok_t, res = pcall(targets.build, party.views(), retinue.roster, prog_hooks.is_hired)
@@ -101,9 +123,12 @@ local function draw()
     for _, w in ipairs(store.warnings) do imgui.text((w:gsub("^%[Retinue%] ", ""))) end
     local rows = party.rows(state.targets)
     imgui.text(party.failed and "Status unavailable (see log)" or status.format(rows))
-    menu:draw(retinue, party, slot.label(tracker.unit()), backups)
+    menu:draw(retinue, party, slot.label(tracker.unit()), backups, flow)
     for _, method_name in ipairs(tracker.missing) do
         imgui.text("Slot tracking unavailable: " .. method_name .. " not found (game update?)")
+    end
+    for _, method_name in ipairs(life_hooks.missing) do
+        imgui.text("Departure tracking unavailable: " .. method_name .. " not found (game update?)")
     end
     for _, method_name in ipairs(prog_hooks.missing) do
         imgui.text("Progression unavailable: " .. method_name .. " not found (game update?)")

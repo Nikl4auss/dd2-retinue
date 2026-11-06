@@ -195,7 +195,8 @@ Use a test slot, never the real save's slot, for 21 and 22.
     load (save wins); `"name": 5` → "(unknown)" until refreshed.
 25. **Read-only**: `"version": 2`. Notice on load; present members level; Adopt/Release refused with the reason; no file
     under `slots/<n>/` changes (roster or backups) through a fight and a dismiss.
-26. **Damaged backup**: `not json` in an **away** member's backup: warning for that pawn only; on its Return no restore;
+26. **Damaged backup**: `not json` in an **away** member's backup: warning for that pawn only; on its Return no restore
+    (it becomes present at the game's level, log `skipped: no backup`, and the poll rewrites the file);
     the other member works. In a **present** member's backup: warning and a note in the menu, rewritten within ~10 s
     (the game is the authority while present).
 

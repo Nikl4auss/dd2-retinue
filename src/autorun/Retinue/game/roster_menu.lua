@@ -5,9 +5,9 @@ local roster = require("Retinue.roster")
 
 local M = {}
 
--- Returns { draw = function(self, store, party, unit_label, backups) } (backups: game/backup_store, for a member's
--- level when it is not in the party and the note on a missing or damaged backup). draw runs inside Retinue.lua's
--- draw, under its pcall.
+-- Returns { draw = function(self, store, party, unit_label, backups, flow) } (backups: game/backup_store, for a member's
+-- level when it is not in the party and the note on a missing or damaged backup; flow: Retinue/lifecycle's, for the
+-- note of a Return whose restore did not finish). draw runs inside Retinue.lua's draw, under its pcall.
 -- Pressing Adopt or Release asks for an inline confirmation; the result of a failed one stays on a line until the
 -- next button press.
 function M.new()
@@ -36,7 +36,7 @@ function M.new()
         end
     end
 
-    function self:draw(store, party, unit_label, backups)
+    function self:draw(store, party, unit_label, backups, flow)
         if store.generation ~= self.generation then
             self.generation = store.generation
             self.pending, self.last_error = nil, nil
@@ -54,6 +54,7 @@ function M.new()
                     in_party = view ~= nil,
                     ambiguous = store.ambiguous[m.offline_id] == true,
                     backup_note = backups.note(m.offline_id),
+                    restore_note = m.status == roster.RETURNING and flow.note(m.offline_id) or nil,
                 }))
                 if not pending then
                     imgui.same_line()

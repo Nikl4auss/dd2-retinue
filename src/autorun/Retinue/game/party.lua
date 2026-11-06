@@ -28,6 +28,16 @@ function M.holder_context(holder, type_name)
     return dict:call("get_Item", key):call("get_CurrentContext")
 end
 
+-- A live pawn's canonical Offline ID (its PawnOwnerContext's _OfflineID), nil when it has no context holder or no
+-- owner context (or the zero GUID). Throws when a read fails.
+function M.offline_id(chara)
+    local holder = chara:call("get_Context")
+    if not holder then return nil end
+    local ctx = M.holder_context(holder, OWNER_CONTEXT)
+    if not ctx then return nil end
+    return roster.canonical_id(as_string(ctx:get_field("_OfflineID")))
+end
+
 -- Returns an object with:
 --   refresh()      -- the pcall'd party read; on a throw clears the views and reports "refresh"
 --   views()        -- array (party order) of { slot, character_id, owner, offline_id, name, chara }; empty when no

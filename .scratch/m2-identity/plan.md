@@ -6,7 +6,7 @@ Return, § Backups, § Code layout. Base commit: `ef43795`. (Plans of earlier ti
 Two slices, sequential (slice 2 uses slice 1's modules).
 
 - [x] Slice 1: Pure decisions: roster transitions, `departure`, read-back compare, the `lifecycle` driver, with tests. Tier: **Sonnet** (`implementer`).
-- [ ] Slice 2: Game glue: the four hooks, the restore writes, backup and roster store changes, wiring, menu, docs. Tier: **Sonnet** (`implementer`).
+- [x] Slice 2: Game glue: the four hooks, the restore writes, backup and roster store changes, wiring, menu, docs. Tier: **Sonnet** (`implementer`).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 

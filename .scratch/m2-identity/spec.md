@@ -142,7 +142,8 @@ From [How does the mod notice a member leaving and returning…?](issues/11-depa
   ready. Writes as in findings 0008: `set_Level`, `set_Exp`, `set_field` on the existing `_IncreaseParams` object,
   `setExtraStatusBoost`, `set_ConsumableExpProp`, `CulmativeExp` by 0-based index assignment, then read back every
   field. Success → present, CharacterID cache set, the poll mirrors the game again. Timeout or read-back mismatch →
-  stays `returning`, warning, retried on the next load.
+  stays `returning`, warning, retried on the next load. A Return with no usable backup becomes present with a warning;
+  the poll then rewrites the file. A dismiss while `returning` → away, backup untouched.
 - **Level guard**: restore when the game's level ≤ the backup's (equal level still restores exp, discipline, vocation
   exp); when greater, skip with a warning, become present, and the game wins.
 - Transitions and backups run **regardless of the `progression` toggle**. Locked: nothing tracked. Read-only: nothing
