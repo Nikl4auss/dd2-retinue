@@ -318,7 +318,6 @@ M.ERRORS = {
     not_adopted = "not in the retinue",
     no_slot = "the save slot is unknown", -- produced by the glue
     not_in_party = "no longer in the party", -- produced by the glue
-    write_failed = "could not save roster.json (see log)", -- not an operation error; used by the menu
 }
 
 function M.error_text(err) return M.ERRORS[err] or tostring(err) end

@@ -554,7 +554,6 @@ do
     assert(roster.error_text("not_adopted") == "not in the retinue")
     assert(roster.error_text("no_slot") == "the save slot is unknown")
     assert(roster.error_text("not_in_party") == "no longer in the party")
-    assert(roster.error_text("write_failed") == "could not save roster.json (see log)")
     assert(roster.error_text("mystery") == "mystery")
     assert(roster.error_text(nil) == "nil")
 end

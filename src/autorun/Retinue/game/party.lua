@@ -1,5 +1,5 @@
 -- REFramework glue: reads the party each frame into views (uses sdk) and the status-line rows.
--- The decisions live in Retinue/{roster,targets,status}.lua; this module no longer decides who is a target.
+-- The decisions live in Retinue/{roster,targets,status}.lua; who is a target is decided in Retinue/targets.lua.
 
 local hooks = require("Retinue.hooks")
 local ids = require("Retinue.ids")

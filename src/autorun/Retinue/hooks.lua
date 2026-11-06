@@ -6,7 +6,7 @@ local M = {}
 -- id_arg is the index in args[] of the app.CharacterID. args[1] is the thread context; for static methods
 -- (these ExpDispenser ones) the first parameter is args[2]. Instance methods have `this` at args[2] and the
 -- first parameter at args[3] (e.g. GuiManager.reqJobRankUp: id_arg = 3).
--- role: "core" rewrites a hired pawn's ID and pushes an open-call frame; "swap" puts the real ID back for the
+-- role: "core" rewrites an adopted pawn's ID and pushes an open-call frame; "swap" puts the real ID back for the
 -- notification (game/progression_hooks.lua).
 M.SPECS = {
     { key = "checkLevelUp", role = "core", type = "app.ExpDispenser",

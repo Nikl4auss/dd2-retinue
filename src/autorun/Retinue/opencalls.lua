@@ -1,6 +1,6 @@
 -- Open core calls (checkLevelUp / addJobPoint) for the notification swap-back. Pure: no REFramework globals.
 --
--- One frame per core call, pushed by its pre-hook whether or not it rewrote; `real` is the hired pawn's ID
+-- One frame per core call, pushed by its pre-hook whether or not it rewrote; `real` is the adopted pawn's ID
 -- and is set only when it did. The swap looks only at the top frame, so a main-pawn or toggle-off call (real =
 -- nil) always shadows any stale rewritten frame below it.
 local ids = require("Retinue.ids")
