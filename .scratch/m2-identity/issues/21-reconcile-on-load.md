@@ -46,3 +46,7 @@ Decisions beyond the spec (plan: [plan.md](../plan.md)):
 - Open for the in-game run: whether a re-hire that keeps its CharacterID changes `_HireTime` (the design assumes it does; check 29b records it).
 
 Commits: `45e1471` (pure), `fd0126b` (the pass in the game), then the final review's fixes. Plan: [../plan.md](../plan.md).
+
+In game (2026-11-06, user, Slot 2, `m2-adopted-folken`), check 19: passed. Grant exp to Lv 30, then back to the title and load (no load in the pause menu). `in the world: yes` at 17:51:18.444,
+`Folken: save has Lv 28, backup had Lv 30 -> backup lowered, save wins` at 17:51:31.685 (13.2 s: 3 s settle plus the 10 s poll), no `roster ...` line, roster `present`, backup Lv 28.
+First reading of `hire_time` from the game: 37991999, the fixture's `_HireTime` in ms, written and verified through JSON with no write error.
