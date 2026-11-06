@@ -24,13 +24,19 @@ local M = {}
 --   store:mark_away(id) -> member, previous_status | nil, err;  store:mark_returning(id) -> member | nil, err;
 --   store:mark_present(id, character_id) -> member | nil, err
 --                      -- the roster.mark_* transitions, saved on success (no file in read-only); "no_slot" without a roster
+--   store:correct(corrections) -> count       -- roster.apply_corrections, saved once when the count is above 0 (0 without a roster)
+--   store:settle()                            -- ends the hold a (re)load puts on the cache refresh (see below) and refreshes once
 -- roster.json is read when the active unit changes or a new start/load request was seen (a reload of the same
 -- unit: the frame loop may never see the unit go nil in between, so the unit alone would miss it). It is written
 -- only by save(), only while the roster is writable.
+-- A (re)load holds the cache refresh (the present members' kept CharacterID is what the reconciliation compares): store:settle()
+-- lifts the hold and the next update refreshes. Until then only adopt, release, correct and the mark_* write the roster.
 -- Lines go to log.error (another mod may raise the log level and drop warnings), with the [Retinue] prefix.
 function M.new(report, backups)
     local store = { unit = nil, requests = nil, roster = nil, ambiguous = {}, found = {}, save_failed = false, generation = 0 }
     local warned = {} -- offline_id -> true: ambiguity already logged for it
+    local hold = false -- a load has not been reconciled yet: the cache refresh waits
+    local refresh_due = false -- settle() was called: refresh on the next update
 
     local function save()
         local r, unit = store.roster, store.unit
@@ -51,7 +57,6 @@ function M.new(report, backups)
     end
 
     function store.update(unit, party, requests)
-        local forced = false
         if unit ~= store.unit or requests ~= store.requests then
             local r = nil
             if unit ~= nil then r = roster.resolve(jsonfile.read(roster.path(unit), { strict = true })) end
@@ -60,7 +65,7 @@ function M.new(report, backups)
             store.ambiguous, store.found, warned = {}, {}, {}
             store.save_failed = false
             store.generation = store.generation + 1
-            forced = true
+            hold, refresh_due = true, false
             if r then
                 local label = slot.label(unit)
                 log.error(string.format("[Retinue] %s: %s", label, roster.state_text(r)))
@@ -83,7 +88,8 @@ function M.new(report, backups)
         for id in pairs(warned) do
             if not store.ambiguous[id] then warned[id] = nil end
         end
-        if forced or party.changed() then
+        if not hold and (refresh_due or party.changed()) then
+            refresh_due = false
             if roster.refresh_cache(r, views) then save() end
         end
     end
@@ -128,6 +134,19 @@ function M.new(report, backups)
     store.mark_away = transition(roster.mark_away)
     store.mark_returning = transition(roster.mark_returning)
     store.mark_present = transition(roster.mark_present)
+
+    -- The reconciliation's corrections: one write for all of them. Returns the count applied.
+    function store:correct(corrections)
+        if self.roster == nil then return 0 end
+        local n = roster.apply_corrections(self.roster, corrections)
+        if n > 0 then save() end
+        return n
+    end
+
+    -- The reconciliation is over (or failed): the cache refresh resumes, starting with the next update.
+    function store:settle()
+        hold, refresh_due = false, true
+    end
 
     return store
 end

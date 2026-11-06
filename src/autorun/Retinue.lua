@@ -21,6 +21,9 @@
 -- (retried for about 10 seconds; the menu shows a note when that fails). Both run whatever the progression checkbox says.
 -- A member that leaves any other way (lost) is noticed by a party check about every second in the world and marked away
 -- after 3 misses; its backup is the last poll.
+-- After each load, once the pawns are in the world again, the roster is reconciled with the save: a member's status
+-- follows what the loaded party shows (a rollback, a member that left or was re-hired without the mod), one log line per
+-- correction. Until then the hook events, the party check, the restores, the backup poll and the cache refresh wait.
 -- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
 -- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
 -- tracked from the game's start and load requests; the decisions live in Retinue/slot.lua.
@@ -30,7 +33,7 @@
 --
 -- Layout: this file is only wiring (requires, the shared state, the REFramework callbacks and the menu).
 -- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot,backup,departure,
--- lifecycle}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus Retinue/game/:
+-- lifecycle,reconcile}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus Retinue/game/:
 -- jsonfile (verified JSON file
 -- reads and writes and deletes), config_store (config.json), roster_store (the active slot's roster.json),
 -- backup_store and pawn_state (the member backups and the pawn read behind them), roster_menu (the roster part of
@@ -103,7 +106,7 @@ re.on_frame(function()
         world = tracker.in_world(party.has_main_pawn())
         local ok_l, err_l = pcall(flow.update, os.clock(), world)
         if not ok_l then report("lifecycle", err_l) end
-        local ok_b, err_b = pcall(backups.poll, retinue, world, os.clock())
+        local ok_b, err_b = pcall(backups.poll, retinue, world and flow.settled(), os.clock())
         if not ok_b then report("backup", err_b) end
     end
     state.in_world = world

@@ -43,6 +43,7 @@ Folken's entry stayed at Lv 23 throughout. It survives save and reload. Limits: 
 | OfflineID | `426f7888…` | same | same |
 | CharacterID | 1601809365 | 372209474 | 3147318785 |
 | Level / exp / discipline | 27 / 9610 / 1930 | 23 / 0 / 0 | 23 / 0 / 0 |
+| `SubPawnDataContext._HireTime` | 37991.99912477005 | 39276.41967765521 | 38927.32584851235 |
 | Warrior rank (culmative exp) | 6 (11130) | 6 (9200) | 6 |
 | Equipped item IDs | 3329, 6123, 5132, 1203 | 3311, 6122, 5007, 4019, 1203 | 3339, 6122, 5016, 1203 |
 
@@ -51,6 +52,11 @@ of the old record is restored (`restorePastInformation` / `restoreContextsToHold
 CharacterID is new and not deterministic; only the OfflineID is stable. Equipment is regenerated on each hire.** Right
 after the hire the record lookups (`CharacterID2Keys`, `hasRecord`) are false; they turn true after a save. `IsRestore`
 turns true after a reload.
+
+`SubPawnDataContext._HireTime` marks one hire: Folken's is 37991.99912477005 in the fixture across every run and
+reload, and each re-hire gets a new value; it survives save and reload to the last digit (c, reloaded). It is the
+save's clock (c is larger than d though it ran earlier), so it rolls back with a rollback. Diamonds, never dismissed:
+32135.22838183213 in all 12 files. Unknown: whether a re-hire that keeps its CharacterID changes it (no run recorded it).
 
 **Lost via *Kill pawns*** (e). The whole party is removed at once. For each hired pawn: `returnSubPawnItems`,
 `unregistPawn`, `SoundVoiceManager.onDismissUnloadPawnEvent`, `addStrayPawn_HireTime_DismissNotInstance` →

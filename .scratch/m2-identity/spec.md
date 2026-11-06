@@ -48,7 +48,8 @@ From [What identifies an adopted pawn across dismiss and re-hire?](issues/07-ide
   Anything else is refused with reason `no_offline_id`. No surrogate key is ever invented.
 - **CharacterID** is a cache: where the member is in this save. It is never used to find or identify a pawn. It is
   refreshed on load, on every party change and on Return. An **away member keeps its last CharacterID** (revised by
-  the uninstall-guarantee ticket); it is only compared on load (see Reconciliation).
+  the uninstall-guarantee ticket); it is only compared on load, and only when the hire time is unknown (see
+  Reconciliation).
 - **Ambiguous**: two party pawns with one member's OfflineID. The member gets no progression, no restore and no
   transition; one warning. Never guess.
 - `name` is stored for display and refreshed while present.
@@ -116,7 +117,9 @@ Path `slots/<n>/backups/<offline_id>.json`, own `version: 1`. One file per membe
   `_Attack`, `_Defence`, `_MagicAttack`, `_MagicDefence`, `_Blow`, `_Weight`), `_AcquiredExtraStatusBoost`;
   `JobContext` `ConsumableExp` (discipline) and the whole `CulmativeExp` array.
 - **Recorded, never restored**: `CurrentJob`, `QualifiedJobBits`, `ChangedJobBits` (verification), equipped item IDs
-  (display, log), equipped skills per vocation (compared on Return, a mismatch logged; kept for M3).
+  (display, log), equipped skills per vocation (compared on Return, a mismatch logged; kept for M3), and the **hire
+  time** (`SubPawnDataContext._HireTime`, integer milliseconds so the file verifies with `==`), which marks one hire
+  (see Reconciliation).
 - **Display**: name, current vocation, level.
 - **Written**: on adopt; by a **poll every ~10 s** while present and in the world, only if a value changed; a forced read
   at `PawnManager.dismissPawn` pre. **Frozen** while away or returning: nothing writes it.
@@ -155,20 +158,38 @@ From [How does the mod notice a member leaving and returning…?](issues/11-depa
 ### Reconciliation on load
 
 From the drift ticket and the uninstall-guarantee ticket. **One pass per load**, on entering the world, before the party
-diff and the poll act; matching by OfflineID:
+diff, the poll and the restore attempts act; matching by OfflineID. "Rehired" is the test below.
 
-| Roster says | Loaded party | Result |
-|---|---|---|
-| present | in party | present; cache refreshed; save wins (backup lowered by the poll if lower) |
-| present | absent | away, last backup kept (save from before the adopt, or dismissed with the mod off) |
-| away | in party, **same** CharacterID as kept | present, no restore (rollback to before the departure; save wins) |
-| away | in party, **different** CharacterID, or none kept | `returning` → restore under the level guard (a Return the mod did not see) |
-| away | absent | away |
-| returning | in party | retry the restore under the level guard |
-| returning | absent | away, backup untouched (save from before the re-hire) |
+| Roster says | Loaded party | Rehired | Result |
+|---|---|---|---|
+| present | in party | no | nothing; the poll lowers the backup if the save is lower (save wins) |
+| present | in party | yes | `returning` (a Return the mod did not see; the poll never lowers the backup) |
+| present | absent | | away, last backup kept (save from before the adopt, or dismissed with the mod off) |
+| away | in party | no | present, no restore (rollback to before the departure; save wins) |
+| away | in party | yes | `returning` → restore under the level guard (a Return the mod did not see) |
+| away | absent | | away |
+| returning | in party | | nothing; `flow.tick` retries the restore under the level guard |
+| returning | absent | | away, backup untouched (save from before the re-hire) |
 
-- One log line per correction, e.g. `Rook: roster away, save has it Lv20 (backup Lv27) → present, save wins`.
-- Read-only roster: the pass runs in memory only. Locked: no pass. Unknown slot: no roster.
+- **The discriminator is the hire time**, kept in the backup (recorded, never restored, frozen while away): a different
+  hire time than the backup's means the pawn was hired again since, an equal one means the same hire. Not "later": a
+  false Return only gives a pawn its backup back, while a false rollback lowers the backup for good, so a rollback to
+  before an earlier Return restores the backup, the one case that departs from "save wins". The hire time is the save's
+  clock, so it rolls back with the save.
+- **Fallback when either hire time is unknown** (a backup written before it was recorded, an unreadable context): the
+  CharacterID as kept. A different one is a re-hire; none kept is a re-hire for an away or returning member and nothing
+  for a present one; the same one is a re-hire only in the first-hire state: exp 0, discipline 0 and behind the backup
+  (lower level, or the same level with backup exp or discipline above 0).
+- **Gate**: the pass runs once per generation, after the game has left the world since the generation changed (or after
+  a 20 s grace, so a start request that never leaves the world cannot hold the session), and after 3 s in the world with
+  a complete party read. While it is pending the hook events wait, and the party diff, the restore attempts, the backup
+  poll and the cache refresh hold (the refresh would overwrite the kept CharacterID the fallback compares).
+- A member whose pawn read fails does not hold the pass: its level, exp and hire time count as unknown, and the failure
+  is reported. With the CharacterID it kept it gets no correction: nothing proves a rollback or a re-hire, and a false
+  rollback lowers the backup. Ambiguous members get no correction.
+- One log line per correction, e.g. `Rook: roster away, save has it Lv20 (backup Lv27) → present, save wins`, and one
+  roster write per pass.
+- Read-only roster: the pass runs in memory only. Locked: no pass. Unknown slot: no roster. The gate opens either way.
 
 ### Progression (M1 narrowed)
 
@@ -256,8 +277,9 @@ Pure modules (no REFramework globals) in `src/autorun/Retinue/`, each with a `te
 - `backup.lua`: serialise / validate, "changed?" comparison, level guard decision.
 - `slot.lua`: unit from a global slot and `SLOT_PER_UNIT`, `StartType` classification (new playthrough / NG+ / load),
   fallback rule, directory and archive names.
-- `reconcile.lua`: the reconciliation table as a pure function (roster, loaded party `{offline_id, character_id, level}`,
-  backup levels) → new roster plus actions and log lines.
+- `reconcile.lua`: the reconciliation table as a pure function (roster, the loaded party `{ [offline_id] = { character_id,
+  level, exp, discipline, hire_time } }`, the ambiguous set, the backups) → corrections with their log lines; and the gate
+  that runs the pass once per generation.
 - `departure.lua`: the party diff counter (3 misses) and the `returning` retry budget.
 - `labels.lua`: every player-facing string (rows, dialogs, notices, Rift and Status marks) from data.
 - `targets.lua`: the narrowed predicate.

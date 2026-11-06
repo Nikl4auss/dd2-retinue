@@ -181,10 +181,12 @@ Use a test slot, never the real save's slot, for 21 and 22.
 20. **Reconciliation table**, from `m2-adopted-folken`, each with a quit, hand-edit of `roster.json` and relaunch;
     expected log line and roster after load:
     - roster `away`, same `character_id`, Folken in party → present, no restore;
-    - roster `away`, `character_id` changed to another number, Folken in party at his saved level → `returning`, then
-      restored under the guard (level ≤ backup: restore; notice shown);
+    - roster `away`, Folken in party, `hire_time` removed from his backup and `character_id` changed to another number
+      → `returning` (log `re-hired unseen`), then restored under the guard (level ≤ backup: restore; notice shown);
     - roster `returning`, Folken in party → restore retried;
-    - roster `present`, Folken dismissed in that save (load a save taken after a dismiss with the mod removed) → away.
+    - roster `present`, Folken dismissed in that save (load a save taken after a dismiss with the mod removed) → away;
+    - roster `present`, Folken in party, `hire_time` in his backup changed to another number (after ~15 s in the world
+      with this build, so the backup has one) → `returning`, log `re-hired unseen`, restored.
 21. **New game** *(opportunistic)*: in a test slot with a roster, start a New Game over it (or restart, `RedoNewGame`).
     `slots/<n>/archive-<date-time>/` holds the old roster and backups; the slot starts empty.
 22. **NG+** *(opportunistic)*: over a cleared test slot, the roster is kept; members not in the party become away.
@@ -201,8 +203,8 @@ Use a test slot, never the real save's slot, for 21 and 22.
     under `slots/<n>/` changes (roster or backups) through a fight and a dismiss.
 26. **Damaged backup**: `not json` in an **away** member's backup: warning for that pawn only; on its Return no restore
     (it becomes present at the game's level, log `skipped: no backup`, and the poll rewrites the file);
-    the other member works. In a **present** member's backup: warning and a note in the menu, rewritten within ~10 s
-    (the game is the authority while present).
+    the other member works. In a **present** member's backup: warning and a note in the menu, rewritten within ~15 s of
+    entering the world (3 s settle, then the poll; the game is the authority while present).
 
 ### Uninstall guarantee
 
@@ -216,8 +218,11 @@ removal. To reinstall: quit, `./deploy.sh --remove`, `./deploy.sh --probe --life
 28. **Away member** (`m2-adopted-folken`, Folken dismissed): remove, load. Playable; Folken in Previous Hires with a plain
     name; re-hired he comes back at Lv 23, exp 0, ordinary (known limit).
 29. **Reinstall after a Return without the mod**: continue 28: save with Folken re-hired at Lv 23, quit, reinstall
-    (`./deploy.sh --probe --lifecycle`), load. Log: away with a different CharacterID → `returning` → restored Lv 23→28,
-    notice shown. Snapshot equals `m2-a` except equipment.
+    (`./deploy.sh --probe --lifecycle`), load. Log: `Folken: roster away, save has it Lv23 (backup Lv28) → returning,
+    re-hired unseen`, then restored Lv 23→28, notice shown. Snapshot equals `m2-a` except equipment.
+29b. **Hire time of a re-hire** *(records a fact)*: in 29, note `hire_time` in `backups/<offline_id>.json` before the
+    dismiss and read the new one from the backup after the re-hire and the next poll. If the re-hire kept Folken's
+    CharacterID, record whether the time changed (the pass assumes it does).
 30. **Returning member**: nothing new to run. A member that is `returning` is, in the save, a re-hired pawn at its
     first-hire level: ordinary, as in 28; on reinstall its restore is retried, as in 20 (third case). Record as covered
     by 28 and 20.

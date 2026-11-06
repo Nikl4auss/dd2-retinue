@@ -1,5 +1,6 @@
 local backup = require("Retinue.backup")
 local lifecycle = require("Retinue.lifecycle")
+local reconcile = require("Retinue.reconcile")
 local roster = require("Retinue.roster")
 
 local A = "11111111-2222-3333-4444-555555555555"
@@ -19,7 +20,10 @@ end
 -- statuses: { [id] = status }; the roster holds Ana (A) and Bo (B) in that order unless `only` limits it.
 local function setup(statuses, opts)
     opts = opts or {}
-    local t = { lines = {}, reports = {}, queue = {}, order = {}, stores = {}, restores = {}, party_levels = {} }
+    local t = {
+        lines = {}, reports = {}, queue = {}, order = {}, stores = {}, restores = {}, party_levels = {},
+        corrections = {}, settles = 0, reads = {},
+    }
     local members = {}
     for _, spec in ipairs({ { A, "Ana", 11 }, { B, "Bo", 12 } }) do
         local st = statuses[spec[1]]
@@ -43,6 +47,13 @@ local function setup(statuses, opts)
         t.order[#t.order + 1] = "mark_present"
         return roster.mark_present(self.roster, id, cid)
     end
+    -- correct / settle: the store's reconciliation calls (the corrections it was given are kept in t.corrections)
+    function retinue:correct(corrections)
+        t.order[#t.order + 1] = "correct"
+        t.corrections[#t.corrections + 1] = corrections
+        return roster.apply_corrections(self.roster, corrections)
+    end
+    function retinue:settle() t.settles = t.settles + 1 end
     t.retinue = retinue
 
     t.backups_by_id = {}
@@ -66,7 +77,11 @@ local function setup(statuses, opts)
         if f then return f(view, b) end
         return "done"
     end
+    -- t.reads[id]: a snapshot, or a function(view) -> snapshot | nil, why that may throw (checked first)
     function pawns.read(view)
+        local per = t.reads[view.offline_id]
+        if type(per) == "function" then return per(view) end
+        if per then return per end
         if t.read_throws then error("read boom") end
         if t.read_nil then return nil, t.read_nil end
         return t.read_result or t.backups_by_id[view.offline_id]
@@ -90,6 +105,7 @@ local function setup(statuses, opts)
         end,
         log_line = function(text) t.lines[#t.lines + 1] = text end,
         report = function(what, err) t.reports[#t.reports + 1] = { what = what, err = tostring(err) } end,
+        gate = opts.gate or { pending = false, check = function() return false end },
     }
     function t.view(id, cid)
         local name = id == A and "Ana" or "Bo"
@@ -741,6 +757,278 @@ do
     assert(t.status(A) == roster.PRESENT and t.status(B) == roster.AWAY)
     assert(#t.reports == 1 and t.reports[1].what == "lifecycle")
     assert(#t.lines == 1 and t.lines[1] == "Bo: present→away (absence)")
+end
+
+-- The reconciliation pass (real gate: settle 3 s in the world, so it runs at the update at 3 when the world starts at 0)
+local function gated(statuses, opts)
+    opts = opts or {}
+    opts.gate = reconcile.new_gate(reconcile.SETTLE_SECONDS, reconcile.GRACE_SECONDS)
+    return setup(statuses, opts)
+end
+
+-- A in the party with the backup's hire time (1000), the save's (`saw`) and level 3 in the save; the backup is Lv 27.
+local function with_hire(t, id, saw)
+    local name = id == A and "Ana" or "Bo"
+    t.backups_by_id[id] = snapshot(27, { offline_id = id, name = name, hire_time = 1000 })
+    t.reads[id] = snapshot(3, { offline_id = id, name = name, hire_time = saw })
+    t.view(id, id == A and 11 or 12)
+end
+
+-- nothing acts before the gate opens: no correction, no restore, no absence, the events and the backup poll wait
+do
+    local t = gated{ [A] = roster.AWAY, [B] = roster.RETURNING }
+    with_hire(t, B, 1000)
+    t.party_levels[B] = 3
+    t.backups_by_id[A] = snapshot(27)
+    t.push(hire(A))
+    ticks(t, 0, 2)
+    t.flow.tick(2, true)
+    assert(t.flow.settled() == false and t.settles == 0)
+    assert(#t.order == 0 and #t.restores == 0 and #t.lines == 0 and t.status(A) == roster.AWAY)
+    ticks(t, 3, 3) -- the pass runs: nothing to correct (A is not in the party, B is returning), then the events
+    assert(t.flow.settled() == true and t.settles == 1)
+    assert(t.status(A) == roster.RETURNING and table.concat(t.order, ",") == "mark_returning")
+    assert(#t.lines == 1 and t.lines[1] == "Ana: away→returning (backup Lv 27)")
+    ticks(t, 4, 6) -- once only
+    assert(t.settles == 1)
+    t.flow.tick(7, true) -- the restores act again
+    assert(#t.restores == 1 and t.status(B) == roster.PRESENT)
+    assert(#t.reports == 0)
+end
+
+-- a row end-to-end: away, same hire time -> present (the save wins), nothing restored
+do
+    local t = gated{ [A] = roster.AWAY }
+    with_hire(t, A, 1000)
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.PRESENT and t.member(A).character_id == 11)
+    assert(#t.lines == 1 and t.lines[1] == "Ana: roster away, save has it Lv3 (backup Lv27) → present, save wins")
+    assert(table.concat(t.order, ",") == "correct" and #t.corrections[1] == 1)
+    t.flow.tick(4, true)
+    assert(#t.restores == 0 and #t.reports == 0 and t.settles == 1)
+end
+
+-- away, different hire time -> returning, then tick restores
+do
+    local t = gated{ [A] = roster.AWAY }
+    with_hire(t, A, 2000)
+    t.party_levels[A] = 3
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.RETURNING)
+    assert(#t.lines == 1 and t.lines[1] == "Ana: roster away, save has it Lv3 (backup Lv27) → returning, re-hired unseen")
+    assert(#t.restores == 0)
+    t.flow.tick(4, true)
+    assert(#t.restores == 1 and t.status(A) == roster.PRESENT)
+end
+
+-- present, different hire time -> returning (the poll never lowers the backup); present, same -> untouched
+do
+    local t = gated{ [A] = roster.PRESENT, [B] = roster.PRESENT }
+    with_hire(t, A, 2000)
+    with_hire(t, B, 1000)
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.RETURNING and t.status(B) == roster.PRESENT)
+    assert(#t.lines == 1 and t.lines[1] == "Ana: roster present, save has it Lv3 (backup Lv27) → returning, re-hired unseen")
+    assert(#t.corrections == 1 and #t.corrections[1] == 1)
+end
+
+-- returning and absent -> away, nothing stored; present and absent -> away; away and absent -> nothing
+do
+    local t = gated{ [A] = roster.RETURNING, [B] = roster.PRESENT }
+    t.backups_by_id[A] = snapshot(27)
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.AWAY and t.status(B) == roster.AWAY)
+    assert(#t.lines == 2 and #t.stores == 0)
+    assert(t.lines[1] == "Ana: roster returning, not in the save's party (backup Lv27) → away, backup kept")
+    assert(t.lines[2] == "Bo: roster present, not in the save's party (no backup) → away, backup kept")
+    assert(#t.corrections == 1 and #t.corrections[1] == 2) -- one correct call for both
+    local u = gated{ [A] = roster.AWAY }
+    ticks(u, 0, 3)
+    assert(#u.order == 0 and #u.lines == 0 and u.settles == 1)
+end
+
+-- the pass with nothing to correct: no correct call, settle once
+do
+    local t = gated{ [A] = roster.PRESENT }
+    with_hire(t, A, 1000)
+    ticks(t, 0, 5)
+    assert(#t.order == 0 and #t.lines == 0 and t.settles == 1)
+end
+
+-- locked and no roster: no correction, the gate still opens and settles
+do
+    local t = gated({ [A] = roster.PRESENT }, { mode = roster.LOCKED })
+    ticks(t, 0, 3)
+    assert(#t.order == 0 and #t.lines == 0 and t.settles == 1 and t.flow.settled() and #t.reports == 0)
+    local u = gated{ [A] = roster.PRESENT }
+    u.retinue.roster = nil
+    ticks(u, 0, 3)
+    assert(#u.order == 0 and u.settles == 1 and u.flow.settled() and #u.reports == 0)
+end
+
+-- read-only: corrections apply in memory through correct, and tick restores nothing
+do
+    local t = gated({ [A] = roster.AWAY }, { mode = roster.READ_ONLY })
+    with_hire(t, A, 2000)
+    t.party_levels[A] = 3
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.RETURNING and #t.lines == 1 and table.concat(t.order, ",") == "correct")
+    t.flow.tick(4, true)
+    assert(#t.restores == 0 and t.status(A) == roster.RETURNING)
+end
+
+-- ambiguous members get no correction
+do
+    local t = gated{ [A] = roster.PRESENT, [B] = roster.AWAY }
+    with_hire(t, B, 2000)
+    t.retinue.ambiguous[A] = true
+    t.retinue.ambiguous[B] = true
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.PRESENT and t.status(B) == roster.AWAY)
+    assert(#t.order == 0 and #t.lines == 0 and t.settles == 1)
+end
+
+-- pawns.read failing (a throw, or nil + why): reported, the other members still judged, an equal CharacterID stays put
+do
+    local t = gated{ [A] = roster.PRESENT, [B] = roster.PRESENT }
+    t.view(A, 11) -- equal CharacterID: no hire time to compare, nothing says it left
+    t.reads[A] = function() error("read boom") end
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.PRESENT and t.status(B) == roster.AWAY)
+    assert(#t.reports == 1 and t.reports[1].what == "reconcile" and t.reports[1].err:find("Ana: ") and t.reports[1].err:find("read boom"))
+    assert(t.settles == 1 and #t.lines == 1)
+
+    local u = gated{ [A] = roster.PRESENT }
+    u.view(A, 11)
+    u.reads[A] = function() return nil, "no Human" end
+    ticks(u, 0, 3)
+    assert(u.status(A) == roster.PRESENT and #u.order == 0)
+    assert(#u.reports == 1 and u.reports[1].what == "reconcile" and u.reports[1].err == "Ana: no Human" and u.settles == 1)
+end
+
+-- a failed read with the kept CharacterID proves nothing: away stays away, present stays present, no correction
+do
+    for _, status in ipairs({ roster.AWAY, roster.PRESENT }) do
+        local t = gated{ [A] = status }
+        t.backups_by_id[A] = snapshot(27)
+        t.view(A, 11)
+        t.reads[A] = function() error("read boom") end
+        ticks(t, 0, 3)
+        assert(t.status(A) == status and #t.order == 0 and #t.lines == 0)
+        assert(#t.reports == 1 and t.reports[1].what == "reconcile" and t.settles == 1)
+        assert(next(t.retinue.ambiguous) == nil) -- the skip set is a copy
+    end
+    -- a different CharacterID with a failed read is evidence of a re-hire: it goes through the plan
+    local u = gated{ [A] = roster.AWAY }
+    u.backups_by_id[A] = snapshot(27)
+    u.view(A, 4242)
+    u.reads[A] = function() return nil, "no Human" end
+    ticks(u, 0, 3)
+    assert(u.status(A) == roster.RETURNING and #u.reports == 1)
+end
+
+-- the gate waits for a complete party read: a failed party, no main pawn or an unread pawn restart the settle
+do
+    local cases = {
+        function(t, on) t.party.all_read = not on end,
+        function(t, on) t.party.failed = on end,
+        function(t, on) t.party.main = not on end,
+    }
+    for _, break_it in ipairs(cases) do
+        local t = gated{ [A] = roster.PRESENT }
+        t.view(A, 11)
+        break_it(t, true)
+        ticks(t, 0, 5)
+        assert(t.flow.settled() == false and t.settles == 0)
+        break_it(t, false)
+        ticks(t, 6, 8)
+        assert(t.flow.settled() == false)
+        ticks(t, 9, 9)
+        assert(t.flow.settled() and t.settles == 1)
+    end
+end
+
+-- the first-hire signature through flow: same CharacterID, no hire time, exp 0 and behind the backup is a re-hire
+do
+    local t = gated{ [A] = roster.AWAY }
+    t.view(A, 11)
+    t.backups_by_id[A] = snapshot(27, { exp = 500 })
+    t.reads[A] = snapshot(3, { exp = 0 })
+    ticks(t, 0, 3)
+    assert(t.status(A) == roster.RETURNING)
+    local u = gated{ [A] = roster.AWAY }
+    u.view(A, 11)
+    u.backups_by_id[A] = snapshot(27, { exp = 500 })
+    u.reads[A] = snapshot(3, { exp = 5 })
+    ticks(u, 0, 3)
+    assert(u.status(A) == roster.PRESENT)
+end
+
+-- the restore budget is synced to the new generation before the gate holds the restores
+do
+    local t = gated{ [A] = roster.RETURNING }
+    t.backups_by_id[A] = snapshot(27)
+    t.view(A)
+    t.restore_results[A] = function() return "mismatch", "culmative_exp[3]" end
+    ticks(t, 0, 3)
+    t.flow.tick(4, true)
+    assert(t.flow.note(A) ~= nil) -- closed with a note
+    t.retinue.generation = 2
+    ticks(t, 5, 5) -- the gate pends again
+    assert(t.flow.settled() == false)
+    t.flow.tick(6, true)
+    assert(t.flow.note(A) == nil)
+end
+
+-- a throwing correct is reported, no lines, and the pass still settles
+do
+    local t = gated{ [A] = roster.PRESENT }
+    t.retinue.correct = function() error("save boom") end
+    ticks(t, 0, 3)
+    assert(#t.reports == 1 and t.reports[1].what == "reconcile" and t.reports[1].err:find("save boom"))
+    assert(#t.lines == 0 and t.settles == 1 and t.flow.settled())
+end
+
+-- a new generation: the gate pends again, the old generation's events are dropped, the old roster is not written
+do
+    local t = gated{ [A] = roster.PRESENT }
+    with_hire(t, A, 1000)
+    ticks(t, 0, 3)
+    assert(t.settles == 1 and t.flow.settled())
+    local old = t.retinue.roster
+    t.push(dismiss(A, nil)) -- generation 1, queued behind the load request
+    t.retinue.generation = 2
+    ticks(t, 4, 6) -- the old party may still be there: the gate waits for the world to be left
+    assert(t.flow.settled() == false and t.settles == 1)
+    assert(#t.order == 0 and #t.lines == 0 and #t.stores == 0 and t.status(A) == roster.PRESENT)
+    ticks(t, 7, 7, false) -- the world is left; the new save's roster is loaded
+    t.retinue.roster = { mode = roster.OK, warnings = {}, members = {
+        { offline_id = A, name = "Ana", status = roster.PRESENT, character_id = 11 } } }
+    t.retinue.found[A] = nil
+    ticks(t, 8, 10) -- settle 3 s from the first frame back
+    assert(t.flow.settled() == false)
+    ticks(t, 11, 11)
+    assert(t.flow.settled() and t.settles == 2)
+    assert(old.members[1].status == roster.PRESENT) -- untouched
+    assert(t.retinue.roster.members[1].status == roster.AWAY)
+    assert(table.concat(t.order, ",") == "correct" and #t.lines == 1)
+end
+
+-- the diff and the restores act again after the pass
+do
+    local t = gated{ [A] = roster.PRESENT, [B] = roster.RETURNING }
+    with_hire(t, A, 1000)
+    with_hire(t, B, 1000)
+    t.party_levels[B] = 3
+    ticks(t, 0, 3)
+    assert(t.flow.settled() and #t.order == 0)
+    t.flow.tick(3, true)
+    assert(t.status(B) == roster.PRESENT and #t.restores == 1)
+    t.retinue.found[A] = nil
+    ticks(t, 4, 5) -- armed at the pass (3); the checks are at 4, 5, 6
+    assert(t.status(A) == roster.PRESENT)
+    ticks(t, 6, 6)
+    assert(t.status(A) == roster.AWAY and t.lines[#t.lines] == "Ana: present→away (absence)")
 end
 
 print("lifecycle_test ok")

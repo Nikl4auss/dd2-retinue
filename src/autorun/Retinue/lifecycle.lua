@@ -1,17 +1,20 @@
 -- The Departure and Return driver. Pure: no REFramework globals, everything is injected, so
 -- tests/lifecycle_test.lua drives it with fakes. It applies the hook events (a dismiss, a hire) to the roster,
--- runs the party diff (a present member missing from the party becomes away) and runs the restore attempts.
+-- runs the party diff (a present member missing from the party becomes away) and runs the restore attempts. After each
+-- load it first reconciles the roster with the save (reconcile.lua), once the gate opens; until then all of those wait.
 -- Decisions live in departure.lua, roster.lua and backup.lua; the game thread, the hooks and the writes are the
 -- glue's (game/lifecycle_hooks.lua, game/pawn_state.lua).
 local backup = require("Retinue.backup")
 local departure = require("Retinue.departure")
+local reconcile = require("Retinue.reconcile")
 local roster = require("Retinue.roster")
 
 local M = {}
 
--- M.new{ retinue, backups, pawns, party, drain, log_line, report } -> flow
+-- M.new{ retinue, backups, pawns, party, drain, log_line, report, gate } -> flow
 --   retinue:   .unit .generation .roster .found .ambiguous, retinue:mark_away(id) -> member, from | nil, err;
---              retinue:mark_returning(id) -> member | nil, err; retinue:mark_present(id, character_id) -> member | nil, err
+--              retinue:mark_returning(id) -> member | nil, err; retinue:mark_present(id, character_id) -> member | nil, err;
+--              retinue:correct(corrections) -> count; retinue:settle() (the reconciliation is over)
 --   backups:   .store(unit, m, snapshot), .get(id) -> backup | nil, .note(id) -> problem | nil
 --   pawns:     .restore(view, b) -> "done" | "wait", why | "mismatch", field;  .read(view) -> snapshot | nil, why
 --   party:     .failed, .has_main_pawn(), .all_read(), .level(view) -> number | nil
@@ -19,9 +22,11 @@ local M = {}
 --              { kind = "dismiss", id = <canonical>, generation = n, snapshot = table|nil }
 --              { kind = "hire",    id = <canonical>, generation = n }
 --   log_line(text): the [Retinue] prefix is the caller's.
+--   gate:      optional, reconcile.new_gate's object (.pending, :check(now, in_world, ready, generation)); the tests replace it.
 function M.new(deps)
     local retinue, backups, pawns, party = deps.retinue, deps.backups, deps.pawns, deps.party
     local log_line, report = deps.log_line, deps.report
+    local gate = deps.gate or reconcile.new_gate(reconcile.SETTLE_SECONDS, reconcile.GRACE_SECONDS)
     local budget = departure.new_budget(departure.RETRY_SECONDS)
     local diff = departure.new_diff(departure.CHECK_SECONDS, departure.MISS_LIMIT)
     local fifo = {}
@@ -78,8 +83,8 @@ function M.new(deps)
             if e.generation == retinue.generation then kept[#kept + 1] = e end
         end
         fifo = kept
-        -- An empty party must not read as "the pawn left": the events wait.
-        if party.failed or not party.has_main_pawn() then return end
+        -- An empty party must not read as "the pawn left", and the old party's state is not the save's: the events wait.
+        if gate.pending or party.failed or not party.has_main_pawn() then return end
         local todo = fifo
         fifo = {}
         for i, e in ipairs(todo) do
@@ -116,13 +121,59 @@ function M.new(deps)
         log_line(departure.away_text(m.name, from, "absence"))
     end
 
-    -- on_frame, after retinue.update, before the backup poll: the hook events, then the party diff (in the world only;
-    -- a queued dismiss wins and logs its own cause).
+    -- What the save says about a member in the party: the cached CharacterID from the view, and the progress and the hire
+    -- time from a read. A read that fails is reported and leaves those unknown; the second result is true then.
+    local function party_entry(m, view)
+        local entry = { character_id = view.character_id }
+        local ok, s, why = pcall(pawns.read, view)
+        if not ok then s, why = nil, s end
+        if s == nil then
+            report("reconcile", m.name .. ": " .. tostring(why))
+            return entry, true
+        end
+        entry.level, entry.exp, entry.discipline, entry.hire_time = s.level, s.exp, s.discipline, s.hire_time
+        return entry, false
+    end
+
+    -- The reconciliation: the roster against the party the loaded save put in the world.
+    local function reconcile_pass()
+        local r = retinue.roster
+        if r == nil or r.mode == roster.LOCKED then return end
+        local seen = {}
+        -- Ambiguous, plus a member whose read failed with the CharacterID it kept: nothing proves a rollback or a re-hire,
+        -- and a false rollback lowers the backup. (A different CharacterID is evidence enough and goes through the plan.)
+        local skip = {}
+        for id in pairs(retinue.ambiguous) do skip[id] = true end
+        for _, m in ipairs(r.members) do
+            local view = retinue.found[m.offline_id]
+            if view ~= nil then
+                local entry, failed = party_entry(m, view)
+                seen[m.offline_id] = entry
+                if failed and m.character_id ~= nil and view.character_id == m.character_id then
+                    skip[m.offline_id] = true
+                end
+            end
+        end
+        local corrections = reconcile.plan(r, seen, skip, backups.get)
+        if #corrections == 0 then return end
+        retinue:correct(corrections)
+        for _, c in ipairs(corrections) do log_line(c.text) end
+    end
+
+    -- on_frame, after retinue.update, before the backup poll: the reconciliation when its gate opens, the hook events,
+    -- then the party diff (in the world only; a queued dismiss wins and logs its own cause). All of them wait for the
+    -- reconciliation after a load.
     function flow.update(now, in_world)
+        local complete = not party.failed and party.has_main_pawn() and party.all_read()
+        if gate:check(now, in_world, complete, retinue.generation) then
+            local ok, err = pcall(reconcile_pass)
+            if not ok then report("reconcile", err) end
+            retinue:settle() -- a failed pass must not hold the session
+        end
         apply_events()
         local r = retinue.roster
         local ready = in_world and r ~= nil and r.mode ~= roster.LOCKED and not party.failed and party.has_main_pawn()
-            and party.all_read()
+            and party.all_read() and not gate.pending
         for _, id in ipairs(diff:check(now, ready, retinue.generation, missing)) do
             local ok, err = pcall(absence, id)
             if not ok then report("lifecycle", err) end
@@ -195,6 +246,7 @@ function M.new(deps)
     -- UpdateBehavior, game thread: the restore attempts.
     function flow.tick(now, in_world)
         budget:sync(retinue.generation)
+        if gate.pending then return end
         if not (in_world and roster.writable(retinue.roster)) then return end
         for _, m in ipairs(retinue.roster.members) do
             local id = m.offline_id
@@ -207,6 +259,9 @@ function M.new(deps)
             end
         end
     end
+
+    -- false from a load until its reconciliation ran: the backup poll waits too.
+    function flow.settled() return not gate.pending end
 
     -- The menu's restore note.
     function flow.note(id) return budget:note(id) end

@@ -45,6 +45,8 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
   pawn's CharacterID is reused for a different pawn (findings 0006). Never identifies an adopted pawn.
 - **Offline ID** (`PawnOwnerContext._OfflineID`, a GUID): identifies a game-generated Rift pawn; unchanged across
   dismiss, lost and re-hire (findings 0006). The roster's key: a pawn without one cannot be adopted.
+- **Hire time** (`SubPawnDataContext._HireTime`, seconds of the save's clock as a float): marks one hire. It changes on
+  a re-hire and survives save and load (findings 0006); the backup keeps it, in milliseconds. Never identifies a pawn.
 
 ## Progression
 

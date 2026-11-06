@@ -46,4 +46,4 @@ Game members relevant to the mod, verified against `il2cpp_dump.json` of 2026-11
 | `app.Human.get_PawnDataContext() : PawnDataContext` → `_Name / _Nickname / setName(String)` | | verified-game (fields) |
 | `app.GUIBase.getName(app.Character) : String` (static) | display name | verified-game |
 | `app.PawnOwnerContext._Name / _Level / _Job / _OfflineID / _UserId / _SlotId` | creator info | verified-game |
-| `app.SubPawnDataContext._HireTime / _RentalToken / _EquipStorage / ChangedEquipSlot` | rental state | verified-game (first three) |
+| `app.SubPawnDataContext._HireTime / _RentalToken / _EquipStorage / ChangedEquipSlot` | rental state; `_HireTime` (float, the save's clock) marks one hire: new on a re-hire, kept across save and load (findings 0006) | verified-game (first three) |

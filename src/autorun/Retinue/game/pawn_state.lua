@@ -92,7 +92,7 @@ end
 -- The snapshot is backup.lua's table of a live party pawn
 -- (view as party.views() builds it; name is view.name, the store overrides it with the roster's). nil + why when a
 -- restored field cannot be read or the snapshot is not usable (backup.invalid). A recorded field that cannot be read
--- (the three job fields, items, skills) stays nil and is reported through report("backup <key>", err).
+-- (the three job fields, items, skills, hire_time) stays nil and is reported through report("backup <key>", err).
 function M.new(report)
     local td_im = sdk.find_type_definition("app.ItemManager")
     local m_get_equip = nil
@@ -174,6 +174,16 @@ function M.new(report)
         recorded("changed_job_bits", function() return job_number("ChangedJobBits") end)
         recorded("item_ids", function() return read_equip(view.character_id) end)
         recorded("skills", function() return read_skills(chara) end)
+        -- SubPawnDataContext._HireTime: the save's clock at the hire (a float of seconds); milliseconds as an integer
+        -- survive the JSON backup exactly.
+        recorded("hire_time", function()
+            local holder = chara:call("get_Context")
+            local sub = holder and party.holder_context(holder, "app.SubPawnDataContext")
+            if sub == nil then error("no SubPawnDataContext") end
+            local v = sub:get_field("_HireTime")
+            if type(v) ~= "number" then error("_HireTime is not a number: " .. str(v)) end
+            return math.floor(v * 1000)
+        end)
 
         local why = backup.invalid(b)
         if why then return nil, why end

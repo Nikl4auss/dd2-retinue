@@ -26,6 +26,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   backup, unless the game's level is already above it. A `Departure tracking unavailable` notice shows when a hooked
   method is missing. A member that leaves any other way (lost) is marked away after 3 party checks, about a second
   apart in the world, that do not find it; its backup is the last poll.
+- Reconciliation on load (M2): once per load, in the world, the roster follows the loaded save: a member that is back
+  in the party after a rollback is present again, one re-hired without the mod is marked returning and restored, one
+  missing from the party is away. The backup records each pawn's hire time to tell a re-hire from a rollback. One log
+  line per correction.
 
 ### Changed
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is
