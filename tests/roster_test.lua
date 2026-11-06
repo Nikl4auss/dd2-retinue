@@ -672,3 +672,39 @@ do
     assert(roster.mark_returning(ro, A).status == roster.RETURNING)
     assert(roster.mark_present(ro, A, 5).status == roster.PRESENT)
 end
+
+-- apply_corrections
+do
+    local function two()
+        local r = ok_roster({
+            { offline_id = A, name = "Ana", status = roster.PRESENT, character_id = 11 },
+            { offline_id = B, name = "Bea", status = roster.AWAY, character_id = 22 },
+        })
+        return r
+    end
+    local r = two()
+    local n = roster.apply_corrections(r, {
+        { id = A, to = roster.RETURNING },
+        { id = B, to = roster.PRESENT },
+    })
+    assert(n == 2 and r.members[1].status == roster.RETURNING and r.members[2].status == roster.PRESENT)
+    assert(r.members[1].character_id == 11 and r.members[2].character_id == 22)
+    -- any status to any status
+    r = two()
+    assert(roster.apply_corrections(r, { { id = A, to = roster.AWAY }, { id = B, to = roster.RETURNING } }) == 2)
+    assert(r.members[1].status == roster.AWAY and r.members[2].status == roster.RETURNING)
+    -- unknown ids are skipped and not counted; the id is canonicalised
+    r = two()
+    assert(roster.apply_corrections(r, { { id = C, to = roster.AWAY }, { id = B:upper(), to = roster.RETURNING } }) == 1)
+    assert(r.members[1].status == roster.PRESENT and r.members[2].status == roster.RETURNING)
+    -- empty list
+    assert(roster.apply_corrections(two(), {}) == 0)
+    -- locked and nil
+    local lk = { mode = roster.LOCKED, members = { { offline_id = A, name = "Ana", status = roster.PRESENT } }, warnings = {} }
+    assert(roster.apply_corrections(lk, { { id = A, to = roster.AWAY } }) == 0 and lk.members[1].status == roster.PRESENT)
+    assert(roster.apply_corrections(nil, { { id = A, to = roster.AWAY } }) == 0)
+    -- read-only works in memory
+    local ro = two()
+    ro.mode = roster.READ_ONLY
+    assert(roster.apply_corrections(ro, { { id = A, to = roster.AWAY } }) == 1 and ro.members[1].status == roster.AWAY)
+end

@@ -29,7 +29,7 @@ end
 assert(backup.VERSION == 1 and backup.POLL_SECONDS == 10)
 assert(backup.EQUAL == "equal" and backup.LOWER == "lower" and backup.HIGHER == "higher")
 assert(backup.NONE == "none" and backup.WRITE == "write" and backup.LOWERED == "lowered")
-assert(#backup.INCREASE_KEYS == 8 and #backup.RECORDED_KEYS == 5)
+assert(#backup.INCREASE_KEYS == 8 and #backup.RECORDED_KEYS == 6)
 assert(backup.path(0, A) == "Retinue/slots/1/backups/" .. A .. ".json")
 assert(backup.path(2, B) == "Retinue/slots/3/backups/" .. B .. ".json")
 
@@ -44,6 +44,8 @@ do
     assert(backup.invalid(nil) ~= nil and backup.invalid("x") ~= nil)
     assert(backup.invalid(good({ offline_id = "nope" })) == "offline_id is missing or invalid")
     assert(backup.invalid(good({ offline_id = B:upper() })) == nil)
+    assert(backup.invalid(good({ hire_time = "x" })) == nil)
+    assert(backup.invalid(good({ hire_time = -1.5 })) == nil)
     -- recorded fields are not checked
     local b = good()
     for _, k in ipairs(backup.RECORDED_KEYS) do b[k] = nil end
@@ -166,6 +168,13 @@ do
     -- a nil last changes nothing
     local f4 = good({ current_job = NIL })
     assert(backup.carry_recorded(f4, nil) == f4 and f4.current_job == nil)
+    -- hire_time is carried when a read failed
+    local f6 = good({ hire_time = NIL })
+    backup.carry_recorded(f6, good({ hire_time = 37991999 }))
+    assert(f6.hire_time == 37991999)
+    local f7 = good({ hire_time = 5 })
+    backup.carry_recorded(f7, good({ hire_time = 37991999 }))
+    assert(f7.hire_time == 5)
     -- restored keys are never carried
     local f5 = good({ level = NIL })
     backup.carry_recorded(f5, last)
@@ -188,6 +197,11 @@ do
     assert(backup.decide(last, good({ exp = 5 })) == backup.WRITE) -- exp lower at the same level
     assert(backup.decide(last, good({ level = 26, exp = 5000 })) == backup.LOWERED)
     assert(backup.decide(good({ item_ids = {} }), good({ item_ids = NIL })) == backup.NONE)
+    -- hire_time alone: an older backup gains it, a re-hire changes it
+    assert(backup.decide(good({ hire_time = 100 }), good({ hire_time = 200 })) == backup.WRITE)
+    assert(backup.decide(good(), good({ hire_time = 200 })) == backup.WRITE)
+    assert(backup.decide(good({ hire_time = 100 }), good({ hire_time = 100 })) == backup.NONE)
+    assert(backup.decide(good({ hire_time = 100 }), good({ hire_time = 100.0 })) == backup.NONE)
 end
 
 -- lowered_text
@@ -274,6 +288,8 @@ do
     -- item_ids are ignored
     eq(backup.recorded_mismatch(b, good({ item_ids = { 99 } })), {})
     eq(backup.recorded_mismatch(b, good({ item_ids = NIL })), {})
+    -- hire_time is not compared
+    eq(backup.recorded_mismatch(good({ hire_time = 1 }), good({ hire_time = 2 })), {})
 end
 
 print("backup_test ok")

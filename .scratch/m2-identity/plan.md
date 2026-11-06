@@ -5,7 +5,7 @@ Source: [issues/21-reconcile-on-load.md](issues/21-reconcile-on-load.md), [spec.
 
 Two slices, sequential.
 
-- [ ] Slice 1: pure decisions (`reconcile.lua`, `roster.apply_corrections`, `hire_time` in the backup) and their tests. Tier: **Sonnet** (`implementer`).
+- [x] Slice 1: pure decisions (`reconcile.lua`, `roster.apply_corrections`, `hire_time` in the backup) and their tests. Tier: **Sonnet** (`implementer`).
 - [ ] Slice 2: the pass in the game (lifecycle gate, store hold, `_HireTime` read, wiring), lifecycle tests, docs. Tier: **Sonnet** (`implementer`).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.

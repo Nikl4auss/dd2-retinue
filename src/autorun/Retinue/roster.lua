@@ -349,6 +349,22 @@ function M.refresh_cache(r, views)
     return changed
 end
 
+-- apply_corrections(r, corrections) -> count. corrections: array of { id = <canonical>, to = status }. Sets each listed member's status
+-- (any status to any status: reconcile.plan decided); a listed id that is not a member is skipped. LOCKED or nil r -> 0. Never touches files;
+-- works in memory for READ_ONLY too. character_id is left alone.
+function M.apply_corrections(r, corrections)
+    if r == nil or r.mode == M.LOCKED then return 0 end
+    local count = 0
+    for _, c in ipairs(corrections) do
+        local m = M.find(r, c.id)
+        if m ~= nil and VALID_STATUS[c.to] then
+            m.status = c.to
+            count = count + 1
+        end
+    end
+    return count
+end
+
 M.ERRORS = {
     full = "the retinue is full (" .. M.CAP .. " members)",
     already_adopted = "already in the retinue",
