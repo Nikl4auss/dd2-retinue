@@ -346,8 +346,8 @@ function M.pawn_text(name, level)
     return string.format("%s (Lv %s)", name, num(level))
 end
 
--- member_text(m, info) -> "<name>: <status>[, Lv <level>][, <note>]"
---   info = { level = number|nil, in_party = boolean, ambiguous = boolean }
+-- member_text(m, info) -> "<name>: <status>[, Lv <level>][, <note>][, backup <backup_note>]"
+--   info = { level = number|nil, in_party = boolean, ambiguous = boolean, backup_note = string|nil }
 function M.member_text(m, info)
     local text = m.name .. ": " .. m.status
     if info.level ~= nil then text = text .. ", Lv " .. num(info.level) end
@@ -356,6 +356,7 @@ function M.member_text(m, info)
     elseif m.status == M.PRESENT and not info.in_party then
         text = text .. ", not in party"
     end
+    if info.backup_note ~= nil then text = text .. ", backup " .. info.backup_note end
     return text
 end
 

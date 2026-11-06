@@ -585,6 +585,14 @@ do
     local away = { name = "Bo", status = roster.AWAY }
     assert(roster.member_text(away, { in_party = false, ambiguous = false }) == "Bo: away")
     assert(roster.member_text({ name = "Cy", status = roster.RETURNING }, { in_party = true, ambiguous = false }) == "Cy: returning")
+    -- backup_note goes last
+    assert(roster.member_text(m, { in_party = true, ambiguous = false, backup_note = "missing" }) == "Ana: present, backup missing")
+    assert(roster.member_text(m, { level = 12, in_party = true, ambiguous = false, backup_note = "damaged: level is missing or invalid" })
+        == "Ana: present, Lv 12, backup damaged: level is missing or invalid")
+    assert(roster.member_text(m, { level = 3, in_party = false, ambiguous = false, backup_note = "missing" })
+        == "Ana: present, Lv 3, not in party, backup missing")
+    assert(roster.member_text(m, { level = 3, in_party = false, ambiguous = true, backup_note = "missing" })
+        == "Ana: present, Lv 3, ambiguous: two party pawns share its Offline ID, excluded, backup missing")
 end
 
 -- pawn_text: party pawn line before adoption
