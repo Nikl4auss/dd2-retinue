@@ -301,6 +301,7 @@ do
     assert(not roster.matches(r, { members = { { offline_id = A }, { offline_id = C } } }))
     assert(not roster.matches(r, { members = { { offline_id = A }, "x" } }))
     assert(not roster.matches(r, { members = "x" }))
+    assert(not roster.matches(r, { members = { a = { offline_id = A }, b = { offline_id = B } } })) -- not a sequence
     assert(not roster.matches(r, {})) -- nil members is an empty list
     assert(not roster.matches(r, nil))
     assert(not roster.matches(r, "x"))
@@ -309,6 +310,29 @@ do
     assert(roster.matches(empty, {}))
     assert(roster.matches(empty, { members = {} }))
     assert(not roster.matches(empty, { members = { { offline_id = A } } }))
+end
+
+-- matches: name, status and character_id are compared too
+do
+    local function mem(extra)
+        local m = { offline_id = A, name = "Ana", status = "present", character_id = 5 }
+        for k, v in pairs(extra or {}) do m[k] = v end
+        return m
+    end
+    local r = ok_roster({ mem() })
+    assert(roster.matches(r, { members = { mem() } }))
+    assert(roster.matches(r, { members = { mem({ character_id = 5.0 }) } }))
+    assert(not roster.matches(r, { members = { mem({ name = "Anna" }) } }))
+    assert(not roster.matches(r, { members = { mem({ name = false }) } }))
+    assert(not roster.matches(r, { members = { mem({ status = "away" }) } }))
+    assert(not roster.matches(r, { members = { mem({ status = false }) } }))
+    assert(not roster.matches(r, { members = { mem({ character_id = 6 }) } }))
+    assert(not roster.matches(r, { members = { mem({ character_id = false }) } }))
+    -- a member without a cached character_id matches only a file without one
+    local r2 = ok_roster({ mem({ character_id = false }) })
+    r2.members[1].character_id = nil
+    assert(roster.matches(r2, { members = { mem({ character_id = false }) } }))
+    assert(not roster.matches(r2, { members = { mem() } }))
 end
 
 -- match
@@ -335,7 +359,8 @@ do
     assert(next(found) == nil and next(amb) == nil)
 
     -- LOCKED / nil -> empty
-    found, amb = roster.match({ mode = roster.LOCKED, members = {} }, { va })
+    local locked_match = { mode = roster.LOCKED, members = { { offline_id = A, name = "Ana", status = "present", character_id = 5 } } }
+    found, amb = roster.match(locked_match, { va })
     assert(next(found) == nil and next(amb) == nil)
     found, amb = roster.match(nil, { va })
     assert(next(found) == nil and next(amb) == nil)
@@ -438,10 +463,20 @@ do
     roster.release(r, ids[1])
     assert(#r.members == roster.CAP - 1 and r.members[1].offline_id == ids[2])
 
+    -- release from the middle keeps the order of the rest (an artificial roster above the cap)
+    r = ok_roster({
+        { offline_id = A, name = "Ana", status = "present" },
+        { offline_id = B, name = "Bo", status = "present" },
+        { offline_id = C, name = "Cy", status = "present" },
+    })
+    assert(roster.release(r, B))
+    assert(#r.members == 2 and r.members[1].offline_id == A and r.members[2].offline_id == C)
+
     local locked_r = { mode = roster.LOCKED, members = {}, warnings = {} }
     local ro_r = { mode = roster.READ_ONLY, members = { { offline_id = A } }, warnings = {} }
     assert(select(2, roster.release(locked_r, A)) == "locked")
     assert(select(2, roster.release(ro_r, A)) == "read_only")
+    assert(select(2, roster.release(ro_r, C)) == "read_only") -- a non-member too
     assert(#ro_r.members == 1)
 end
 
@@ -496,8 +531,10 @@ do
     assert(roster.refresh_cache(r, {}) == false)
 
     -- LOCKED -> false, nothing changes
-    local locked_r = { mode = roster.LOCKED, members = {}, warnings = {} }
-    assert(roster.refresh_cache(locked_r, { view(1, A) }) == false)
+    local locked_r = { mode = roster.LOCKED, warnings = {},
+        members = { { offline_id = A, name = "Ana", status = "present", character_id = 5 } } }
+    assert(roster.refresh_cache(locked_r, { view(1, A, { name = "Anna", character_id = 9 }) }) == false)
+    assert(locked_r.members[1].name == "Ana" and locked_r.members[1].character_id == 5)
     assert(roster.refresh_cache(nil, { view(1, A) }) == false)
 
     -- READ_ONLY works in memory

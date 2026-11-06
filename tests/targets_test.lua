@@ -27,7 +27,9 @@ local function empty(set) return next(set) == nil end
 do
     local views = { view(1, HIRED, A) }
     assert(empty(targets.build(views, nil, yes)))
-    assert(empty(targets.build(views, roster_of(roster.LOCKED, {}), yes)))
+    -- a LOCKED roster holding a matching member still yields nobody
+    local locked_r = roster_of(roster.LOCKED, { { offline_id = A, name = "Ana", status = "present", character_id = 5 } })
+    assert(empty(targets.build(views, locked_r, yes)))
 end
 
 -- a present member in the party is a target, keyed by CharacterID

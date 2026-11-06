@@ -3,7 +3,6 @@
 -- roster (validation, locked, read-only, soft corrections), what to write back, adopt / release / cache refresh,
 -- the adoptable rule, ambiguity, and the menu texts.
 local slot = require("Retinue.slot")
-local ids = require("Retinue.ids")
 
 local M = {}
 
@@ -196,15 +195,19 @@ function M.serialize(r)
 end
 
 -- Read-back check for the glue: back is a table whose members (nil = empty) list the same canonical offline_ids in
--- the same order as r.members.
+-- the same order as r.members, each with the same name, status and character_id (so a cache-only change that did
+-- not reach the file is caught too).
 function M.matches(r, back)
     if type(back) ~= "table" then return false end
     local members = back.members
     if members == nil then members = {} end
-    if type(members) ~= "table" or #members ~= #r.members then return false end
+    if not is_sequence(members) or #members ~= #r.members then return false end
     for i, m in ipairs(r.members) do
         local e = members[i]
-        if type(e) ~= "table" or M.canonical_id(e.offline_id) ~= m.offline_id then return false end
+        if type(e) ~= "table" or M.canonical_id(e.offline_id) ~= m.offline_id or e.name ~= m.name
+            or e.status ~= m.status or slot.to_int(e.character_id) ~= m.character_id then
+            return false
+        end
     end
     return true
 end

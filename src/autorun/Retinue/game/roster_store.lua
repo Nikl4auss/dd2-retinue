@@ -1,0 +1,102 @@
+-- REFramework glue: the roster of the active save slot (uses log; file I/O is game/jsonfile).
+-- The decisions (reading a file into a roster, adopt / release, cache refresh, ambiguity) live in Retinue/roster.lua.
+
+local jsonfile = require("Retinue.game.jsonfile")
+local roster = require("Retinue.roster")
+local slot = require("Retinue.slot")
+
+local M = {}
+
+-- Returns a store:
+--   unit          integer|nil   the unit whose roster is active (nil = unknown slot: no roster, nothing read or written)
+--   roster        roster|nil    roster.resolve result for unit; nil when unit is nil
+--   ambiguous     { [offline_id] = true }  from the last update
+--   found         { [offline_id] = view }  from the last update
+--   save_failed   boolean       last write failed (cleared by the next successful one)
+--   generation    integer       incremented on every unit switch (the menu drops its pending confirm on a change)
+--   update(unit, party)         -- plain call, every frame, after party.refresh and the slot tracker
+--   store:adopt(view) -> true | nil, err      -- err: roster's errors, plus "no_slot"
+--   store:release(offline_id) -> true | nil, err
+-- roster.json is read when the active unit changes and written only by save(), only while the roster is writable.
+-- Lines go to log.error (another mod may raise the log level and drop warnings), with the [Retinue] prefix.
+function M.new(report)
+    local store = { unit = nil, roster = nil, ambiguous = {}, found = {}, save_failed = false, generation = 0 }
+    local warned = {} -- offline_id -> true: ambiguity already logged for it
+
+    local function save()
+        local r, unit = store.roster, store.unit
+        if unit == nil or not roster.writable(r) then return end
+        local ok, err = jsonfile.write(roster.path(unit), roster.serialize(r),
+            function(back) return roster.matches(r, back) end)
+        store.save_failed = not ok
+        if ok then
+            r.warnings = {} -- the file now holds a clean rewrite (the warnings stay in the log)
+        else
+            report("roster write", err)
+        end
+    end
+
+    local function member_name(id)
+        local m = roster.find(store.roster, id)
+        return m and m.name or roster.UNKNOWN_NAME
+    end
+
+    function store.update(unit, party)
+        local forced = false
+        if unit ~= store.unit then
+            local r = nil
+            if unit ~= nil then r = roster.resolve(jsonfile.read(roster.path(unit), { strict = true })) end
+            -- Assigned together after the read, so a throw above leaves the previous (consistent) state.
+            store.unit, store.roster = unit, r
+            store.ambiguous, store.found, warned = {}, {}, {}
+            store.save_failed = false
+            store.generation = store.generation + 1
+            forced = true
+            if r then
+                local label = slot.label(unit)
+                log.error(string.format("[Retinue] %s: %s", label, roster.state_text(r)))
+                for _, w in ipairs(r.warnings) do
+                    log.error(string.format("[Retinue] %s roster.json: %s", label, w))
+                end
+            end
+        end
+        local r = store.roster
+        if not r then return end
+        local views = party.views()
+        store.found, store.ambiguous = roster.match(r, views)
+        for id in pairs(store.ambiguous) do
+            if not warned[id] then
+                warned[id] = true
+                log.error(string.format("[Retinue] %s: two party pawns share its Offline ID; excluded", member_name(id)))
+            end
+        end
+        for id in pairs(warned) do
+            if not store.ambiguous[id] then warned[id] = nil end
+        end
+        if forced or party.changed() then
+            if roster.refresh_cache(r, views) then save() end
+        end
+    end
+
+    function store:adopt(view)
+        if self.unit == nil then return nil, "no_slot" end
+        local m, err = roster.adopt(self.roster, view)
+        if not m then return nil, err end
+        save()
+        log.error(string.format("[Retinue] %s: adopted %s (%s)", slot.label(self.unit), m.name, m.offline_id))
+        return true
+    end
+
+    function store:release(offline_id)
+        if self.unit == nil then return nil, "no_slot" end
+        local m, err = roster.release(self.roster, offline_id)
+        if not m then return nil, err end
+        save()
+        log.error(string.format("[Retinue] %s: released %s", slot.label(self.unit), m.name))
+        return true
+    end
+
+    return store
+end
+
+return M

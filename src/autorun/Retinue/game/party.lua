@@ -1,70 +1,141 @@
--- REFramework glue: reads the party each frame and the status-line rows (uses sdk).
--- The decisions live in Retinue/{targets,status}.lua.
+-- REFramework glue: reads the party each frame into views (uses sdk) and the status-line rows.
+-- The decisions live in Retinue/{roster,targets,status}.lua; this module no longer decides who is a target.
 
 local hooks = require("Retinue.hooks")
 local ids = require("Retinue.ids")
-local targets = require("Retinue.targets")
+local roster = require("Retinue.roster")
 
 local M = {}
 
--- state: shared table; refresh writes state.targets. is_hired may be nil.
+local OWNER_CONTEXT = "app.PawnOwnerContext"
+
+-- A managed or Lua string as a Lua string, else nil.
+local function as_string(v)
+    if type(v) == "string" then return v end
+    if v ~= nil then -- a managed object (userdata): its ToString
+        local ok, s = pcall(function() return v:call("ToString") end)
+        if ok and type(s) == "string" then return s end
+    end
+    return nil
+end
+
 -- Returns an object with:
---   refresh()  -- the pcall'd party read; on a throw clears the targets and reports "refresh"
---   rows()     -- nil when no party is loaded, else an array of read_row results (the status.format input)
---   failed     -- boolean, last refresh threw
+--   refresh()      -- the pcall'd party read; on a throw clears the views and reports "refresh"
+--   views()        -- array (party order) of { slot, character_id, owner, offline_id, name, chara }; empty when no
+--                     party is loaded. slot = index in _PartyPawnList (0 main pawn, 1-2 hired pawns); owner is the
+--                     PawnOwnerContext _Name (string|nil), offline_id its canonical _OfflineID (nil for the main
+--                     pawn's zero GUID), name the display name; character_id and chara are read every frame, the
+--                     other three only when the party's CharacterID list changes or after an incomplete read
+--   changed()      -- true on the frame the cached part was re-read (the roster store refreshes its cache then)
+--   rows(set)      -- nil when no party is loaded, else an array of read_row results (the status.format input) for
+--                     the views whose character_id is in set (the current targets), in party order
+--   level(view)    -- the pawn's level read now (nil on failure), for the menu
+--   failed         -- boolean, last refresh threw
 --   has_main_pawn() -- whether the main pawn is in the party as of the last refresh (false when no party)
-function M.new(state, is_hired, report)
+function M.new(report)
     local td_guibase = sdk.find_type_definition("app.GUIBase")
     local m_gui_name = td_guibase and td_guibase:get_method("getName(app.Character)")
 
-    -- Set by refresh_targets each frame; read by rows. party_loaded: PawnManager and its party list exist.
-    -- target_charas: app.Character of each party pawn in state.targets, in party order.
-    local party_loaded = false
-    local target_charas = {}
-    local main_pawn_in_party = false
+    local function try(fn)
+        local ok, v = pcall(fn)
+        if ok then return v end
+        return nil
+    end
 
-    local function refresh_targets()
-        state.targets = {}
+    -- Set by refresh each frame. party_loaded: PawnManager and its party list exist.
+    local party_loaded = false
+    local party_views = {}
+    local main_pawn_in_party = false
+    local was_changed = false
+    -- The cached part, keyed by the party's CharacterID list: cache_key = "slot:id,..." of the last read (nil =
+    -- none valid), cache[n] = { owner, offline_id, name } for views[n]. A CharacterID can only be reused by another
+    -- pawn across a dismiss, which changes the list, so the key is safe.
+    local cache_key, cache = nil, {}
+
+    -- Owner, canonical Offline ID and name of one pawn; each read under its own pcall. complete = false when the
+    -- owner context or the name could not be read (the next frame reads again).
+    local function read_identity(chara)
+        local info, complete = {}, true
+        local ctx = nil
+        local okc, errc = pcall(function()
+            local holder = chara:call("get_Context")
+            if not holder then return end
+            local dict = holder:get_field("Contexts")
+            local key = sdk.typeof(OWNER_CONTEXT)
+            if not dict:call("ContainsKey", key) then return end
+            ctx = dict:call("get_Item", key):call("get_CurrentContext")
+        end)
+        if not okc then report("owner context", errc) end
+        if ctx then
+            local okn, name = pcall(function() return as_string(ctx:get_field("_Name")) end)
+            if okn then info.owner = name else report("owner name", name); complete = false end
+            local oko, guid = pcall(function() return as_string(ctx:get_field("_OfflineID")) end)
+            if oko then
+                info.offline_id = roster.canonical_id(guid) -- nil for the zero GUID (the main pawn)
+                if guid == nil then complete = false end
+            else
+                report("offline id", guid)
+                complete = false
+            end
+        else
+            complete = false
+        end
+        local name = m_gui_name and try(function() return m_gui_name:call(nil, chara) end)
+        name = name ~= nil and tostring(name) or nil
+        if name == "" then name = nil end
+        info.name = name
+        -- Without getName (a game update removed it) a nil name is permanent, not an incomplete read.
+        if name == nil and m_gui_name then complete = false end
+        return info, complete
+    end
+
+    local function refresh_views()
+        party_views = {}
         party_loaded = false
-        target_charas = {}
         main_pawn_in_party = false
+        was_changed = false
         local pm = sdk.get_managed_singleton("app.PawnManager")
-        if not pm then return end
-        local party_list = pm:get_field("_PartyPawnList")
-        if not party_list then return end
-        party_loaded = true -- a save is loaded; without isSubPawn there are simply no targets
-        local party_ids, party_charas = {}, {}
+        local party_list = pm and pm:get_field("_PartyPawnList")
+        if not party_list then
+            cache_key, cache = nil, {}
+            return
+        end
+        party_loaded = true -- a save is loaded
+        local key_parts = {}
         for i = 0, party_list:call("get_Count") - 1 do
             local pawn = party_list:call("get_Item", i)
             local chara = pawn and pawn:call("get_CachedCharacter")
             if chara then
                 local id = hooks.to_u32(chara:call("get_CharaID"))
                 if id ~= nil then
-                    local n = #party_ids + 1
-                    party_ids[n] = id
-                    party_charas[n] = chara
+                    party_views[#party_views + 1] = { slot = i, character_id = id, chara = chara }
+                    key_parts[#key_parts + 1] = i .. ":" .. tostring(id)
                     if id == ids.MAIN_PAWN then main_pawn_in_party = true end
                 end
             end
         end
-        -- After the loop: has_main_pawn() must work without isSubPawn (the slot fallback needs it).
-        if not is_hired then return end
-        local set = targets.build(party_ids, is_hired)
-        local charas = {}
-        for i, id in ipairs(party_ids) do
-            if set[id] then charas[#charas + 1] = party_charas[i] end
+        local key = table.concat(key_parts, ",")
+        if key ~= cache_key then
+            was_changed = true
+            local complete_all = true
+            local new_cache = {}
+            for n, view in ipairs(party_views) do
+                local info, complete = read_identity(view.chara)
+                new_cache[n] = info
+                if not complete then complete_all = false end
+            end
+            cache = new_cache
+            -- An incomplete read leaves the key unset, so the next frame reads again.
+            cache_key = complete_all and key or nil
         end
-        state.targets = set
-        target_charas = charas
+        for n, view in ipairs(party_views) do
+            local info = cache[n]
+            view.owner, view.offline_id, view.name = info.owner, info.offline_id, info.name
+        end
     end
 
     -- One status-line row. Each field is read under its own pcall, so one failure shows "?" for that field only.
     local function read_row(chara)
-        local function try(fn)
-            local ok, v = pcall(fn)
-            if ok then return v end
-            return nil
-        end
         local human = try(function() return chara:call("get_Human") end)
         local st = human and try(function() return human:call("get_StatusContext") end)
         local jc = human and try(function() return human:call("get_JobContext") end)
@@ -82,22 +153,38 @@ function M.new(state, is_hired, report)
     local party = { failed = false }
 
     function party.refresh()
-        local ok, err = pcall(refresh_targets)
+        local ok, err = pcall(refresh_views)
         party.failed = not ok
         if not ok then
-            state.targets = {}
+            party_views = {}
             party_loaded = false
-            target_charas = {}
             main_pawn_in_party = false
+            was_changed = false
+            cache_key, cache = nil, {}
             report("refresh", err)
         end
     end
 
-    function party.rows()
+    function party.views()
+        return party_views
+    end
+
+    function party.changed()
+        return was_changed
+    end
+
+    function party.rows(set)
         if not party_loaded then return nil end
         local rows = {}
-        for i, chara in ipairs(target_charas) do rows[i] = read_row(chara) end
+        for _, view in ipairs(party_views) do
+            if set[view.character_id] then rows[#rows + 1] = read_row(view.chara) end
+        end
         return rows
+    end
+
+    function party.level(view)
+        local st = try(function() return view.chara:call("get_Human"):call("get_StatusContext") end)
+        return st and try(function() return st:call("get_Level") end) or nil
     end
 
     function party.has_main_pawn()
