@@ -340,6 +340,12 @@ local function num(n)
     return tostring(n)
 end
 
+-- pawn_text(name, level) -> "<name> (Lv <level>)", or "<name>" when level is nil: a party pawn that is not a member.
+function M.pawn_text(name, level)
+    if level == nil then return name end
+    return string.format("%s (Lv %s)", name, num(level))
+end
+
 -- member_text(m, info) -> "<name>: <status>[, Lv <level>][, <note>]"
 --   info = { level = number|nil, in_party = boolean, ambiguous = boolean }
 function M.member_text(m, info)

@@ -586,3 +586,8 @@ do
     assert(roster.member_text(away, { in_party = false, ambiguous = false }) == "Bo: away")
     assert(roster.member_text({ name = "Cy", status = roster.RETURNING }, { in_party = true, ambiguous = false }) == "Cy: returning")
 end
+
+-- pawn_text: party pawn line before adoption
+assert(roster.pawn_text("Folken", 12) == "Folken (Lv 12)")
+assert(roster.pawn_text("Folken", 12.0) == "Folken (Lv 12)")
+assert(roster.pawn_text("Folken", nil) == "Folken")

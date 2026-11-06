@@ -65,7 +65,8 @@ re.on_frame(function()
     local ok, err = pcall(tracker.update, party.has_main_pawn())
     if not ok then report("slot", err) end
     -- Fail closed: any failure below leaves nobody to progress.
-    local ok_roster, err_roster = pcall(retinue.update, tracker.unit(), party)
+    local ok_roster, err_roster = pcall(retinue.update, tracker.unit(), party,
+        tracker.session.starts + tracker.session.loads)
     if not ok_roster then report("roster", err_roster) end
     local targets_set = {}
     if ok_roster and prog_hooks.is_hired then

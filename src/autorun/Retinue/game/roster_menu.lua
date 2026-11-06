@@ -64,9 +64,10 @@ function M.new()
         for _, view in ipairs(party.views()) do
             if (view.slot == 1 or view.slot == 2) and roster.find(r, view.offline_id) == nil then
                 local name = view.name or "?"
+                local label = roster.pawn_text(name, party.level(view))
                 local id = roster.adoptable(view)
                 if id then
-                    imgui.text(name)
+                    imgui.text(label)
                     if not pending then
                         imgui.same_line()
                         if imgui.button("Adopt##" .. view.slot) then
@@ -75,7 +76,7 @@ function M.new()
                         end
                     end
                 else
-                    imgui.text(name .. " - cannot adopt: " .. roster.error_text("no_offline_id"))
+                    imgui.text(label .. " - cannot adopt: " .. roster.error_text("no_offline_id"))
                 end
             end
         end
