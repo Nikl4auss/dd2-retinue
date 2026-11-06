@@ -19,6 +19,15 @@ local function as_string(v)
     return nil
 end
 
+-- The CurrentContext of the given type (a full type name) in a pawn's context holder (chara:call("get_Context")),
+-- nil when the holder has none. Throws when a read fails.
+function M.holder_context(holder, type_name)
+    local dict = holder:get_field("Contexts")
+    local key = sdk.typeof(type_name)
+    if not dict:call("ContainsKey", key) then return nil end
+    return dict:call("get_Item", key):call("get_CurrentContext")
+end
+
 -- Returns an object with:
 --   refresh()      -- the pcall'd party read; on a throw clears the views and reports "refresh"
 --   views()        -- array (party order) of { slot, character_id, owner, offline_id, name, chara }; empty when no
@@ -60,10 +69,7 @@ function M.new(report)
         local okc, errc = pcall(function()
             local holder = chara:call("get_Context")
             if not holder then return end
-            local dict = holder:get_field("Contexts")
-            local key = sdk.typeof(OWNER_CONTEXT)
-            if not dict:call("ContainsKey", key) then return end
-            ctx = dict:call("get_Item", key):call("get_CurrentContext")
+            ctx = M.holder_context(holder, OWNER_CONTEXT)
         end)
         if not okc then report("owner context", errc) end
         if ctx then

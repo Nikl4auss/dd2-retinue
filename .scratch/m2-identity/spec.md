@@ -121,7 +121,8 @@ Path `slots/<n>/backups/<offline_id>.json`, own `version: 1`. One file per membe
 - **Written**: on adopt; by a **poll every ~10 s** while present and in the world, only if a value changed; a forced read
   at `PawnManager.dismissPawn` pre. **Frozen** while away or returning: nothing writes it.
 - A missing or damaged backup affects only its pawn (no restore, warning); it never locks the roster.
-- Release deletes the file. Orphan backups are ignored, never deleted.
+- Release deletes the file (emptied when REFramework has no file delete: an empty file reads as missing). Orphan
+  backups are ignored, never deleted.
 - **Save wins** within a slot: a present member below its backup (a rollback) keeps the save's state; the poll lowers
   the backup; one warning with both levels. No `.prev` copy.
 

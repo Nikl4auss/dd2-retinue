@@ -16,6 +16,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - `reframework/data/Retinue/config.json` holding the checkbox: written only on change, per-key validation with
   warnings in the menu and log, unknown keys kept.
 - `tests/run.sh`: pure-Lua test runner for the mod's logic.
+- Backups (M2): every present adopted pawn in the party has `slots/<n>/backups/<offline_id>.json` (level, exp, stat
+  increases, discipline, vocation exp; item IDs and skills recorded), written on adopt and refreshed about every 10 s
+  in the world, only when a value changed. A member below its backup lowers it (the save wins). Release empties or
+  deletes the file. The menu shows an away member's level from its backup and a note when the backup is missing or
+  damaged.
 
 ### Changed
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is

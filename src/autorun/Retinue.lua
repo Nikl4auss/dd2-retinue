@@ -11,6 +11,11 @@
 -- naming the party pawns progression applies to (name, level, vocation, rank, discipline), read only while the
 -- menu is drawn, and the roster: the slot and the roster state, one line per member with a Release button, and an
 -- Adopt button per adoptable Rift pawn in your party (both ask for a confirmation).
+-- Every present member in the party also has a backup (reframework/data/Retinue/slots/<n>/backups/<offline_id>.json):
+-- written when you adopt it, then refreshed about every 10 seconds while you are in the world, only when a value
+-- changed (whatever the checkbox says; nothing is written when the roster is locked or read-only, or the slot is
+-- unknown). Release empties or deletes the file. A member below its backup lowers it (the save wins). The menu shows
+-- the level of a member that is not in the party from its backup, and a note when its backup is missing or damaged.
 -- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
 -- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
 -- tracked from the game's start and load requests; the decisions live in Retinue/slot.lua.
@@ -19,11 +24,12 @@
 -- methods and rewrite the same arguments.
 --
 -- Layout: this file is only wiring (requires, the shared state, the three REFramework callbacks and the menu).
--- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot}.lua (pure, tested
+-- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot,backup}.lua (pure, tested
 -- by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus Retinue/game/: jsonfile (verified JSON file
--- reads and writes), config_store (config.json), roster_store (the active slot's roster.json), roster_menu (the
--- roster part of the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views
--- and status rows) and slot_hooks (the start/load request hooks behind the save slot).
+-- reads and writes and deletes), config_store (config.json), roster_store (the active slot's roster.json),
+-- backup_store and pawn_state (the member backups and the pawn read behind them), roster_menu (the roster part of
+-- the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views and status rows)
+-- and slot_hooks (the start/load request hooks behind the save slot, and the in-the-world signal).
 -- Every hook body runs under pcall.
 
 local errlog = require("Retinue.errlog")
@@ -31,6 +37,8 @@ local status = require("Retinue.status")
 local config_store = require("Retinue.game.config_store")
 local progression_hooks = require("Retinue.game.progression_hooks")
 local party_reader = require("Retinue.game.party")
+local pawn_state = require("Retinue.game.pawn_state")
+local backup_store = require("Retinue.game.backup_store")
 local roster_store = require("Retinue.game.roster_store")
 local roster_menu = require("Retinue.game.roster_menu")
 local targets = require("Retinue.targets")
@@ -51,7 +59,9 @@ state.available = prog_hooks.available
 local party = party_reader.new(report)
 
 local tracker = slot_hooks.install(report)
-local retinue = roster_store.new(report)
+local pawns = pawn_state.new(report)
+local backups = backup_store.new(report, pawns.read)
+local retinue = roster_store.new(report, backups)
 local menu = roster_menu.new()
 
 -- Clear the open-call stack at the start of each game update, on the game thread: re.on_frame may run on
@@ -68,6 +78,11 @@ re.on_frame(function()
     local ok_roster, err_roster = pcall(retinue.update, tracker.unit(), party,
         tracker.session.starts + tracker.session.loads)
     if not ok_roster then report("roster", err_roster) end
+    -- The backup poll runs whatever the progression toggle says; it only needs the roster and the world.
+    if ok_roster then
+        local ok_b, err_b = pcall(backups.poll, retinue, tracker.in_world(party.has_main_pawn()), os.clock())
+        if not ok_b then report("backup", err_b) end
+    end
     local targets_set = {}
     if ok_roster and prog_hooks.is_hired then
         local ok_t, res = pcall(targets.build, party.views(), retinue.roster, prog_hooks.is_hired)
@@ -86,7 +101,7 @@ local function draw()
     for _, w in ipairs(store.warnings) do imgui.text((w:gsub("^%[Retinue%] ", ""))) end
     local rows = party.rows(state.targets)
     imgui.text(party.failed and "Status unavailable (see log)" or status.format(rows))
-    menu:draw(retinue, party, slot.label(tracker.unit()))
+    menu:draw(retinue, party, slot.label(tracker.unit()), backups)
     for _, method_name in ipairs(tracker.missing) do
         imgui.text("Slot tracking unavailable: " .. method_name .. " not found (game update?)")
     end

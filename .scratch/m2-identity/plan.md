@@ -6,7 +6,7 @@ Source: [issues/18-adopted-pawns-backed-up.md](issues/18-adopted-pawns-backed-up
 Two slices, sequential (slice 2 uses slice 1's module).
 
 - [x] Slice 1: Pure `backup` module and the menu's backup note, with tests. Tier: **Sonnet** (`implementer`).
-- [ ] Slice 2: Game glue: pawn read, backup store, delete, in-the-world signal, wiring. Tier: **Sonnet** (`implementer`).
+- [x] Slice 2: Game glue: pawn read, backup store, delete, in-the-world signal, wiring. Tier: **Sonnet** (`implementer`).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 

@@ -1,5 +1,6 @@
 -- REFramework glue: JSON file reads and verified writes under reframework/data (uses fs and json).
--- Shared by config_store (config.json) and roster_store (roster.json); the decisions live in the pure modules.
+-- Shared by config_store (config.json), roster_store (roster.json) and backup_store (backups/*.json); the decisions
+-- live in the pure modules.
 
 local M = {}
 
@@ -43,6 +44,25 @@ function M.write(path, data, check)
         if not (okc and matched) then return false, unchanged end
     end
     return true
+end
+
+-- delete(path) -> "removed" | "emptied" | nil, err. REFramework may have no os.remove (its paths are relative to the
+-- game folder, reframework/data/<path> there), so the fallback empties the file: a 0-byte file reads as missing.
+-- fs.read returns "" for a missing and for an empty file alike, so "" after the attempt means the file is gone or
+-- was already empty ("removed") unless it had to be emptied ("emptied"). Without fs.read nothing can be verified.
+function M.delete(path)
+    if not (fs and fs.read) then return nil, "cannot verify" end
+    local function gone()
+        local ok, text = pcall(fs.read, path)
+        return ok and text == ""
+    end
+    if os and os.remove then pcall(os.remove, "reframework/data/" .. path) end
+    if gone() then return "removed" end
+    if fs.write then
+        pcall(fs.write, path, "")
+        if gone() then return "emptied" end
+    end
+    return nil, "file still there"
 end
 
 return M

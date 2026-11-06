@@ -1,5 +1,6 @@
--- REFramework glue: the roster of the active save slot (uses log; file I/O is game/jsonfile).
--- The decisions (reading a file into a roster, adopt / release, cache refresh, ambiguity) live in Retinue/roster.lua.
+-- REFramework glue: the roster of the active save slot (uses log; file I/O is game/jsonfile; the member backups are
+-- game/backup_store). The decisions (reading a file into a roster, adopt / release, cache refresh, ambiguity) live in
+-- Retinue/roster.lua.
 
 local jsonfile = require("Retinue.game.jsonfile")
 local roster = require("Retinue.roster")
@@ -7,6 +8,8 @@ local slot = require("Retinue.slot")
 
 local M = {}
 
+-- backups is game/backup_store's object: re-activated on every roster (re)load, a backup captured on adopt and the
+-- file removed on release.
 -- Returns a store:
 --   unit          integer|nil   the unit whose roster is active (nil = unknown slot: no roster, nothing read or written)
 --   roster        roster|nil    roster.resolve result for unit; nil when unit is nil
@@ -22,7 +25,7 @@ local M = {}
 -- unit: the frame loop may never see the unit go nil in between, so the unit alone would miss it). It is written
 -- only by save(), only while the roster is writable.
 -- Lines go to log.error (another mod may raise the log level and drop warnings), with the [Retinue] prefix.
-function M.new(report)
+function M.new(report, backups)
     local store = { unit = nil, requests = nil, roster = nil, ambiguous = {}, found = {}, save_failed = false, generation = 0 }
     local warned = {} -- offline_id -> true: ambiguity already logged for it
 
@@ -62,6 +65,7 @@ function M.new(report)
                     log.error(string.format("[Retinue] %s roster.json: %s", label, w))
                 end
             end
+            backups.activate(unit, r)
         end
         local r = store.roster
         if not r then return end
@@ -86,6 +90,9 @@ function M.new(report)
         local m, err = roster.adopt(self.roster, view)
         if not m then return nil, err end
         save()
+        -- The first backup; an orphan file of a re-adopted pawn is overwritten. Never fails the adopt.
+        local okb, errb = pcall(backups.capture, self.unit, m, view, { force = true })
+        if not okb then report("backup", errb) end
         log.error(string.format("[Retinue] %s: adopted %s (%s)", slot.label(self.unit), m.name, m.offline_id))
         return true
     end
@@ -95,7 +102,12 @@ function M.new(report)
         local m, err = roster.release(self.roster, offline_id)
         if not m then return nil, err end
         save()
-        log.error(string.format("[Retinue] %s: released %s", slot.label(self.unit), m.name))
+        -- An orphan backup is ignored, so a failed removal leaves the release done.
+        local okd, how, derr = pcall(backups.remove, self.unit, m.offline_id)
+        if not okd then how, derr = nil, how end
+        local result = how or "left in place"
+        if not how then report("backup delete", derr) end
+        log.error(string.format("[Retinue] %s: released %s (backup %s)", slot.label(self.unit), m.name, result))
         return true
     end
 

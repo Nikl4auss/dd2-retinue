@@ -8,13 +8,15 @@ local M = {}
 
 local MFM = "app.MainFlowManager"
 local START_TYPE = "app.MainFlowManager.StartType"
+local PHASE_TYPE = "app.MainFlowManager.Phase"
 
 -- Installs the two pre-hooks (hooks.install, all or nothing, own entries; does not touch hooks.SPECS):
 --   app.MainFlowManager requestLoadGameData(System.Int32)               global slot at args[3] (instance method)
 --   app.MainFlowManager requestStartType(app.MainFlowManager.StartType) enum value at args[3]
 -- Returns a tracker: { available = bool, missing = {strings}, session = slot.new_session(),
 --                      update(has_main_pawn) -- call every frame; the title phase is read in here
---                      unit() -> integer|nil }
+--                      unit() -> integer|nil,
+--                      in_world(has_main_pawn) -> boolean }
 -- When a hook method is missing the session is never fed, so the unit stays unknown (fail closed, no fallback).
 function M.install(report)
     local session = slot.new_session()
@@ -121,6 +123,49 @@ function M.install(report)
             end)
         end)
         if not ok then report("slot", err) end
+    end
+
+    -- The value of Phase.InGame (static field of app.MainFlowManager.Phase), cached once read.
+    local in_game_cache = nil
+    local function in_game_value()
+        if in_game_cache ~= nil then return in_game_cache end
+        local ok, v = pcall(function()
+            return sdk.find_type_definition(PHASE_TYPE):get_field("InGame"):get_data(nil)
+        end)
+        local n = ok and slot.to_int(v) or nil
+        if n == nil then
+            report("slot", "Phase.InGame unreadable")
+            return nil
+        end
+        in_game_cache = n
+        return n
+    end
+
+    -- "No load in progress" (spec, Terms): the main pawn is in the party, the game is not in the title menu phase and
+    -- MainFlowManager.get_FlowPhase() is Phase.InGame. Any failure (or an unreadable InGame) is false: fail closed.
+    -- One log line per change, naming the phase (unverified that InGame holds during normal play: the in-game check
+    -- reads these lines).
+    local last_world, phase = nil, nil
+    function tracker.in_world(has_main_pawn)
+        local ok, res = pcall(function()
+            phase = nil
+            phase = slot.to_int(call_on(MFM, "get_FlowPhase"))
+            if not has_main_pawn then return false end
+            if call_on(MFM, "get_IsTitleMenuPhase") ~= false then return false end
+            local in_game = in_game_value()
+            return in_game ~= nil and phase == in_game
+        end)
+        if not ok then
+            report("slot", res)
+            res = false
+        end
+        local world = res == true
+        if world ~= last_world then
+            last_world = world
+            log.error(world and "[Retinue] in the world: yes"
+                or string.format("[Retinue] in the world: no (phase %s)", tostring(phase)))
+        end
+        return world
     end
 
     function tracker.unit()
