@@ -41,8 +41,8 @@ Domain terms as used in code, docs and conversation. Game class names in `code`.
 ## Identity
 
 - **CharacterID** (`app.CharacterID`, a 32-bit enum value): identifies a pawn's character in the current save.
-  Stable across save/load while the pawn stays hired; a re-hired pawn gets a new one, and a dismissed pawn's
-  CharacterID is reused for a different pawn (findings 0006). Never identifies an adopted pawn.
+  Stable across save/load while the pawn stays hired; a re-hired pawn may get a new one or the same one (ticket 19), and a dismissed
+  pawn's CharacterID is reused for a different pawn (findings 0006). Never identifies an adopted pawn.
 - **Offline ID** (`PawnOwnerContext._OfflineID`, a GUID): identifies a game-generated Rift pawn; unchanged across
   dismiss, lost and re-hire (findings 0006). The roster's key: a pawn without one cannot be adopted.
 

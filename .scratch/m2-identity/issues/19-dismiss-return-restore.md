@@ -8,15 +8,15 @@ level guard), and it becomes present again with its progress. The menu shows eac
 
 **Blocked by:** [18: Adopted pawns are backed up](18-adopted-pawns-backed-up.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `dismissPawn` pre forces a last backup read; `dismissPawn` post marks away only if the pawn really left the party; the CharacterID is kept.
-- [ ] `hirePawn` post with an away member's OfflineID → `returning`, backup frozen; roster written.
-- [ ] Restore one frame later, retried each frame up to ~10 s; writes and read-back as findings 0008 (`CulmativeExp` by 0-based index assignment). Success → present, cache set; timeout or mismatch → stays `returning`, warning.
-- [ ] Level guard: restore when game level ≤ backup's; skip with a warning when greater (then the game wins).
-- [ ] Runs with the toggle off; locked: nothing; read-only: no writes, no restore; ambiguous: excluded.
-- [ ] One log line per transition (away with cause, returning, restored Lv a→b / skipped: guard, timeout).
-- [ ] Verified in game (checklist 10, 12, 15): Folken Lv 28 dismissed and re-hired comes back at Lv 28 with identical Status page, through save, reload and relaunch.
+- [x] `dismissPawn` pre forces a last backup read; `dismissPawn` post marks away only if the pawn really left the party; the CharacterID is kept.
+- [x] `hirePawn` post with an away member's OfflineID → `returning`, backup frozen; roster written.
+- [x] Restore one frame later, retried each frame up to ~10 s; writes and read-back as findings 0008 (`CulmativeExp` by 0-based index assignment). Success → present, cache set; timeout or mismatch → stays `returning`, warning.
+- [x] Level guard: restore when game level ≤ backup's; skip with a warning when greater (then the game wins).
+- [x] Runs with the toggle off; locked: nothing; read-only: no writes, no restore; ambiguous: excluded.
+- [x] One log line per transition (away with cause, returning, restored Lv a→b / skipped: guard, timeout).
+- [x] Verified in game (checklist 10, 12, 15): Folken Lv 28 dismissed and re-hired comes back at Lv 28 with identical Status page, through save, reload and relaunch.
 
 ## Comments
 
@@ -28,12 +28,21 @@ From ticket 18's final review:
 - Until this ticket lands, dismissing and re-hiring a member lowers its backup (the pawn comes back present at its
   first-hire level and the poll follows it).
 
-Implemented: `f6a9d10` (pure), `1d52e38` (glue), then the final review's fix. Plan: [../plan.md](../plan.md). In-game checks 10, 12 and 15 are pending,
-so the ticket stays open.
+Implemented: `f6a9d10` (pure), `1d52e38` (glue), then the final review's fix. Plan: [../plan.md](../plan.md). 
 
 Decisions beyond the spec: a Return with no usable backup becomes present with a warning (`skipped: no backup`) and the poll rewrites the
 file; a read-back mismatch stays `returning` until the next load; a dismiss while `returning` goes away, backup untouched; a hire of a
 member still `present` goes away (cause `hire`) then `returning`; no file I/O in the hooks: the update loop writes the dismiss snapshot.
 
-Watch at check 10: the line `dismissed but still in the party` would mean the pawn leaves `_PartyPawnList` later than one frame after
-`dismissPawn`. That is untested at one frame (earliest sample +0.3 s). The next hire still restores it, but until then the member stays present.
+In game (2026-11-06, user, Slot 2, `fixture-levelled-pawn`, Folken adopted and raised to Lv 28):
+
+- Check 10: `Folken: present→away (dismiss)`, roster `away` with its `character_id` kept. No `dismissed but still in the party` line in the
+  dismiss whose log survives (08:52:08), so the pawn is out of the party list by the next frame.
+- Check 12: re-hired from Previous Hires, back at Lv 28 with the same Status page, through save, reload and relaunch. The backup before the
+  dismiss and after the relaunch differ only in `item_ids` (regenerated): level, exp, discipline, `increase_params`, `culmative_exp`,
+  boost, skills and job bits are equal. The log of this session was overwritten by later launches, so its `restored Lv 23→28` line was not read.
+- Check 15: backup edited to Lv 22, re-hired: `away→returning (backup Lv 22)`, 10 ms later `returning→present skipped: guard (game Lv 23, backup
+  Lv 22)`. The poll then wrote Lv 23 to the backup. `FlowPhase` stayed `InGame` through the Rift hire.
+
+**A re-hire can keep the same CharacterID.** In check 12 Folken came back as 1601809365, his ID before the dismiss; in check 15 as 372209474, the
+same ID as in the lifecycle run (findings 0006). Noted on ticket 21, whose discriminator depends on it.

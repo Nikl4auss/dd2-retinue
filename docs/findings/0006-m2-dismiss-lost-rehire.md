@@ -67,7 +67,7 @@ the same CharacterID and Lv 27. A direct `lost` call leaves a half-done state: n
 
 ## Conclusions
 
-1. **Key the roster on OfflineID.** CharacterIDs change on every re-hire (and are reused by other pawns, research 02).
+1. **Key the roster on OfflineID.** CharacterIDs can change on a re-hire (ticket 19 saw one keep it) (and are reused by other pawns, research 02).
 2. **The game keeps no progress past dismiss or lost**; it re-offers the pawn at its first-hire level with regenerated
    equipment. The mod's backup is required and must hold level, exp, discipline, ranks/culmative exp and equipment.
 3. **Timing**: on dismiss, `dismissPawn` pre is a reliable last read. On lost there is no single hook; the record lingers
