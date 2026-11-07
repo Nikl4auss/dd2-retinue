@@ -1,4 +1,4 @@
--- REFramework glue: tracks which save slot is loaded from the game's start and load requests (uses sdk and log).
+-- REFramework glue: tracks which save slot is loaded from the game's start, load and save requests (uses sdk and log).
 -- The decisions live in Retinue/slot.lua. Read-only: the pre-hooks never change arguments.
 
 local hooks = require("Retinue.hooks")
@@ -9,13 +9,15 @@ local M = {}
 local MFM = "app.MainFlowManager"
 local START_TYPE = "app.MainFlowManager.StartType"
 local PHASE_TYPE = "app.MainFlowManager.Phase"
+local SDM = "app.SaveDataManager"
 
--- Installs the two pre-hooks (hooks.install, all or nothing, own entries; does not touch hooks.SPECS):
+-- Installs the three pre-hooks (hooks.install, all or nothing, own entries; does not touch hooks.SPECS):
 --   app.MainFlowManager requestLoadGameData(System.Int32)               global slot at args[3] (instance method)
 --   app.MainFlowManager requestStartType(app.MainFlowManager.StartType) enum value at args[3]
+--   app.SaveDataManager requestSaveSlot(System.Int32, ...)              global slot at args[3]; every save passes here
 -- Returns a tracker: { available = bool, missing = {strings}, session = slot.new_session(),
 --                      update(has_main_pawn) -- call every frame; the title phase is read in here
---                      unit() -> integer|nil,
+--                      unit() -> integer|nil  the unit whose roster is active (session:roster_unit()),
 --                      in_world(has_main_pawn) -> boolean }
 -- When a hook method is missing the session is never fed, so the unit stays unknown (fail closed, no fallback).
 function M.install(report)
@@ -72,12 +74,21 @@ function M.install(report)
             session.unit and slot.label(session.unit) or "unknown", detail()))
     end
 
+    -- One line when a start or a load ends a NewGame's wait for its first save.
+    local function note_given_up(waiting)
+        if waiting and not session.first_save_pending then
+            log.error("[Retinue] slot: new game given up before its first save; the roster stays")
+        end
+    end
+
     local entries = {
         { key = "requestLoadGameData", type = MFM, sig = "requestLoadGameData(System.Int32)",
           pre = function(args)
               if not tracker.available then return end
               local global_slot = hooks.arg_i32(args[3])
+              local waiting = session.first_save_pending
               session:on_load_request(global_slot, per_unit())
+              note_given_up(waiting)
               note(function() return "load request, global slot " .. global_slot end)
           end },
         { key = "requestStartType", type = MFM, sig = "requestStartType(app.MainFlowManager.StartType)",
@@ -92,11 +103,30 @@ function M.install(report)
                   local ok, un = pcall(call_on, "app.GameSystem", "get_UnitNumber")
                   if ok then unit_number = un else report("slot", un) end
               end
+              local waiting = session.first_save_pending
               session:on_start_request(name, unit_number)
+              note_given_up(waiting)
               note(function()
                   if session.source == "new_game" then return "new game" end
                   return "start request " .. tostring(name or v)
               end)
+              -- The note above says nothing when the unit stays nil, which a restart's start does.
+              local kind = slot.classify(name)
+              if kind == slot.NEW_PLAYTHROUGH or kind == slot.NG_PLUS then
+                  log.error("[Retinue] slot: start " .. name)
+              end
+              if session.first_save_pending then
+                  log.error("[Retinue] slot: the roster waits for the new game's first save")
+              end
+          end },
+        { key = "requestSaveSlot", type = SDM,
+          sig = "requestSaveSlot(System.Int32, app.SaveDataManager.SaveLoadRequestArgs, System.UInt32[])",
+          pre = function(args)
+              if not tracker.available or not session.first_save_pending then return end
+              local global_slot = hooks.arg_i32(args[3])
+              if session:on_save_request(global_slot, per_unit()) then
+                  log.error("[Retinue] slot: first save of the new game, global slot " .. global_slot)
+              end
           end },
     }
 
@@ -170,7 +200,7 @@ function M.install(report)
     end
 
     function tracker.unit()
-        return session.unit
+        return session:roster_unit()
     end
 
     return tracker

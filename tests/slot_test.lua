@@ -178,13 +178,15 @@ do
     assert(s.loads == 2 and s.unit == 0 and s.source == "load")
 end
 
--- take_archive: a new playthrough hands out its unit once; archives counts takes
+-- take_archive: a due archive hands out its unit once; archives counts takes
 do
     local s = slot.new_session()
     assert(s.archive_pending == false and s.archives == 0 and s:take_archive() == nil)
 
-    -- NewGame with a unit: pending at once
+    -- NewGame with a unit: after its first save
     s:on_start_request("NewGame", 1)
+    assert(s.archive_pending == false)
+    s:on_save_request(5, 5)
     assert(s.archive_pending == true)
     assert(s:take_archive() == 1 and s.archives == 1)
     assert(s.archive_pending == false and s:take_archive() == nil and s.archives == 1)
@@ -204,7 +206,7 @@ do
     s:on_start_request("NewGame", nil)
     assert(s.archive_pending == false)
     s:on_start_request("NewGame", -1)
-    assert(s.archive_pending == false)
+    assert(s.archive_pending == false and s.first_save_pending == false)
     s:on_load_request(4, 5)
     assert(s:take_archive() == nil and s.archives == 0)
 end
@@ -236,6 +238,92 @@ do
     -- a load alone (death reload) does not set it either
     s:on_load_request(9, 5)
     assert(s:take_archive() == nil)
+end
+
+-- NewGame: nothing until the first save of its unit, and no roster active meanwhile
+do
+    local s = slot.new_session()
+    s:on_load_request(9, 5)
+    assert(s:roster_unit() == 1)
+    s:on_start_request("NewGame", 1)
+    assert(s.first_save_pending and not s.archive_pending)
+    assert(s.unit == 1 and s:roster_unit() == nil and s:take_archive() == nil and s.archives == 0)
+    -- the system save and another unit's save are not it
+    assert(s:on_save_request(-1, 5) == false and s:on_save_request(0, 5) == false and s:on_save_request(9, nil) == false)
+    assert(s.first_save_pending and s:take_archive() == nil)
+    -- nor is the copy a conversion writes at the title (a save of the unit, with no start or load before it)
+    assert(s:on_save_request(8, 5) == false and s.first_save_pending and s:take_archive() == nil)
+    -- every other type of the unit counts: the first save wrote 6, 9, 5 here
+    assert(s:on_save_request(6, 5) == true)
+    assert(s.archive_pending and not s.first_save_pending and s:roster_unit() == 1)
+    assert(s:take_archive() == 1 and s.archives == 1 and s:take_archive() == nil)
+    -- later saves do nothing
+    assert(s:on_save_request(9, 5) == false and s:take_archive() == nil and s.archives == 1)
+end
+
+-- a NewGame given up: a load or another start ends the wait, nothing archived, the roster is active again
+do
+    local s = slot.new_session()
+    s:on_start_request("NewGame", 1)
+    s:on_load_request(9, 5)
+    assert(not s.first_save_pending and s:roster_unit() == 1 and s:take_archive() == nil)
+    assert(s:on_save_request(9, 5) == false and s:take_archive() == nil and s.archives == 0)
+
+    s:on_start_request("NewGame", 1)
+    s:on_start_request("Latest", 1)
+    assert(not s.first_save_pending)
+    s:on_load_request(9, 5)
+    assert(s:on_save_request(9, 5) == false and s:take_archive() == nil)
+
+    -- the next session sees nothing of it: a new session has no wait
+    assert(slot.new_session():on_save_request(9, 5) == false)
+end
+
+-- RedoNewGame does not wait for a save, and NG+ never archives on one
+do
+    local s = slot.new_session()
+    s:on_start_request("RedoNewGame", 1)
+    s:on_load_request(8, 5)
+    assert(not s.first_save_pending and s:roster_unit() == 1 and s:take_archive() == 1)
+
+    s = slot.new_session()
+    s:on_start_request("RedoNewGameSkip", 0)
+    s:on_load_request(3, 5)
+    assert(s:on_save_request(1, 5) == false and s:take_archive() == nil and s:roster_unit() == 0)
+end
+
+-- the wait is assigned before the unit, the archive flag last
+do
+    local s, order = slot.new_session(), {}
+    local spy = setmetatable({}, { __index = s, __newindex = function(_, k, v)
+        order[#order + 1] = k
+        s[k] = v
+    end })
+    spy:on_start_request("NewGame", 1)
+    local at = {}
+    for i, k in ipairs(order) do at[k] = i end
+    assert(at.first_save_pending < at.unit and at.unit < at.archive_pending)
+    order = {}
+    getmetatable(spy).__newindex = function(_, k, v) order[#order + 1] = k; s[k] = v end
+    assert(spy:on_save_request(9, 5) == true)
+    assert(order[1] == "archive_pending" and order[2] == "first_save_pending")
+    -- a load: the wait ends after the unit
+    s = slot.new_session()
+    s:on_start_request("NewGame", 1)
+    order = {}
+    spy = setmetatable({}, { __index = s, __newindex = function(_, k, v) order[#order + 1] = k; s[k] = v end })
+    spy:on_load_request(9, 5)
+    assert(order[#order] == "first_save_pending")
+end
+
+-- NewGame over a cleared slot, then a conversion at the title and NG+: the conversion's copy does not archive
+do
+    local s = slot.new_session()
+    s:on_start_request("NewGame", 0)
+    assert(s:on_save_request(3, 5) == false)
+    s:on_start_request("RedoNewGameSkip", 0)
+    s:on_load_request(3, 5)
+    assert(s:take_archive() == nil and s.archives == 0 and s:roster_unit() == 0)
 end
 
 -- the flag is assigned last: the frame loop must never see it set with the previous unit

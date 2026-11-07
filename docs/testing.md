@@ -187,8 +187,10 @@ Use a test slot, never the real save's slot, for 21 and 22.
     - roster `present`, Folken dismissed in that save (load a save taken after a dismiss with the mod removed) → away;
     - roster `present`, Folken in party, `hire_time` in his backup changed to another number (after ~15 s in the world
       with this build, so the backup has one) → `returning`, log `re-hired unseen`, restored.
-21. **New game** *(opportunistic)*: in a test slot with a roster, start a New Game over it (or restart, `RedoNewGame`).
-    `slots/<n>/archive-<date-time>/` holds the old roster and backups; the slot starts empty.
+21. **New game** *(opportunistic)*: in a test slot with a roster, start a New Game over it and play to its first save.
+    `slots/<n>/archive-<date-time>/` holds the old roster and backups; the slot starts empty. Giving up instead: close
+    the game in the prologue and load the old save: no archive, the roster and its members as before. A restart
+    (`RedoNewGame`, Change Save Slot, hold Shift) archives at once.
 22. **NG+** *(opportunistic)*: over a cleared test slot, the roster is kept; members not in the party become away.
 
 ### Damaged roster

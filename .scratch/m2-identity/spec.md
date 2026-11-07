@@ -71,6 +71,11 @@ From [Which save slot is loaded…?](issues/14-save-slot-identity-experiment.md)
 - **New playthrough** (`requestStartType` with `NewGame` or `RedoNewGame`): if the unit has a roster, its directory
   contents (roster and backups) move to `slots/<n>/archive-<yyyymmdd-hhmmss>/`, never deleted, and the unit starts
   with an empty roster. Done from the update loop right after the hook, never inside it.
+  - `RedoNewGame` archives at once: the game has already converted the old saves.
+  - `NewGame` archives on its first save (`SaveDataManager.requestSaveSlot` for a global slot of the unit, not type 3,
+    the copy a conversion writes at the title), because the old saves stay on disk until then. Until that save no
+    roster is active. A later start or load gives the new game up: nothing is archived and the roster is active again.
+    So does closing the game: the wait lives in the session.
 - **NG+** (`RedoNewGameSkip`): same playthrough, roster kept; members not in the party become away by the general rule.
 - Any other `StartType`: a load within the playthrough.
 - Switching units in one session (title → another start) activates the new unit's roster and cancels the previous
@@ -316,6 +321,7 @@ The experiment scripts stay in `tools/experiments/` and are never deployed with 
 - Without the mod, an away member returns at its first-hire level; reinstalling restores it.
 - A restored member comes back with its restored maximum health but the current health of its first-hire state (Folken: 1722/1900) until healed.
 - A new game started while the mod is not installed is not seen: the old members become away and must be released.
+  The same goes for *Reset scripts* between a new game and its first save.
 - Texts are English only.
 
 ## Open assumptions the checklist verifies

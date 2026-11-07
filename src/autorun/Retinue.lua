@@ -25,8 +25,10 @@
 -- follows what the loaded party shows (a rollback, a member that left or was re-hired without the mod), one log line per
 -- correction. Until then the hook events, the party check, the restores, the backup poll and the cache refresh wait.
 -- Starting a new game or a restart (RedoNewGame) over a slot archives its roster and backups: from the update loop,
--- right after the start/load requests, every file is copied to slots/<n>/archive-<yyyymmdd-hhmmss>/ and emptied, so the
--- slot starts empty. A new game plus (RedoNewGameSkip) keeps the roster. If the copy fails the roster stays in place
+-- every file is copied to slots/<n>/archive-<yyyymmdd-hhmmss>/ and emptied, so the slot starts empty. A restart archives
+-- at once, because the game has converted the old saves. A new game leaves them on disk until its first save, so it
+-- archives then: until that save no roster is active, and a new game given up leaves the roster as it was. A new game
+-- plus (RedoNewGameSkip) keeps the roster. If the copy fails the roster stays in place
 -- (log line). Archives are never read or deleted by the mod.
 -- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
 -- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
@@ -43,7 +45,7 @@
 -- backup_store and pawn_state (the member backups and the pawn read behind them), archive_store (the archive of a
 -- slot's roster on a new playthrough), roster_menu (the roster part of
 -- the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views and status rows),
--- slot_hooks (the start/load request hooks behind the save slot, and the in-the-world signal) and lifecycle_hooks
+-- slot_hooks (the start, load and save request hooks behind the save slot, and the in-the-world signal) and lifecycle_hooks
 -- (the dismiss and hire hooks; pawn_state also does the restore writes).
 -- Every hook body runs under pcall.
 
@@ -101,7 +103,7 @@ re.on_frame(function()
     party.refresh()
     local ok, err = pcall(tracker.update, party.has_main_pawn())
     if not ok then report("slot", err) end
-    -- Before the roster store reads the slot: a new playthrough's roster is archived (and emptied) first.
+    -- Before the roster store reads the slot: a roster due for its archive is archived (and emptied) first.
     local ok_a, err_a = pcall(archive_store.run, tracker.session, report)
     if not ok_a then report("archive", err_a) end
     -- Fail closed: any failure below leaves nobody to progress.

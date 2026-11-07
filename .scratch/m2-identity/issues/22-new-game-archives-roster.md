@@ -64,3 +64,9 @@ and starts empty; NG+ keeps the roster, and members not in the party become away
   `RedoNewGame` over a cleared slot, which would archive.
 - `tools/saves.sh` found the save folder by `data000.bin`, which the conversion of slot 1 deletes. It then chose an old Steam
   prefix and `restore` refused, correctly. It now looks for `data00-1.bin`, the system save.
+- Fix of the open bug, decided by the user 2026-11-07: a `NewGame` archives on its first save. `RedoNewGame` stays at once (its old
+  saves are already converted, so the bug does not apply). Signal: `SaveDataManager.requestSaveSlot(global, ...)`, seen for every
+  save in the runs of 2026-11-05, with `requestSaveSlot(11)` as the first call after `NewGame` on slot 3. Until that save no
+  roster is active; a later start or load, or closing the game, gives the new game up and changes nothing. Needs the in-game
+  check again: give up (slot 2, close in the prologue, load: roster as before), and a real first save. In the 2026-11-05 runs that save came about 80 s after `NewGame`, not after the prologue, so this may be short; on slot 2 it had not come after 3 min 40 s. A conversion's copy (type 3) does not count as the first save.
+- Still untried: "Start from Beginning" on a cleared slot, and NG+ with a valid backup.

@@ -62,7 +62,7 @@ Shaira, 7 h; slot 3 empty.
 `Base` (3), `NewGame` (0), `RedoNewGame` (7), `RedoNewGameSkip` (8), `ExitGame` (10). Death reload calls none.
 
 - **New game in an empty unit** (slot 3): `setUnitNumber(2)` on pick, `requestStartType(NewGame)` on the last Yes, after the difficulty choice (2026-11-07), **no
-  `requestLoadGameData`**. The first save (after the prologue) writes types 1, 4, 0 (global 11, 14, 10).
+  `requestLoadGameData`**. The first save writes types 1, 4, 0 (global 11, 14, 10). It came about 80 s after `NewGame` in this run, with no main pawn yet and not in the world.
 - **New game over an occupied unit that is not cleared** (slot 2): `SaveUnitSelect.onExecuteGameRestart(UnitNo 1,
   IsClearData false)`; on the final confirm the game loads the unit's latest save (9), copies it to type 3 (global 8)
   and **deletes the unit's saves 5, 6, 9 at once** (`updateUnitDataList(n, true)`, watcher). Then
@@ -85,6 +85,7 @@ Shaira, 7 h; slot 3 empty.
   after 3 min 40 s in the prologue). Presumably the first save replaces them; not observed. Closing in the prologue and loading
   gives the old save back.
 - `NewGame` fires on the last Yes, after the difficulty choice.
+- Every save passes `SaveDataManager.requestSaveSlot(global, ...)`, the conversion's copy (type 3) too, at the title with no start or load before it.
 - A cleared slot now asks "Start from Vernworth" or "Start from Beginning" after the difficulty. Vernworth is `RedoNewGameSkip`,
   then "Use existing character data" and the creator for the Arisen and the pawn; the world came nearly 9 min after the load
   request. "Start from Beginning" was not tried.
