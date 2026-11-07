@@ -62,7 +62,8 @@ Shaira, 7 h; slot 3 empty.
 `Base` (3), `NewGame` (0), `RedoNewGame` (7), `RedoNewGameSkip` (8), `ExitGame` (10). Death reload calls none.
 
 - **New game in an empty unit** (slot 3): `setUnitNumber(2)` on pick, `requestStartType(NewGame)` on the last Yes, after the difficulty choice (2026-11-07), **no
-  `requestLoadGameData`**. The first save writes types 1, 4, 0 (global 11, 14, 10). It came about 80 s after `NewGame` in this run, with no main pawn yet and not in the world.
+  `requestLoadGameData`**. The first save writes types 1, 4, 0 (global 11, 14, 10). It comes about 5 s after the character creator's last Yes, not on a timer (2026-11-07), with no main pawn yet and not
+  in the world; about 76-80 s after `NewGame` when the creator is rushed.
 - **New game over an occupied unit that is not cleared** (slot 2): `SaveUnitSelect.onExecuteGameRestart(UnitNo 1,
   IsClearData false)`; on the final confirm the game loads the unit's latest save (9), copies it to type 3 (global 8)
   and **deletes the unit's saves 5, 6, 9 at once** (`updateUnitDataList(n, true)`, watcher). Then
