@@ -52,3 +52,5 @@ In game (2026-11-06, user, Slot 2, `m2-adopted-folken`), check 19: passed. Grant
 First reading of `hire_time` from the game: 37991999, the fixture's `_HireTime` in ms, written and verified through JSON with no write error.
 
 Check 20a (same run conditions, roster hand-edited to `away`, CharacterID kept, backup without `hire_time`): passed. `in the world: yes` at 20:52:10.287, `Folken: roster away, save has it Lv28 (backup Lv28) → present, save wins` at 20:52:13.313 (3.03 s), no `restored` line, roster `present`, backup Lv 28 with `hire_time` 37991999 written by the poll at 20:52:23.
+
+Check 20b (roster `away` with another `character_id`, backup without `hire_time`): passed. `in the world: yes` at 21:18:44.720, `Folken: roster away, save has it Lv28 (backup Lv28) → returning, re-hired unseen` at 21:18:47.796, `Folken: returning→present restored Lv 28→28` 12 ms later. Roster `present` with the real `character_id` 1601809365; backup written at once by the restore (21:18:47.810) with `hire_time` 37991999 and `restored_from` 28.
