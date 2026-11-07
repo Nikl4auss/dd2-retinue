@@ -47,3 +47,18 @@ Game members relevant to the mod, verified against `il2cpp_dump.json` of 2026-11
 | `app.GUIBase.getName(app.Character) : String` (static) | display name | verified-game |
 | `app.PawnOwnerContext._Name / _Level / _Job / _OfflineID / _UserId / _SlotId` | creator info | verified-game |
 | `app.SubPawnDataContext._HireTime / _RentalToken / _EquipStorage / ChangedEquipSlot` | rental state; `_HireTime` (float, the save's clock) marks one hire: new on a re-hire, kept across save and load (findings 0006) | verified-game (first three) |
+
+## REFramework `fs`
+
+Observed in the game on the title screen, 2026-11-06 (no save loaded). Paths are relative to `reframework/data`.
+
+| Member | Notes | Status |
+|---|---|---|
+| `fs.write(path, text)` | creates missing folders; writes the bytes exactly (multi-line, UTF-8); `fs.write(path, "")` works | verified-game |
+| `fs.read(path)` | `""` for a missing and for an empty file alike (ticket 18) | verified-game |
+| `fs.glob(filter)` | recursive; returns paths relative to `reframework/data` **with backslashes**; the filter is a regex that must match the **whole** relative path, and forward slashes in it do not match: `Retinue[\\/]slots[\\/]2[\\/].*` works, `Retinue/spike/.*` and `spike` return nothing (the Lua string holds two backslash characters per `[\\/]`); no match returns an empty table, not nil | verified-game |
+| `os.date("*t")` | works (year, month, day, hour, min, sec) | verified-game |
+| `os.remove` | no working delete (ticket 18: release ran the emptying fallback); `os.rename` is reported missing by another mod, not checked here. The mod copies and empties files instead | verified-game (`os.remove`) |
+
+Also seen in that run (`saveslot_20261105_192726`): `requestLoadGameData` runs nested inside `requestStartType` (start
+pre, load pre, load post, start post), for `RedoNewGame` and `RedoNewGameSkip`.

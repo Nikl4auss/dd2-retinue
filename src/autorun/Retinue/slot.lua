@@ -67,11 +67,17 @@ end
 --   starts      integer  count of start requests seen (later tickets detect a new start by comparing it)
 --   loads       integer  count of load requests seen (later tickets detect a new load, e.g. a death reload of the
 --               same unit, by comparing it)
+--   archive_pending  boolean  the last start request began a new playthrough whose slot's roster is to be archived
+--               (see on_start_request and take_archive)
+--   archives    integer  count of take_archive results (the roster store's request count includes it: see Retinue.lua)
 local Session = {}
 Session.__index = Session
 
 function M.new_session()
-    return setmetatable({ unit = nil, source = nil, seen = false, last_start = nil, starts = 0, loads = 0 }, Session)
+    return setmetatable({
+        unit = nil, source = nil, seen = false, last_start = nil, starts = 0, loads = 0,
+        archive_pending = false, archives = 0,
+    }, Session)
 end
 
 -- requestLoadGameData pre: seen = true; loads += 1; unit = unit_of(global_slot, per_unit); source = unit and
@@ -85,7 +91,10 @@ end
 
 -- requestStartType pre: seen = true; starts += 1; last_start = { name, kind }. If name == "NewGame": unit =
 -- unit_number's integer view if >= 0 else nil, source = unit and "new_game" or nil. Any other name (including
--- nil): unit = nil, source = nil (the load request that follows sets it).
+-- nil): unit = nil, source = nil (the load request that follows sets it). archive_pending = the start is a new
+-- playthrough ("NewGame", "RedoNewGame") and, for "NewGame", its unit is known (no load request follows a NewGame,
+-- so without a unit nothing could ever name the slot). Every other start clears it, so a restart whose load never
+-- came cannot archive a slot loaded later.
 function Session:on_start_request(name, unit_number)
     self.seen = true
     self.starts = self.starts + 1
@@ -97,6 +106,20 @@ function Session:on_start_request(name, unit_number)
     end
     self.unit = unit
     self.source = unit and "new_game" or nil
+    -- Assigned last: re.on_frame may run on the render thread, and a reader that sees the flag must also see the
+    -- new unit (with the previous unit it would archive the wrong slot).
+    self.archive_pending = M.classify(name) == M.NEW_PLAYTHROUGH and (name ~= "NewGame" or unit ~= nil)
+end
+
+-- take_archive() -> unit | nil. When an archive is pending and the unit is known: clears the flag, archives += 1 and
+-- returns the unit, once. Otherwise nil and the flag stays (the load request that follows a RedoNewGame sets the unit).
+function Session:take_archive()
+    if not self.archive_pending then return nil end
+    local unit = self.unit -- one read: a hook may change it on another thread
+    if unit == nil then return nil end
+    self.archive_pending = false
+    self.archives = self.archives + 1
+    return unit
 end
 
 -- Called by the glue every frame while in the world. Does nothing once seen. Otherwise unit = fallback(...),

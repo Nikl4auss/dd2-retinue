@@ -24,6 +24,10 @@
 -- After each load, once the pawns are in the world again, the roster is reconciled with the save: a member's status
 -- follows what the loaded party shows (a rollback, a member that left or was re-hired without the mod), one log line per
 -- correction. Until then the hook events, the party check, the restores, the backup poll and the cache refresh wait.
+-- Starting a new game or a restart (RedoNewGame) over a slot archives its roster and backups: from the update loop,
+-- right after the start/load requests, every file is copied to slots/<n>/archive-<yyyymmdd-hhmmss>/ and emptied, so the
+-- slot starts empty. A new game plus (RedoNewGameSkip) keeps the roster. If the copy fails the roster stays in place
+-- (log line). Archives are never read or deleted by the mod.
 -- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
 -- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
 -- tracked from the game's start and load requests; the decisions live in Retinue/slot.lua.
@@ -33,10 +37,11 @@
 --
 -- Layout: this file is only wiring (requires, the shared state, the REFramework callbacks and the menu).
 -- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot,backup,departure,
--- lifecycle,reconcile}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus Retinue/game/:
--- jsonfile (verified JSON file
+-- lifecycle,reconcile,archive}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus
+-- Retinue/game/: jsonfile (verified JSON file
 -- reads and writes and deletes), config_store (config.json), roster_store (the active slot's roster.json),
--- backup_store and pawn_state (the member backups and the pawn read behind them), roster_menu (the roster part of
+-- backup_store and pawn_state (the member backups and the pawn read behind them), archive_store (the archive of a
+-- slot's roster on a new playthrough), roster_menu (the roster part of
 -- the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views and status rows),
 -- slot_hooks (the start/load request hooks behind the save slot, and the in-the-world signal) and lifecycle_hooks
 -- (the dismiss and hire hooks; pawn_state also does the restore writes).
@@ -49,6 +54,7 @@ local progression_hooks = require("Retinue.game.progression_hooks")
 local party_reader = require("Retinue.game.party")
 local pawn_state = require("Retinue.game.pawn_state")
 local backup_store = require("Retinue.game.backup_store")
+local archive_store = require("Retinue.game.archive_store")
 local roster_store = require("Retinue.game.roster_store")
 local roster_menu = require("Retinue.game.roster_menu")
 local targets = require("Retinue.targets")
@@ -95,9 +101,16 @@ re.on_frame(function()
     party.refresh()
     local ok, err = pcall(tracker.update, party.has_main_pawn())
     if not ok then report("slot", err) end
+    -- Before the roster store reads the slot: a new playthrough's roster is archived (and emptied) first.
+    local ok_a, err_a = pcall(archive_store.run, tracker.session, report)
+    if not ok_a then report("archive", err_a) end
     -- Fail closed: any failure below leaves nobody to progress.
+    -- The archives term: a hook can land between take_archive and this call on another thread, so a roster read just
+    -- before the archive would otherwise stay active and be written back over the emptied file. The count changes,
+    -- and the roster is read again.
+    local session = tracker.session
     local ok_roster, err_roster = pcall(retinue.update, tracker.unit(), party,
-        tracker.session.starts + tracker.session.loads)
+        session.starts + session.loads + session.archives)
     if not ok_roster then report("roster", err_roster) end
     -- The lifecycle events and the backup poll run whatever the progression toggle says; they only need the roster
     -- and the world.

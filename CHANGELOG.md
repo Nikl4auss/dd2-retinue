@@ -30,6 +30,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   in the party after a rollback is present again, one re-hired without the mod is marked returning and restored, one
   missing from the party is away. The backup records each pawn's hire time to tell a re-hire from a rollback. One log
   line per correction.
+- Archive on a new playthrough (M2): starting a new game or a restart over a slot copies its roster and backups to
+  `slots/<n>/archive-<yyyymmdd-hhmmss>/` and empties the originals, so the slot starts empty. A new game plus keeps the
+  roster. If the copy cannot be verified the roster stays in place (log line). Archives are never read or deleted.
 
 ### Changed
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is

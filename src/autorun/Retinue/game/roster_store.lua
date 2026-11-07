@@ -18,7 +18,8 @@ local M = {}
 --   save_failed   boolean       last write failed (cleared by the next successful one)
 --   generation    integer       incremented on every unit switch or reload (the menu drops its pending confirm)
 --   update(unit, party, requests) -- plain call, every frame, after party.refresh and the slot tracker; requests:
---                                    the tracker's start + load request count (a change means a new load)
+--                                    the tracker's start + load request + archive count (a change means a new load, or
+--                                    the file was just archived)
 --   store:adopt(view) -> true | nil, err      -- err: roster's errors, plus "no_slot"
 --   store:release(offline_id) -> true | nil, err
 --   store:mark_away(id) -> member, previous_status | nil, err;  store:mark_returning(id) -> member | nil, err;
@@ -26,7 +27,7 @@ local M = {}
 --                      -- the roster.mark_* transitions, saved on success (no file in read-only); "no_slot" without a roster
 --   store:correct(corrections) -> count       -- roster.apply_corrections, saved once when the count is above 0 (0 without a roster)
 --   store:settle()                            -- ends the hold a (re)load puts on the cache refresh (see below) and refreshes once
--- roster.json is read when the active unit changes or a new start/load request was seen (a reload of the same
+-- roster.json is read when the active unit changes, a new start/load request was seen or the slot was archived (a reload of the same
 -- unit: the frame loop may never see the unit go nil in between, so the unit alone would miss it). It is written
 -- only by save(), only while the roster is writable.
 -- A (re)load holds the cache refresh (the present members' kept CharacterID is what the reconciliation compares): store:settle()
