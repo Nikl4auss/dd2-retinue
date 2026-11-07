@@ -5,7 +5,7 @@ Source: [issues/23-native-notices.md](issues/23-native-notices.md), [spec.md](sp
 
 - [x] Slice 1: spike in game, read-only: which game state means "a dialog or menu is up", and how to tell the notice is ours. Tier: **Opus, inline** (the outcome is unknown, and Slice 2's design rests on it).
 - [x] Slice 2: pure `labels.lua` and `notices.lua`, glue `game/notice_screen.lua`, wiring, tests, docs. Tier: **Sonnet** (`implementer`).
-- [ ] Slice 3: in-game verification with the mod (ticket's last box). Tier: **Opus, inline**, keys; the user only if a step cannot be driven.
+- [ ] Slice 3 (partial, see the ticket's comments): in-game verification with the mod (ticket's last box). Tier: **Opus, inline**, keys; the user only if a step cannot be driven.
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 
