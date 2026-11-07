@@ -21,10 +21,11 @@ BACKUPS="${DD2_BACKUP_DIR:-$GAME/Retinue-backups}"
 
 die() { echo "$*" >&2; exit 1; }
 
-# Most recently written save folder among the known Proton/Wine prefix locations.
+# Most recently written save folder among the known Proton/Wine prefix locations. Found by data00-1.bin, the system
+# save: every save folder has it, while data000.bin is deleted when slot 1 is converted for a restart.
 save_dir() {
     if [[ -n "${DD2_SAVE_DIR:-}" ]]; then
-        [[ -f "$DD2_SAVE_DIR/data000.bin" ]] || die "No data000.bin in DD2_SAVE_DIR=$DD2_SAVE_DIR"
+        [[ -f "$DD2_SAVE_DIR/data00-1.bin" ]] || die "No data00-1.bin in DD2_SAVE_DIR=$DD2_SAVE_DIR"
         printf '%s\n' "$DD2_SAVE_DIR"; return
     fi
     local base f t best='' best_t=-1
@@ -37,7 +38,7 @@ save_dir() {
         while IFS= read -r -d '' f; do
             t="$(stat -c %Y -- "$f")"
             if (( t > best_t )); then best_t=$t; best="$f"; fi
-        done < <(find "$base" -type f -path '*/2054970/remote/win64_save/data000.bin' -print0 2>/dev/null)
+        done < <(find "$base" -type f -path '*/2054970/remote/win64_save/data00-1.bin' -print0 2>/dev/null)
     done
     [[ -n "$best" ]] || die "No DD2 save folder found (set DD2_SAVE_DIR)"
     dirname -- "$best"
@@ -79,7 +80,7 @@ do_restore() {
     local name="${1:-}" from live recorded
     [[ -n "$name" ]] || die "Usage: tools/saves.sh restore <backup> (see: tools/saves.sh list)"
     from="$BACKUPS/$name"
-    [[ -f "$from/win64_save/data000.bin" ]] || die "Not a backup: $from"
+    [[ -f "$from/win64_save/data00-1.bin" ]] || die "Not a backup: $from"
     game_not_running
     live="$(save_dir)"
     recorded="$(cat "$from/SOURCE.txt" 2>/dev/null || true)"

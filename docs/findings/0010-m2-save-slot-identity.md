@@ -76,6 +76,19 @@ Shaira, 7 h; slot 3 empty.
 - In both restart cases `requestLoadGameData` names the unit (8 ÷ 5 = 1, 3 ÷ 5 = 0); `UnitNumber` already holds it
   from the pick.
 
+## Corrections from the in-game checks of ticket 22 (2026-11-07)
+
+- The restart above is not reached from New Game: title, Change Save Slot, hold Shift on the slot ("Restart game with data
+  carried over"), Yes, I Understand, Convert Saved Data, OK, back to the title, START GAME, "Restart game with current level and
+  equipment", Yes, difficulty, Yes. It works on the current slot and on a slot that is not current.
+- **New Game over the occupied current slot** is another path: a plain `NewGame`, and the saves stay on disk (5, 6, 9 unchanged
+  after 3 min 40 s in the prologue). Presumably the first save replaces them; not observed. Closing in the prologue and loading
+  gives the old save back.
+- `NewGame` fires on the last Yes, after the difficulty choice.
+- A cleared slot now asks "Start from Vernworth" or "Start from Beginning" after the difficulty. Vernworth is `RedoNewGameSkip`,
+  then "Use existing character data" and the creator for the Arisen and the pawn; the world came nearly 9 min after the load
+  request. "Start from Beginning" was not tried.
+
 ## Not established
 
 - What the Rift's "previously hired" list holds after NG+ (whether away members can return in the new cycle).
