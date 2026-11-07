@@ -4,7 +4,7 @@ Source: [issues/23-native-notices.md](issues/23-native-notices.md), [spec.md](sp
 (Plans of earlier tickets are in git history.)
 
 - [x] Slice 1: spike in game, read-only: which game state means "a dialog or menu is up", and how to tell the notice is ours. Tier: **Opus, inline** (the outcome is unknown, and Slice 2's design rests on it).
-- [ ] Slice 2: pure `labels.lua` and `notices.lua`, glue `game/notice_screen.lua`, wiring, tests, docs. Tier: **Sonnet** (`implementer`).
+- [x] Slice 2: pure `labels.lua` and `notices.lua`, glue `game/notice_screen.lua`, wiring, tests, docs. Tier: **Sonnet** (`implementer`).
 - [ ] Slice 3: in-game verification with the mod (ticket's last box). Tier: **Opus, inline**, keys; the user only if a step cannot be driven.
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
@@ -48,12 +48,13 @@ notices.SETTLE_SECONDS = 1
 notices.new(hold_seconds, settle_seconds) -> queue
 queue:push(text)
 queue:sync(generation)    -- a new generation drops what waits; a notice on screen stays and still gets closed
-queue:step(now, can_show, is_mine) -> nil | "show", text | "hide"
+queue:step(now, can_show, is_mine) -> nil | "show", text | "hide", text
 --   one notice at a time, oldest first.
 --   can_show false restarts the settle. Nothing showing, something waiting, can_show true for settle seconds without a break
 --     -> "show", text; deadline = now + hold.  (The settle bridges the gap between two cutscenes, about 0.5 s, and fades.)
 --   showing, before the deadline -> nil.
---   showing, deadline reached -> is_mine(text) is called once: true -> "hide"; false -> nil. Showing ends either way.
+--   showing, deadline reached -> is_mine(text): true -> "hide", text; false -> nil, showing ends; nil (unreadable) -> keeps showing, asked again next step.
+--   a failed hide -> queue:reopen(text, now). notices.drive(queue, screen, now, in_world) is the tick.
 notices.new_once() -> once;  once:due(generation, ready) -> true on the first ready call of each generation
 ```
 
@@ -72,7 +73,7 @@ New glue `game/notice_screen.lua`:
   whole Rift visit, where a Return happens. Not `TalkSelect.IsDisp`: it sticks.
 - `is_mine(text)` -> `Dialog.get_IsDisp() == true and Dialog.IsNoButton == true and Dialog.MainText == text`, read in that call. `MainText` may
   arrive as a Lua string or a managed string: compare through a helper taking both (`:call("ToString")` for userdata). All three matter:
-  `MainText` and `IsNoButton` keep their values after a hide, and a dialog that replaces ours leaves `IsDisp` true. Unreadable counts as not ours, and is reported.
+  `MainText` and `IsNoButton` keep their values after a hide, and a dialog that replaces ours leaves `IsDisp` true. Three values: true, false (proven not ours), nil (a read failed, reported). A notice is never given up on an unreadable read, and a hide needs true. A script reset closes a notice that is still ours.
 - `show(text)`, `hide()`: under pcall; a throw is reported and sets `available = false`. Called only with the game thread's `UpdateBehavior`.
 
 `lifecycle.lua`: new dep `notify(text)`. In `attempt`: after the `SKIP_GUARD` log line `notify(labels.kept(m.name, game_level))`, after the
@@ -110,3 +111,7 @@ Update the header comment of `Retinue.lua`. `tests/run.sh` picks up the new file
 Backup first. Keys, with screenshots: a Return in the Rift (dismiss, re-hire): the notice shows after the talk, inside the Rift, and closes (never
 tried in the Rift: if it does not draw, stop and decide); a guard skip; a roster with `not json`: one notice on load; read-only; a notice held while the
 pause menu is open (check 33); a new game's prologue gives no "slot unknown". Tick the ticket's boxes, record the runs in the ticket's comments, close it.
+
+Also check, on that Return: the interaction prompt (`Hail (Hold to Talk)`, `Examine (Hold)`) stays visible and can overlap the panel (seen in the spikes; the player stands next to the hired pawn, so it is likely here). Does it hurt the reading, and does F act on it while the notice is up? Cosmetic only: stop and decide only if F starts a talk under the notice.
+
+Same Return: press F, and in another pass hold it across the close, with `Hail` available. Does it fire when the notice closes? The user saw the answering press of a Yes/No dialog reach the game on close (spike G1, G3; known input leak, findings 0007, ticket 24's fallback). The notice has no buttons, so this case is untested, not assumed.

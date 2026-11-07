@@ -33,6 +33,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Archive on a new playthrough (M2): starting a new game or a restart over a slot copies its roster and backups to
   `slots/<n>/archive-<yyyymmdd-hhmmss>/` and empties the originals, so the slot starts empty. A restart does it at once;
   a new game does it on its first save, so giving it up leaves the roster as it was. A new game plus keeps the roster. If the copy cannot be verified the roster stays in place (log line). Archives are never read or deleted.
+- Native notices (M2): the game's centred dialog tells the player when a member returned ("<name> returned — Lv N
+  restored", or "kept Lv M, newer than the backup" on a guard skip) and, once per load, when the roster is locked,
+  read-only or the save slot unknown. A notice stays 3 s, shows only after no dialog, menu, cutscene or talk has been up
+  for a second, and is closed only while it is still the one displayed. If a needed game method is missing, the texts go to
+  the log instead.
 
 ### Changed
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is

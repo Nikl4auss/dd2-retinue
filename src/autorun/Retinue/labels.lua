@@ -1,0 +1,35 @@
+-- The player-facing texts (the native notices). Pure: no REFramework globals, so it runs under plain Lua in tests. The
+-- log texts of the transitions stay in departure.lua; the notice queue is notices.lua, the game call game/notice_screen.lua.
+local roster = require("Retinue.roster")
+local slot = require("Retinue.slot")
+
+local M = {}
+
+-- A level as departure.lua prints it: an integral float without the ".0".
+local function num(n) return tostring(slot.to_int(n) or n) end
+
+function M.returned(name, level)
+    return string.format("%s returned — Lv %s restored", name, num(level))
+end
+
+function M.kept(name, level)
+    return string.format("%s returned — kept Lv %s, newer than the backup", name, num(level))
+end
+
+-- roster_problem(r, unit) -> text | nil. r is the active roster (retinue.roster), unit the session's unit
+-- (tracker.session.unit, not the roster unit). No roster with a unit set is a NewGame waiting for its first save:
+-- nothing is wrong, so no text.
+function M.roster_problem(r, unit)
+    if r == nil then
+        if unit == nil then return "Retinue is off: the save slot is unknown" end
+        return nil
+    end
+    if r.mode == roster.LOCKED then
+        return string.format("The Retinue roster is locked: %s\nSee the Retinue menu.", tostring(r.reason))
+    elseif r.mode == roster.READ_ONLY then
+        return string.format("The Retinue roster is read-only: written by a newer Retinue (%s)", tostring(r.reason))
+    end
+    return nil
+end
+
+return M

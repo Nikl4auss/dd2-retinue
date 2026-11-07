@@ -99,6 +99,8 @@ Two throwaway read-only scripts, run by keys (ticket 23). `D` is `GuiManager.Dia
 **Nothing reads**: scripted talks (Fiska in the prologue), tutorial panels, ambient pawn chatter. A notice there was not tested cleanly; with a tutorial
 panel up it did not show and the hide was clean.
 
+**Prompts stay on top**: the interaction prompt (`Hail (Hold to Talk)`, `Examine (Hold)`) stays visible with the panel up and can overlap its text. F on it was not tried.
+
 **Not reached**: a Rift NPC talk, a cutscene after the prologue, a dialog requested by the game itself rather than by script, a notice inside the Rift.
 
 ## Conclusions

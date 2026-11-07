@@ -21,7 +21,7 @@ end
 local function setup(statuses, opts)
     opts = opts or {}
     local t = {
-        lines = {}, reports = {}, queue = {}, order = {}, stores = {}, restores = {}, party_levels = {},
+        lines = {}, notices = {}, reports = {}, queue = {}, order = {}, stores = {}, restores = {}, party_levels = {},
         corrections = {}, settles = 0, reads = {},
     }
     local members = {}
@@ -109,6 +109,7 @@ local function setup(statuses, opts)
             return q
         end,
         log_line = function(text) t.lines[#t.lines + 1] = text end,
+        notify = function(text) t.notices[#t.notices + 1] = text end,
         report = function(what, err) t.reports[#t.reports + 1] = { what = what, err = tostring(err) } end,
         gate = opts.gate or { pending = false, check = function() return false end },
     }
@@ -338,6 +339,7 @@ do
     assert(t.status(A) == roster.PRESENT and t.member(A).character_id == 4242)
     assert(#t.restores == 1)
     assert(t.lines[#t.lines] == "Ana: returning→present restored Lv 3→27")
+    assert(#t.notices == 1 and t.notices[1] == "Ana returned — Lv 27 restored") -- the backup's level
     assert(t.flow.note(A) == nil)
     -- nothing more once present
     t.flow.tick(11, true)
@@ -383,6 +385,7 @@ do
     t.flow.tick(110, true)
     assert(#t.lines == 1 and t.lines[1] == "Ana: restore timed out, stays returning")
     assert(t.flow.note(A) == "timed out" and t.status(A) == roster.RETURNING)
+    assert(#t.notices == 0)
     t.view(A)
     t.flow.tick(111, true)
     t.flow.tick(500, true)
@@ -413,6 +416,7 @@ do
     t.flow.tick(0, true)
     assert(t.status(A) == roster.RETURNING and #t.lines == 1)
     assert(t.lines[1] == "Ana: restore read-back differs at culmative_exp[3], stays returning")
+    assert(#t.notices == 0)
     assert(t.flow.note(A) == "differs at culmative_exp[3]")
     t.flow.tick(1, true)
     t.flow.tick(2, true)
@@ -428,6 +432,7 @@ do
     t.flow.tick(0, true)
     assert(#t.restores == 0 and t.status(A) == roster.PRESENT and t.member(A).character_id == 55)
     assert(t.lines[1] == "Ana: returning→present skipped: guard (game Lv 30, backup Lv 27)" and #t.lines == 1)
+    assert(#t.notices == 1 and t.notices[1] == "Ana returned — kept Lv 30, newer than the backup") -- the game's level
     assert(t.flow.note(A) == nil)
 end
 
@@ -440,6 +445,7 @@ do
     t.flow.tick(0, true)
     assert(#t.restores == 0 and t.status(A) == roster.PRESENT and t.status(B) == roster.PRESENT)
     assert(t.lines[1] == "Ana: returning→present skipped: no backup (missing)")
+    assert(#t.notices == 0)
     assert(t.lines[2] == "Bo: returning→present skipped: no backup (damaged: not valid JSON)")
     assert(t.member(A).character_id == 55 and t.member(B).character_id == 56)
 end

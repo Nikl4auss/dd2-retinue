@@ -6,12 +6,13 @@
 -- glue's (game/lifecycle_hooks.lua, game/pawn_state.lua).
 local backup = require("Retinue.backup")
 local departure = require("Retinue.departure")
+local labels = require("Retinue.labels")
 local reconcile = require("Retinue.reconcile")
 local roster = require("Retinue.roster")
 
 local M = {}
 
--- M.new{ retinue, backups, pawns, party, drain, log_line, report, gate } -> flow
+-- M.new{ retinue, backups, pawns, party, drain, log_line, notify, report, gate } -> flow
 --   retinue:   .unit .generation .roster .found .ambiguous, retinue:mark_away(id) -> member, from | nil, err;
 --              retinue:mark_returning(id) -> member | nil, err; retinue:mark_present(id, character_id) -> member | nil, err;
 --              retinue:correct(corrections) -> count; retinue:settle() (the reconciliation is over)
@@ -22,10 +23,11 @@ local M = {}
 --              { kind = "dismiss", id = <canonical>, generation = n, snapshot = table|nil }
 --              { kind = "hire",    id = <canonical>, generation = n }
 --   log_line(text): the [Retinue] prefix is the caller's.
+--   notify(text):   the player-facing notice (labels.lua), queued by the caller; called for a restore and a guard skip only.
 --   gate:      optional, reconcile.new_gate's object (.pending, :check(now, in_world, ready, generation)); the tests replace it.
 function M.new(deps)
     local retinue, backups, pawns, party = deps.retinue, deps.backups, deps.pawns, deps.party
-    local log_line, report = deps.log_line, deps.report
+    local log_line, notify, report = deps.log_line, deps.notify, deps.report
     local gate = deps.gate or reconcile.new_gate(reconcile.SETTLE_SECONDS, reconcile.GRACE_SECONDS)
     local budget = departure.new_budget(departure.RETRY_SECONDS)
     local diff = departure.new_diff(departure.CHECK_SECONDS, departure.MISS_LIMIT)
@@ -230,6 +232,7 @@ function M.new(deps)
         if action == departure.SKIP_GUARD then
             if not present(m, view) then return end
             log_line(departure.guard_text(m.name, game_level, b.level))
+            notify(labels.kept(m.name, game_level))
             return
         end
         -- RESTORE
@@ -240,6 +243,7 @@ function M.new(deps)
             -- a load before the next poll must find both.
             b.restored_from = game_level
             log_line(departure.restored_text(m.name, game_level, b.level))
+            notify(labels.returned(m.name, b.level))
             local ok_c, err_c = pcall(backups.capture, retinue.unit, m, view, { force = true })
             if not ok_c then report("backup", err_c) end
             local ok, err = pcall(function()
