@@ -13,7 +13,7 @@ the loaded party, including a Return made while the mod was not installed (recog
 - [x] One pass per load, on entering the world, before the party diff and the poll act.
 - [x] Switching slots in one session cancels the previous slot's pending work without writing to it.
 - [x] Read-only: in memory only; locked: no pass; slot unknown: none. One log line per correction.
-- [ ] Verified in game (checklist 19, 20): rollback keeps the save's level; each hand-edited roster case gives the expected result.
+- [x] Verified in game (checklist 19, 20): rollback keeps the save's level; each hand-edited roster case gives the expected result.
 
 ## Comments
 
@@ -58,3 +58,7 @@ Check 20b (roster `away` with another `character_id`, backup without `hire_time`
 Check 20c (roster `returning`, CharacterID kept; run by another Claude session with the user's go-ahead, without the user; log, roster and backup re-read here): passed. `in the world: yes` at 21:30:33.296, `Folken: returning→present restored Lv 28→28` at 21:30:36.346 (3.05 s), no `Folken: roster ...` line, roster `present`, backup written at 21:30:36 at Lv 28 with `restored_from` 28. The game was ended with SIGTERM from a server-error dialog that ignored the window close; no save was written (`data00-1.bin` still 08:37:24).
 
 Check 20d (Folken dismissed at the Rift with the mod removed, saved, mod reinstalled, roster still `present`): passed. `in the world: yes` at 21:55:27.896, `Folken: roster present, not in the save's party (backup Lv28) → away, backup kept` at 21:55:30.919 (3.02 s), no `restored` line, roster `away` (written 21:55:30), backup file untouched at Lv 28.
+
+Check 20e (roster `present`, `hire_time` in the backup changed by hand; run by another Claude session, without the user; log, roster, backup and saves re-read here): passed. First run wrote `hire_time` 37991999 by the poll, no save made (the same hire in the disk save, so the step is equivalent); backup edited to 11111111 with the game closed. `in the world: yes` at 22:03:22.531, `Folken: roster present, save has it Lv28 (backup Lv28) → returning, re-hired unseen` at 22:03:25.548 (3.02 s), `Folken: returning→present restored Lv 28→28` at 22:03:25.558. Roster `present`, `character_id` 1601809365; backup written at 22:03:25 at Lv 28 with the game's `hire_time` 37991999 and `restored_from` 28.
+
+Check 20 complete. Open before resolving: 29 and 29b, the only real re-hire, which records whether a re-hire changes `_HireTime` (the design's assumption; 20e faked it by hand).
