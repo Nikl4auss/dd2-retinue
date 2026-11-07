@@ -250,8 +250,8 @@ From [Where does the player see the retinue's status in game?](issues/13-native-
   writing `PawnInfo2Ref.TxtName` / `CharaChangeRef.TxtName`). Never for the Arisen or the main pawn.
 - **Rift Previous Hires**: in `ui041401.ResItem.updateDisp(ResInfo)`, an entry whose `ResInfo.OfflineId` is a member
   shows "★ <name> · Lv N" in `TxtPawnName`, N the **backup's** level. Ordinary pawns unmarked.
-- **Notices** through `GuiManager.requestNoButtonDialog(String, UInt32)`, centred, closed by the mod after ~4 s with
-  `requestHideDialog()`:
+- **Notices** through `GuiManager.requestNoButtonDialog(String, UInt32)`, centred, closed by the mod after 3 s with
+  `requestHideDialog()` (a modal: it pauses the world and blocks input, findings 0009 P6):
   - "<name> returned — Lv N restored"; on a guard skip "<name> returned — kept Lv M, newer than the backup";
   - locked / read-only / unknown slot: once per load, with the reason; Adopt/Release refusals.
   - The mod closes only a notice it opened that is still the one displayed, and defers a notice while a game dialog or
@@ -327,7 +327,7 @@ The experiment scripts stay in `tools/experiments/` and are never deployed with 
 ## Open assumptions the checklist verifies
 
 - `requestDialog` opened inside a talk does not leak the confirming press (else the talk-menu confirm fallback).
-- The notice shows over menus and inside a talk, and `requestHideDialog()` never closes a game dialog.
+- The notice shows inside the Rift. (It does not show over menus, and `requestHideDialog()` does close a game dialog: findings 0009 P6, so the mod guards both.)
 - The talk-menu, Status-page and Rift hooks do not clash with Guild Contracts (none seen in 0007).
 - Natural lost (down timer, rest sweep) triggers the party diff like *Kill pawns* did.
 - The `CulmativeExp` index write and `_IncreaseParams` `set_field` keep working outside the experiment.

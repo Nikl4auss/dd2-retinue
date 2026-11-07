@@ -63,6 +63,44 @@ Shaira (2283028347), hired Diamonds (743846891, Lv 24, OfflineID `89658ac1-…`)
   "To me" pawn command** (0007 saw only the jump). The answer poll timed out after 60 s without reading an answer
   (the dialog was left open longer while capturing the screenshot).
 
+## P6 — the notice is modal (verified-game, 2026-11-07)
+
+Two throwaway read-only scripts, run by keys (ticket 23). `D` is `GuiManager.Dialog`, `app.ui010101`.
+
+**What the panel does.** `requestNoButtonDialog` is a modal: the world pauses, input is blocked, the HUD hides and Esc is not queued. `MainText` and
+`IsNoButton` are ours within one 250 ms sample. After the hide `get_IsDisp` goes false, but `MainText` and `IsNoButton` keep their values.
+
+**It shares the widget with the game's dialogs.**
+
+| Situation | Result |
+|---|---|
+| hide with a game Yes/No up (save), no notice of ours | closes the game's dialog; the System menu softlocks, only closing the game gets out |
+| show with a game Yes/No up | replaces it at once, nothing visible; the hide then softlocks the same way |
+| show with the pause menu open | nothing visible, the menu freezes; the hide frees it |
+| show, then Esc | the menu does not open; the hide is clean |
+| show, then `requestDialog` | the dialog replaces the notice at once (`IsDisp` stays true, `IsNoButton` false) and answers normally; no hide must follow |
+| show with the server-error dialog up | ours sits behind it, invisible; the hide does not touch it (separate widget, `NetworkErrorDialog`) |
+| show in a talk list | draws over it, the list blocks, the hide frees it |
+| show in a cutscene | invisible, the cutscene plays on; the hide is clean |
+
+**What reads each state** (all false in the plain field):
+
+| State | True |
+|---|---|
+| Pause menu, map, Rift stone menu, Previous Hires | `IsOpenMainFlowUI`, `isPausedGUI`, `PauseManager.isPausedAny` |
+| Game Yes/No | `IsDispDialogGui` |
+| Server-error dialog | `NetworkErrorDialog.get_IsDisp`, `isPausedAny`; not `IsDispDialogGui` |
+| Talk, from its first line to its end | `TalkEventManager._IsTalkingAny` |
+| Cutscene | `DemoMediator.get_IsPlayingDemo`, `isDispMovieScreen`; `get_IsPlayingDemo` drops about 0.5 s between two scenes |
+| Anywhere in the Rift | `isPausedAny` alone, for the whole visit |
+
+`TalkSelect.IsDisp` sticks after the first talk. `IsMenuUIPause`, `isWaitDialogMessage` and `_IsTalkingManualPlayer` never changed.
+
+**Nothing reads**: scripted talks (Fiska in the prologue), tutorial panels, ambient pawn chatter. A notice there was not tested cleanly; with a tutorial
+panel up it did not show and the hide was clean.
+
+**Not reached**: a Rift NPC talk, a cutscene after the prologue, a dialog requested by the game itself rather than by script, a notice inside the Rift.
+
 ## Conclusions
 
 1. Custom transient text works through `requestNoButtonDialog(String, UInt32)`; the mod must close it itself.
@@ -72,3 +110,4 @@ Shaira (2283028347), hired Diamonds (743846891, Lv 24, OfflineID `89658ac1-…`)
    entry carries the OfflineID to match it.
 4. A disabled talk row looks enabled: it cannot explain why it is disabled.
 5. The native dialog fits two lines; input leaks from the field include pawn commands on the d-pad.
+6. The notice is modal and shares its widget with the game's dialogs (P6): it may only be shown with nothing else up, and only closed if it is still ours.

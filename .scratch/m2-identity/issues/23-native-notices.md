@@ -10,7 +10,7 @@ Every player-facing string lives in one place.
 
 **Status:** ready-for-agent
 
-- [ ] `requestNoButtonDialog` notice, closed by the mod after ~4 s with `requestHideDialog()`, only if it is still the mod's notice on screen.
+- [ ] `requestNoButtonDialog` notice, closed by the mod after 3 s with `requestHideDialog()`, only if it is still the mod's notice on screen.
 - [ ] A notice is deferred while a game dialog or menu is up.
 - [ ] Pure `labels` module with tests for every string (Return, guard skip, locked / read-only / no slot reasons).
 - [ ] Fails closed: missing methods → log only.

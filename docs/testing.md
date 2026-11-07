@@ -148,7 +148,7 @@ Restore `fixture-levelled-pawn`, adopt Folken (Lv 27), grant exp until Lv 28. Sn
 11. **Previous Hires mark**: the Rift's Previous Hires shows "★ Folken · Lv 28" (backup's level, not the list's 23);
     other entries plain; the other party member, if adopted, is marked too.
 12. **Return and restore**: re-hire Folken from Previous Hires. The notice "Folken returned — Lv 28 restored" shows
-    centred and closes by itself after ~4 s. Snapshot `m2-b`: level, exp, discipline, `_IncreaseParams`, vocation exp
+    centred and closes by itself after 3 s. Snapshot `m2-b`: level, exp, discipline, `_IncreaseParams`, vocation exp
     equal `m2-a` (equipment differs: regenerated). Status page matches. Log `away→returning`, `returning→present
     restored Lv 23→28`. Save, reload, then full relaunch: unchanged.
 13. **Retinue full**: from `m2-adopted-folken`, adopt the second hired pawn too, dismiss Folken, hire a fresh pawn into
