@@ -1,0 +1,30 @@
+### D 22:19:17
+Restored 20261106-083816-m2-adopted-folken into /home/nikl4auss/.local/share/cru
+screenshots: /tmp/claude-1000/-home-nikl4auss-Proyectos-dd2-own-pawns/f7d44369-c0b8-4129-ac09-16be9bab1dd1/scratchpad/shots
+first screen after ~40s
+load requested after 9 F presses
+in world
+[2026-11-06 22:20:09.925] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-06 22:20:57.220] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-06 22:20:57.224] [REFramework] [error] [Retinue] Slot 2: roster read-only: written by a newer Retinue (version 2)
+[2026-11-06 22:20:57.224] [REFramework] [error] [Retinue] Slot 2 roster.json: written by a newer Retinue (version 2); read-only
+[2026-11-06 22:21:43.622] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-06 22:21:46.628] [REFramework] [error] [Retinue] Folken: roster away, save has it Lv28 (backup Lv28) → present, save wins
+game closed
+runner exit 0
+slots/2 UNCHANGED
+--- roster
+{
+    "members": [
+        {
+            "character_id": 1601809365,
+            "name": "Folken",
+            "offline_id": "426f7888-0cc8-44a4-86b2-1ed445367596",
+            "status": "away"
+        }
+    ],
+    "version": 2
+}
+
+--- backup
+{'level': 28, 'exp': 8860, 'hire_time': None, 'restored_from': None}

@@ -1,0 +1,30 @@
+### B 22:13:49
+Restored 20261106-083816-m2-adopted-folken into /home/nikl4auss/.local/share/cru
+screenshots: /tmp/claude-1000/-home-nikl4auss-Proyectos-dd2-own-pawns/f7d44369-c0b8-4129-ac09-16be9bab1dd1/scratchpad/shots
+first screen after ~72s
+load requested after 4 F presses
+in world
+[2026-11-06 22:14:40.396] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-06 22:15:33.132] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-06 22:15:33.139] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-06 22:15:33.139] [REFramework] [error] [Retinue] Slot 2 roster.json: member 1: name is missing or invalid; using (unknown)
+[2026-11-06 22:16:14.617] [REFramework] [error] [Retinue] in the world: yes
+game closed
+runner exit 0
+slots/2 CHANGED:
+lots/2/backups/426f7888-0cc8-44a4-86b2-1ed445367596.json
+lots/2/roster.json
+--- roster
+{
+    "members": [
+        {
+            "character_id": 1601809365,
+            "name": "Folken",
+            "offline_id": "426f7888-0cc8-44a4-86b2-1ed445367596",
+            "status": "present"
+        }
+    ],
+    "version": 1
+}
+--- backup
+{'level': 28, 'exp': 8860, 'hire_time': 37991999, 'restored_from': None}

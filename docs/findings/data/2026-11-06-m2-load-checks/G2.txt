@@ -1,0 +1,31 @@
+### G2 22:30:26
+Restored 20261106-083816-m2-adopted-folken into /home/nikl4auss/.local/share/cru
+screenshots: /tmp/claude-1000/-home-nikl4auss-Proyectos-dd2-own-pawns/f7d44369-c0b8-4129-ac09-16be9bab1dd1/scratchpad/shots
+first screen after ~44s
+load requested after 11 F presses
+in world
+[2026-11-06 22:31:22.372] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-06 22:32:15.125] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-06 22:32:15.129] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-06 22:32:15.130] [REFramework] [error] [Retinue] Slot 2 backup of Folken: damaged: not valid JSON
+[2026-11-06 22:33:07.154] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-06 22:33:10.167] [REFramework] [error] [Retinue] Folken: returning→present skipped: no backup (damaged: not valid JSON)
+game closed
+runner exit 0
+slots/2 CHANGED:
+lots/2/backups/426f7888-0cc8-44a4-86b2-1ed445367596.json
+lots/2/roster.json
+--- roster
+{
+    "members": [
+        {
+            "character_id": 1601809365,
+            "name": "Folken",
+            "offline_id": "426f7888-0cc8-44a4-86b2-1ed445367596",
+            "status": "present"
+        }
+    ],
+    "version": 1
+}
+--- backup
+{'level': 28, 'exp': 8860, 'hire_time': 37991999, 'restored_from': None}

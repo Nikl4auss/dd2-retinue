@@ -14,3 +14,16 @@ roadmap and CHANGELOG are updated; `deploy.sh --probe-only` links the probe with
 - [ ] README: status, how to adopt/release, uninstall and reinstall behaviour, known limits from the spec.
 - [ ] Roadmap and `CHANGELOG.md` (Unreleased → Added) updated; no version bump.
 - [ ] Every checklist item passed, opportunistic ones recorded as passed or not reached; findings note written.
+
+## Comments
+
+Load-only part of checks 23–26 (2026-11-06, Slot 2, fixture `m2-adopted-folken`, run by another Claude session with `tools/autotest/run_load.sh`, no user; output in `docs/findings/data/2026-11-06-m2-load-checks/`, `<run>.txt` plus hashes in `.before`/`.after`). All eight matched. Only the log and files are covered: the fights, dismisses, talk rows and notices of these checks are still to run, so none of 23–26 is passed yet.
+
+- 24, `status: banana` (A): warning, then `roster away ... → present, save wins`, no restore, roster `present`.
+- 24, `name: 5` (B): warning `using (unknown)`, name refreshed to Folken, no correction.
+- 25, `version: 2` (C): `roster read-only: written by a newer Retinue (version 2)`, nothing under `slots/2/` changed.
+- 25 with `away` (D): the correction logged, roster and backup unchanged on disk (in memory only).
+- 23, `not json` (E): `roster locked: not valid JSON ...`, no pass, nothing changed.
+- 23, three members (F): `roster locked: more than 2 members ...`, no pass, nothing changed.
+- 26, present member (G): `backup of Folken: damaged: not valid JSON`, no correction, file rewritten at Lv 28 by the end of the run (16 s in the world; the moment was not measured).
+- 26, `returning` (G2, stands in for the away → Return case): `returning→present skipped: no backup (damaged: not valid JSON)`, roster `present`, file rewritten at Lv 28.

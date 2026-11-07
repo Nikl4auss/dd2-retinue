@@ -1,0 +1,29 @@
+### C 22:16:37
+Restored 20261106-083816-m2-adopted-folken into /home/nikl4auss/.local/share/cru
+screenshots: /tmp/claude-1000/-home-nikl4auss-Proyectos-dd2-own-pawns/f7d44369-c0b8-4129-ac09-16be9bab1dd1/scratchpad/shots
+first screen after ~56s
+load requested after 2 F presses
+in world
+[2026-11-06 22:17:16.857] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-06 22:18:10.608] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-06 22:18:10.613] [REFramework] [error] [Retinue] Slot 2: roster read-only: written by a newer Retinue (version 2)
+[2026-11-06 22:18:10.613] [REFramework] [error] [Retinue] Slot 2 roster.json: written by a newer Retinue (version 2); read-only
+[2026-11-06 22:18:56.978] [REFramework] [error] [Retinue] in the world: yes
+game closed
+runner exit 0
+slots/2 UNCHANGED
+--- roster
+{
+    "members": [
+        {
+            "character_id": 1601809365,
+            "name": "Folken",
+            "offline_id": "426f7888-0cc8-44a4-86b2-1ed445367596",
+            "status": "present"
+        }
+    ],
+    "version": 2
+}
+
+--- backup
+{'level': 28, 'exp': 8860, 'hire_time': None, 'restored_from': None}

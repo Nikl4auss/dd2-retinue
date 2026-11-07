@@ -1,0 +1,40 @@
+### F 22:25:02
+Restored 20261106-083816-m2-adopted-folken into /home/nikl4auss/.local/share/cru
+screenshots: /tmp/claude-1000/-home-nikl4auss-Proyectos-dd2-own-pawns/f7d44369-c0b8-4129-ac09-16be9bab1dd1/scratchpad/shots
+first screen after ~40s
+load requested after 10 F presses
+in world
+[2026-11-06 22:25:50.566] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-06 22:26:39.146] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-06 22:26:39.150] [REFramework] [error] [Retinue] Slot 2: roster locked: more than 2 members (fix roster.json by hand, then Reset scripts)
+[2026-11-06 22:27:27.734] [REFramework] [error] [Retinue] in the world: yes
+game closed
+runner exit 0
+slots/2 UNCHANGED
+--- roster
+{
+    "members": [
+        {
+            "character_id": 1601809365,
+            "name": "Folken",
+            "offline_id": "426f7888-0cc8-44a4-86b2-1ed445367596",
+            "status": "present"
+        },
+        {
+            "character_id": 111111111,
+            "name": "TestOne",
+            "offline_id": "11111111-1111-4111-8111-111111111111",
+            "status": "away"
+        },
+        {
+            "character_id": 222222222,
+            "name": "TestTwo",
+            "offline_id": "22222222-2222-4222-8222-222222222222",
+            "status": "away"
+        }
+    ],
+    "version": 1
+}
+
+--- backup
+{'level': 28, 'exp': 8860, 'hire_time': None, 'restored_from': None}
