@@ -54,8 +54,8 @@ Observed in the game on the title screen, 2026-11-06 (no save loaded). Paths are
 
 | Member | Notes | Status |
 |---|---|---|
-| `fs.write(path, text)` | creates missing folders; writes the bytes exactly (multi-line, UTF-8); `fs.write(path, "")` works | verified-game |
-| `fs.read(path)` | `""` for a missing and for an empty file alike (ticket 18) | verified-game |
+| `fs.write(path, text)` | creates missing folders; UTF-8 kept; **text mode**: LF becomes CRLF on disk (2026-11-07, sha256 of the files); `fs.write(path, "")` works | verified-game |
+| `fs.read(path)` | `""` for a missing and for an empty file alike (ticket 18); text mode: CRLF on disk reads as LF, so comparing through `fs.read` cannot show line-ending changes. `json.dump_file` writes CRLF too, so the mod's own files copy unchanged | verified-game |
 | `fs.glob(filter)` | recursive; returns paths relative to `reframework/data` **with backslashes**; the filter is a regex that must match the **whole** relative path, and forward slashes in it do not match: `Retinue[\\/]slots[\\/]2[\\/].*` works, `Retinue/spike/.*` and `spike` return nothing (the Lua string holds two backslash characters per `[\\/]`); no match returns an empty table, not nil | verified-game |
 | `os.date("*t")` | works (year, month, day, hour, min, sec) | verified-game |
 | `os.remove` | no working delete (ticket 18: release ran the emptying fallback); `os.rename` is reported missing by another mod, not checked here. The mod copies and empties files instead | verified-game (`os.remove`) |

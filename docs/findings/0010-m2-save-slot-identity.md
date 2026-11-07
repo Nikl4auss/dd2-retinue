@@ -61,7 +61,7 @@ Shaira, 7 h; slot 3 empty.
 `MainFlowManager.requestStartType(StartType)` names every start: `SystemMenuSave` (9) for a Manual save, `Latest` (2),
 `Base` (3), `NewGame` (0), `RedoNewGame` (7), `RedoNewGameSkip` (8), `ExitGame` (10). Death reload calls none.
 
-- **New game in an empty unit** (slot 3): `setUnitNumber(2)` on pick, `requestStartType(NewGame)`, **no
+- **New game in an empty unit** (slot 3): `setUnitNumber(2)` on pick, `requestStartType(NewGame)` on the last Yes, after the difficulty choice (2026-11-07), **no
   `requestLoadGameData`**. The first save (after the prologue) writes types 1, 4, 0 (global 11, 14, 10).
 - **New game over an occupied unit that is not cleared** (slot 2): `SaveUnitSelect.onExecuteGameRestart(UnitNo 1,
   IsClearData false)`; on the final confirm the game loads the unit's latest save (9), copies it to type 3 (global 8)

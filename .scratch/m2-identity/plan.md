@@ -13,7 +13,7 @@ Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewe
 
 Title-only run in the game, 2026-11-06 (throwaway autorun script, removed; no save loaded):
 
-- `fs.write` creates missing folders and writes bytes exactly (multi-line, UTF-8). `fs.write(path, "")` works.
+- `fs.write` creates missing folders and keeps the text as `fs.read` sees it (multi-line, UTF-8). Corrected by the in-game run of 2026-11-07: both are text mode, so LF becomes CRLF on disk. `fs.write(path, "")` works.
 - `fs.glob(filter)` is recursive and returns paths relative to `reframework/data`, **with backslashes**. The filter must
   match the **whole** relative path, and forward slashes do not match: `Retinue[\\/]slots[\\/]2[\\/].*` works,
   `Retinue/spike/.*` and `spike` return nothing. No match returns an empty table, not nil.
