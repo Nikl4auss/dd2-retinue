@@ -83,7 +83,7 @@ Shaira, 7 h; slot 3 empty.
   carried over"), Yes, I Understand, Convert Saved Data, OK, back to the title, START GAME, "Restart game with current level and
   equipment", Yes, difficulty, Yes. It works on the current slot and on a slot that is not current.
 - **New Game over the occupied current slot** is another path: a plain `NewGame`, and the saves stay on disk (5, 6, 9 unchanged
-  after 3 min 40 s in the prologue). Presumably the first save replaces them; not observed. Closing in the prologue and loading
+  after 3 min 40 s in the prologue). The first save replaces them, after the character creator (seen 2026-11-07: 5, 6, 9 rewritten at 197820 bytes). Closing in the prologue and loading
   gives the old save back.
 - `NewGame` fires on the last Yes, after the difficulty choice.
 - Every save passes `SaveDataManager.requestSaveSlot(global, ...)`, the conversion's copy (type 3) too, at the title with no start or load before it.
