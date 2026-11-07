@@ -1,0 +1,10 @@
+screenshots: /tmp/claude-1000/-home-nikl4auss-Proyectos-dd2-own-pawns/f7d44369-c0b8-4129-ac09-16be9bab1dd1/scratchpad/shots
+first screen after ~68s
+load requested after 4 F presses
+in world
+[2026-11-06 23:05:43.798] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-06 23:06:41.433] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-06 23:06:41.440] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-06 23:07:30.297] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-06 23:07:33.318] [REFramework] [error] [Retinue] Folken: roster present, save has it Lv23 (backup Lv28) → returning, re-hired unseen
+[2026-11-06 23:07:33.329] [REFramework] [error] [Retinue] Folken: returning→present restored Lv 23→28

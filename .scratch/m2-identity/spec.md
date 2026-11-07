@@ -314,6 +314,7 @@ The experiment scripts stay in `tools/experiments/` and are never deployed with 
 - Up to ~10 s of progress can be lost when a member is lost (last poll).
 - Gear given to any hired pawn, adopted or not, is lost on dismiss and lost; equipment and skills are never restored.
 - Without the mod, an away member returns at its first-hire level; reinstalling restores it.
+- A restored member comes back with its restored maximum health but the current health of its first-hire state (Folken: 1722/1900) until healed.
 - A new game started while the mod is not installed is not seen: the old members become away and must be released.
 - Texts are English only.
 

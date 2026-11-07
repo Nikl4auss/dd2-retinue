@@ -1,0 +1,8 @@
+screenshots: /tmp/claude-1000/-home-nikl4auss-Proyectos-dd2-own-pawns/f7d44369-c0b8-4129-ac09-16be9bab1dd1/scratchpad/shots
+first screen after ~64s
+load requested after 3 F presses
+in world
+[2026-11-06 23:10:14.109] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-06 23:11:02.813] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-06 23:11:02.817] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-06 23:11:57.182] [REFramework] [error] [Retinue] in the world: yes

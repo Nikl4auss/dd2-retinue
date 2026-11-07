@@ -7,7 +7,7 @@ the loaded party, including a Return made while the mod was not installed (recog
 
 **Blocked by:** [19: Dismiss and Return restore an adopted pawn's progress](19-dismiss-return-restore.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Pure `reconcile` module with a test per table row of the spec, including the kept-CharacterID discriminator (same → present, save wins; different or none → `returning` and restore under the guard).
 - [x] One pass per load, on entering the world, before the party diff and the poll act.
@@ -70,3 +70,7 @@ Check 29 (run by another Claude session, the re-hire included, with two pointers
 - 29b: `hire_time` 37991999 → 39611074, `character_id` 1601809365 → 372209474. This re-hire did **not** keep its CharacterID, so the case the check asks about (same ID) was not observed; a new hire time is confirmed only for a new ID. If a same-ID re-hire kept its time, the first-hire signature still catches it.
 
 **Open:** the HUD shows Folken Lv.28 with 1722 health after the restore on load, the Lv 23 value (1838 at Lv 28 in check 20c). Not known yet whether only the live HP is stale until the next load, or the restore misses something on this path. Findings 0008 and check 12 saw the Status page match, but on the `hirePawn` path. No snapshot taken, so "equals `m2-a`" is unchecked. Stays open until a save and reload settles it.
+
+Health question settled (same session as check 29; output in `docs/findings/data/2026-11-06-m2-load-checks/hp/`; screenshots, log and backups re-read here). The restored Lv 28 was saved, then the game relaunched and loaded: no `Folken:` line (same hire time, the save no longer behind), backup identical before and after in every key, Status page Lv 28 with stats as restored. **Not a restore bug**: the Status page reads Health 1722/**1900** (1900), right after the restore too, so the maximum was never stale; 1722 is the pawn's current health from its first-hire state, and it survives the save. My expected "~1838" was wrong: that was the HUD's current health in 20c, not a maximum. Recorded as a known limit in the spec. Healing or resting was not tried; whether the `hirePawn` path does the same was not observed. Also unexplained, not investigated: carried weight 9.21 before the save, 17.42 after, same gear shown.
+
+Closed: every box ticked, checks 19, 20, 29 passed; 29b's same-ID case stays unobserved (the first-hire signature covers it).
