@@ -74,3 +74,17 @@ Folken (1601809365). Other mods hooking the same talk methods were active (Guild
   `IsMainPawn`, `CopyOwner._OfflineID` (zeros for the Arisen and the main pawn), owner name `CAPCOM` for offline pawns.
   The Arisen goes through `setupPawn` too. `setPawnData` never fired; `partyListCtrlSelectionChangedIsPC` and
   `setTabId` fired.
+
+## Follow-up — the mod's talk-menu row (ticket 24, 2026-11-08, verified-game)
+
+Three headless runs (gamescope, XTEST keys, F taps of 0.2 s; no pad) on the mod, Slot 2, party Shaira / Diamonds / Folken.
+
+- Reading the root node at `ui021601.reqDisp` pre in the mod: `_NodeId` (raw-qword GUID read) and the speaker CharacterID
+  read fine, but **`get_elements()` fails on the node's `_Choices`**; read by index it gives the 10 choices, Never mind last.
+  The mod now reads it by `get_Count`/`get_Item`, then `get_Length`/`GetValue` (`04f7aff`).
+- `GuiManager.TalkSelect:get_address()` equals the raw `this` of the `reqDisp` hook: the identity check holds.
+- With the row picked, the redirect to Never mind and `requestDialog` in the same `UpdateBehavior`: the dialog shows within
+  0.3 s, and **by then the talk is over** (HUD, party list and the `Hail (Hold to Talk)` prompt are back behind it). No
+  flicker, no second dialog.
+- **No input leak** on 4 confirms (2 Yes, 2 No) with F taps: no jump, no attack, no interaction, no pawn command. Untested:
+  the pad's A, and F held about 1 s on the dialog (the Hail prompt is live under it).

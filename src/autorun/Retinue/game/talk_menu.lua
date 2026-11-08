@@ -134,8 +134,8 @@ function M.new(report, deps)
         log.error(string.format("[Retinue] talk menu: %s %s: %s", action, name, result))
     end
 
-    -- The current talk's node: node id, the choice ids in order, the speaker and the listener (CharacterIDs). nil when
-    -- anything is unreadable.
+    -- The current talk's node: node id, the choice ids in order, the speaker and the listener (CharacterIDs). nil when the
+    -- node or its id is unreadable; choice_ids nil when _Choices is unreadable; speaker or listener nil when unreadable.
     local function read_talk()
         local tm = sdk.get_managed_singleton(TALK_MANAGER)
         local info = tm and tm:get_field(CURRENT_TALK_INFO)

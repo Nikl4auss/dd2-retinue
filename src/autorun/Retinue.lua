@@ -44,7 +44,7 @@
 -- · Lv N)" (a member in the party), added in the pre of ui021601.reqDisp when the menu is the pawn's root menu. Picking it ends
 -- the talk as Never mind does (the picked index is rewritten) and opens the game's Yes/No dialog (GuiManager.requestDialog);
 -- Yes adopts or releases with the same rules as the Retinue menu, and a refusal shows as a notice. Anything unrecognised or
--- missing leaves the menu vanilla (the menu says so). While our dialog is open the notices wait.
+-- missing leaves the menu vanilla (a missing one shows in the menu, an unrecognised root menu in the log). While our dialog is open the notices wait.
 --
 -- Do NOT deploy tools/experiments/Retinue_Exp_Hooks.lua alongside this script: both would hook the same
 -- methods and rewrite the same arguments.

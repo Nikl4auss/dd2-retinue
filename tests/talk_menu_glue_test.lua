@@ -318,8 +318,10 @@ do
     local saved = choices[3]
     choices[3] = obj("c3", { _ChoiceId = "ffffffff-0000-0000-0000-000000000000" })
     fresh()
+    reports = {}
     hooked[1].pre({ [2] = 1000, [3] = 2000 })
     assert(#list_items == 3)
+    assert(#reports == 1 and reports[1]:find("root menu not recognised: 3 choices, last ffffffff-0000-0000-0000-000000000000", 1, true), reports[1])
     choices[3] = saved
     select_props.get_IsEndGUI, select_props.SelectedIndex = true, 3
     calls = {}
@@ -363,6 +365,8 @@ do
     local hook = hooked[#hooked]
     store.roster.mode, store.roster.members = roster.OK, {}
     for _, shape in ipairs({
+        { get_elements = function() return {} end, get_Count = function() return #choices end,
+          get_Item = function(_, i) return choices[i + 1] end },
         { get_elements = function() error("no elements") end, get_Count = function() return #choices end,
           get_Item = function(_, i) return choices[i + 1] end },
         { get_elements = function() error("no elements") end, get_Count = function() error("not a List") end,

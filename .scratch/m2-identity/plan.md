@@ -5,8 +5,8 @@ Source: [issues/24-talk-menu-adopt-release.md](issues/24-talk-menu-adopt-release
 (Plans of earlier tickets are in git history.)
 
 - [x] Slice 1: pure `talk_menu.lua` and `confirm.lua`, labels, glue `game/talk_menu.lua` and `game/confirm_dialog.lua`, wiring, tests. Tier: **Sonnet** (`implementer`). Two review rounds; the round-2 findings (re-arm on a reused list, the TalkSelect check after the row) applied inline.
-- [ ] Slice 2: in-game run, checklist 2–4 and 7 (keys). Tier: **Opus, inline**; the user only if a step cannot be driven.
-- [ ] Slice 3 (only if slice 2 sees the confirming press leak): the talk-menu confirm fallback. Designed after slice 2, from what it saw.
+- [x] Slice 2: in-game run, checklist 2–4 and 7 (keys). Tier: **Opus, inline**; the user only if a step cannot be driven.
+- [ ] Slice 3 (only if a run sees the confirming press leak; none on run 3 with F taps, so not built; the manual pass checks pad A and a held F): the talk-menu confirm fallback. Designed after slice 2, from what it saw.
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 
