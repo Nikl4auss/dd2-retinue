@@ -13,3 +13,7 @@ Parent: [M2 spec](../spec.md) (§ Status (native))
 - [ ] Previous Hires matched by `ResInfo.OfflineId`; ordinary entries untouched.
 - [ ] Fails closed when a widget field is missing (no mark, logged once).
 - [ ] Verified in game (checklist 4, 11).
+
+## Comments
+
+- 2026-11-08, slice 1 (the pure marks, the glue in `game/marks.lua`, wiring and tests; `34f604e`): in-game checks (4, 11) wait for slice 2.
