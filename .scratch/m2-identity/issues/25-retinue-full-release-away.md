@@ -7,11 +7,11 @@ each away member ("Release <name> (away, Lv N)") and Cancel; picking one release
 
 **Blocked by:** [24: Adopt and Release from the pawn's talk menu](24-talk-menu-adopt-release.md)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Lists every away member with its backup's level; Cancel changes nothing.
-- [ ] Picking a member row deletes the member and backup, then adopts (one step, no second confirmation).
-- [ ] Verified in game (checklist 13).
+- [x] Lists every away member with its backup's level; Cancel changes nothing.
+- [x] Picking a member row deletes the member and backup, then adopts (one step, no second confirmation).
+- [x] Verified in game (checklist 13).
 
 ## Comments
 
@@ -28,3 +28,6 @@ each away member ("Release <name> (away, Lv N)") and Cancel; picking one release
   - Not reachable headless: full with no away member (needs a third hired pawn while both members are present).
   - Backup `20261108-115059-m2-t25-run1`. Saves were restored to `m2-t25-pre`, because Ghost is fake.
   - Left for the user's pass: the real route (dismiss, Rift hire), full with no away member, pad A, and the feel.
+- 2026-11-08, `725bbe9`, manual pass by the user (real route: adopt the second pawn, dismiss Folken, Rift hire, pad and keyboard): all pass.
+  Full with no away member (optional) not done: the code path is the ticket 24 `full` refusal, covered by the unit and glue tests.
+  Ticket closed.
