@@ -8,14 +8,14 @@ Refusals (full, locked, read-only, no slot) show a notice.
 
 **Blocked by:** [23: Native notices](23-native-notices.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Row only on the root party-pawn talk node (by node id or Dismiss choice); never in sub-menus or for a pawn outside the party; not added for non-adoptable pawns; unrecognised node → menu vanilla.
 - [x] Pick redirected to Never mind before the game maps it.
-- [x] `requestDialog` Yes/No opened before the talk ends; answer read from the widget.
+- [x] ~~`requestDialog` Yes/No opened before the talk ends; answer read from the widget.~~ Built, then replaced: it leaked (see comments).
 - [x] If the confirming press leaks to the character, switch to the talk-menu confirm fallback ("Confirm adopt" / "Confirm release" + Never mind) and record it.
 - [x] Same roster rules and errors as the mod menu; texts from `labels`.
-- [ ] Verified in game (checklist 2–4, 7): adopt and release natively, no jump or pawn command on confirm.
+- [x] Verified in game (checklist 2–4, 7): adopt and release natively, no jump or pawn command on confirm.
 
 ## Comments
 
@@ -43,3 +43,6 @@ Refusals (full, locked, read-only, no slot) show a notice.
 - 2026-11-08, manual pass by the user on `e3b12ac`: pad A through the new flow works, no leak. A talk cannot be broken off (no movement
   while talking, hits do not end it), so checklist 9a is dropped. The warning row goes (it takes the cursor; gear waits for M4): the confirm
   is "Confirm adopt" / Cancel.
+- 2026-11-08, `b81adc3`, run 5 (headless, Diamonds): the confirm sub-menu has exactly 2 rows ("Confirm adopt" / Cancel, "Confirm release" /
+  Cancel); the cursor only moves between them, B lands on Cancel; Cancel changes nothing; both confirms act and the root shows the new row at
+  once; Talk's own sub-menu stays vanilla. No guard fired, no report line. Ticket closed.
