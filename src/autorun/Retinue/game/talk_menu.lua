@@ -64,17 +64,26 @@ local function to_managed(a)
     return sdk.to_managed_object(a)
 end
 
--- The elements of a managed array as a Lua array, at most CHOICES_MAX; nil when unreadable.
+-- The elements of a managed array or List as a Lua array, at most CHOICES_MAX; nil when unreadable. get_elements() comes
+-- first; ticket 24 run 2 saw it fail on a node's _Choices, so a List (get_Count / get_Item) and an array (get_Length /
+-- GetValue, as the experiment read it) follow. A count above CHOICES_MAX is unreadable: is_root needs the last choice.
+local function by_index(arr, count_method, item_method)
+    local ok, n = pcall(function() return arr:call(count_method) end)
+    if not (ok and math.type(n) == "integer") or n < 0 or n > CHOICES_MAX then return nil end
+    local out = {}
+    for i = 0, n - 1 do
+        local oki, v = pcall(function() return arr:call(item_method, i) end)
+        if not oki or v == nil then return nil end
+        out[i + 1] = v
+    end
+    return out
+end
+
 local function elements(arr)
     if arr == nil then return nil end
     local ok, elems = pcall(function() return arr:get_elements() end)
-    if not (ok and type(elems) == "table") then return nil end
-    local out = {}
-    for i, v in ipairs(elems) do
-        if i > CHOICES_MAX then break end
-        out[i] = v
-    end
-    return out
+    if ok and type(elems) == "table" and #elems > 0 and #elems <= CHOICES_MAX then return elems end
+    return by_index(arr, "get_Count", "get_Item") or by_index(arr, "get_Length", "GetValue")
 end
 
 -- M.new(report, deps) -> talk

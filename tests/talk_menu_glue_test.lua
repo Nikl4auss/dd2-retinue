@@ -353,6 +353,38 @@ do
     dialog.available = false
     hooked[1].pre({ [2] = 1000, [3] = 2000 })
     assert(#list_items == 3)
+
+    -- _Choices whose get_elements fails (ticket 24 run 2): read as a List, then as an array
+    dialog.available = true
+    talk = talk_menu.new(report, {
+        store = store, dialog = dialog, notify = function() end,
+        party = { views = function() return { { slot = 0, character_id = 100 }, view } end, level = function() return 30 end },
+    })
+    local hook = hooked[#hooked]
+    store.roster.mode, store.roster.members = roster.OK, {}
+    for _, shape in ipairs({
+        { get_elements = function() error("no elements") end, get_Count = function() return #choices end,
+          get_Item = function(_, i) return choices[i + 1] end },
+        { get_elements = function() error("no elements") end, get_Count = function() error("not a List") end,
+          get_Length = function() return #choices end, GetValue = function(_, i) return choices[i + 1] end },
+    }) do
+        node = obj("node", { _NodeId = R.ROOT_NODE, _Choices = obj("arr", shape) })
+        info = obj("info", { ["<CurrentNode>k__BackingField"] = node, ["<Speaker>k__BackingField"] = 202, ["<Listener>k__BackingField"] = 100 })
+        world.singletons["app.TalkEventManager"] = obj("tm", { ["<CurrentTalkInfo>k__BackingField"] = info })
+        fresh()
+        hook.pre({ [2] = 1000, [3] = 2000 })
+        assert(#list_items == 4, "row appended through the fallback")
+    end
+    -- more choices than the cap: unreadable, no row
+    local many = {}
+    for i = 1, 17 do many[i] = choices[3] end
+    node = obj("node", { _NodeId = R.ROOT_NODE, _Choices = obj("arr", { get_elements = function() return many end,
+        get_Count = function() return #many end, get_Item = function(_, i) return many[i + 1] end }) })
+    info = obj("info", { ["<CurrentNode>k__BackingField"] = node, ["<Speaker>k__BackingField"] = 202, ["<Listener>k__BackingField"] = 100 })
+    world.singletons["app.TalkEventManager"] = obj("tm", { ["<CurrentTalkInfo>k__BackingField"] = info })
+    fresh()
+    hook.pre({ [2] = 1000, [3] = 2000 })
+    assert(#list_items == 3)
 end
 
 print("talk_menu_glue_test ok")
