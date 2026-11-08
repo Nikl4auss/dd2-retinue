@@ -105,9 +105,10 @@ is entered, a fight, a save and a reload work, the Rift hires and dismisses, and
 2. `./deploy.sh --remove`, then `./deploy.sh --probe --lifecycle` (mod, probe and the lifecycle test actions: *Grant
    exp*, *Dismiss slot N*, *Force lost slot N*). No other experiment is linked.
 3. Fresh state: move `reframework/data/Retinue/slots/` aside if present (keep `config.json` with progression on).
-4. Fixtures (from the lifecycle and restore runs; `tools/saves.sh list` for their full names):
-   `fixture-levelled-pawn` (Folken, hired at Lv 23, now Lv 27, next to a Rift stone), `fixture-2hired-at-rift`,
-   `fixture-1hired-1slot-free`. Restore one with `tools/saves.sh restore <timestamp>-<label>` (game closed) where a
+4. Fixtures (`tools/saves.sh list` for their full names): `fixture-levelled-pawn` (slot 2, Folken hired at Lv 23, now
+   Lv 27, next to a Rift stone) and `m2-adopted-folken` (the same with Folken adopted at Lv 28 and a second hired pawn;
+   for check 1, restore it and move `slots/` aside). The `fixture-2hired-at-rift` and `fixture-1hired-1slot-free` saves
+   of the early runs are gone. Restore one with `tools/saves.sh restore <timestamp>-<label>` (game closed) where a
    check says so. The **real save** is the user's own playthrough, slot noted here: ____.
 5. Nick's Devtools installed (teleport, *Kill pawns*). Note other active mods touching pawns, talk menus or exp (Guild
    Contracts hooks the same talk methods).
