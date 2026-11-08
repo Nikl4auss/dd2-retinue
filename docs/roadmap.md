@@ -41,6 +41,10 @@ lost and re-hire, and uninstalling leaves ordinary hired pawns. Being charted as
 
 - Lift hired-pawn equip restrictions (`ItemIDUtil.isSubPawnDisableEquipItem`, `GUIBase.isSubpawnDisableEquipStorage`)
 - Items stay with the pawn (no `ItemManager.returnSubPawnItems` for adopted pawns)
+- Gear across dismiss / lost / re-hire: refund gifts at departure **or** re-equip from the backup on re-hire, never both
+  (duplication). Skipping `returnSubPawnItems` probably loses carried items (inferred; test on a throwaway save first).
+  Prior art and pitfalls: [findings/research-pawn-gear-mods.md](findings/research-pawn-gear-mods.md) (Arisen's Company 1.2
+  overlaps Retinue: detect and warn). Decided 2026-11-08: nothing of this in M2 (the backup keeps item IDs only).
 
 ## M5 — Name
 
