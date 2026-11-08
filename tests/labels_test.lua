@@ -40,4 +40,13 @@ do
     assert(labels.refused("adopt", "Ana", "full") == "Cannot adopt Ana: the retinue is full (2 members)")
 end
 
+-- the marks on the Status page and in Previous Hires: exact texts, an integral float without ".0"
+do
+    assert(labels.STATUS_MARK == " \u{B7} Retinue" and labels.RIFT_STAR == "\u{2605} ")
+    assert(labels.status_name("Folken") == "Folken \u{B7} Retinue")
+    assert(labels.rift_name("Folken", 28) == "\u{2605} Folken \u{B7} Lv 28")
+    assert(labels.rift_name("Folken", 28.0) == "\u{2605} Folken \u{B7} Lv 28")
+    assert(labels.rift_name("Folken", nil) == "\u{2605} Folken")
+end
+
 print("labels_test ok")

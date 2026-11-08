@@ -36,6 +36,19 @@ end
 function M.confirm_adopt() return "Confirm adopt" end
 function M.confirm_release() return "Confirm release" end
 
+-- The marks on the game's own pages (game/marks.lua, decisions in marks.lua). "\194\183" is U+00B7, "\226\152\133" is U+2605.
+M.STATUS_MARK = " \194\183 Retinue"
+M.RIFT_STAR = "\226\152\133 "
+
+-- The Status page's name header of a present member: "<name> · Retinue".
+function M.status_name(name) return name .. M.STATUS_MARK end
+
+-- The Previous Hires entry of a member: "★ <name> · Lv N" (N the backup's level); no level: "★ <name>".
+function M.rift_name(name, level)
+    if level == nil then return M.RIFT_STAR .. name end
+    return string.format("%s%s \194\183 Lv %s", M.RIFT_STAR, name, num(level))
+end
+
 -- refused(action, name, err) -> text. action "adopt" | "release"; err one of roster.ERRORS' keys.
 function M.refused(action, name, err)
     return string.format("Cannot %s %s: %s", action, name, roster.error_text(err))

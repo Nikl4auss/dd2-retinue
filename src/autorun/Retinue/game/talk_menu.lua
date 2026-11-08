@@ -39,40 +39,7 @@ local CHOICES_MAX = 16 -- entries read from a node's _Choices
 local CONFIRM_SECONDS = 5 -- how long our pick on the root menu waits for the Talk sub-menu to show
 local GUARD_SECONDS = 2 -- how long either nextNode guard (root after our pick, sub-menu after the confirm) waits for its nextNode
 
--- System.Guid (a value type) -> canonical lowercase "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx". Reads the raw 16 bytes, then
--- falls back to ToString; "unreadable" (matches nothing) otherwise. Never returns userdata.
-local function guid_str(v)
-    if v == nil then return nil end
-    if type(v) == "string" then return v:lower() end
-    if type(v) ~= "userdata" then return tostring(v) end
-    local ok, s = pcall(function()
-        local lo, hi = v:read_qword(0), v:read_qword(8)
-        return string.format("%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-            lo & 0xFFFFFFFF, (lo >> 32) & 0xFFFF, (lo >> 48) & 0xFFFF,
-            hi & 0xFF, (hi >> 8) & 0xFF, (hi >> 16) & 0xFF, (hi >> 24) & 0xFF,
-            (hi >> 32) & 0xFF, (hi >> 40) & 0xFF, (hi >> 48) & 0xFF, (hi >> 56) & 0xFF)
-    end)
-    if ok and s then return s end
-    local ok2, s2 = pcall(function() return v:call("ToString") end)
-    if ok2 and type(s2) == "string" and s2:match("^%x+%-%x+%-%x+%-%x+%-%x+$") then return s2:lower() end
-    return "unreadable"
-end
-
--- A managed or Lua string as a Lua string, else nil.
-local function as_string(v)
-    if type(v) == "string" then return v end
-    if v ~= nil then -- a managed object (userdata): its ToString
-        local ok, str = pcall(function() return v:call("ToString") end)
-        if ok and type(str) == "string" then return str end
-    end
-    return nil
-end
-
--- A hook argument (a raw pointer-sized value) as a managed object, nil when null.
-local function to_managed(a)
-    if a == nil or sdk.to_int64(a) == 0 then return nil end
-    return sdk.to_managed_object(a)
-end
+local guid_str, as_string, to_managed = hooks.guid_str, hooks.as_string, hooks.to_managed
 
 -- The elements of a managed array or List as a Lua array, at most CHOICES_MAX; nil when unreadable. get_elements() comes
 -- first; ticket 24 run 2 saw it fail on a node's _Choices, so a List (get_Count / get_Item) and an array (get_Length /

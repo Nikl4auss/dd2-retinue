@@ -38,6 +38,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   read-only or the save slot unknown. A notice stays 3 s, shows only after no dialog, menu, cutscene or talk has been up
   for a second, and is closed only while it is still the one displayed. If a needed game method is missing, the texts go to
   the log instead.
+- Retinue marks (M2): a present member's name header on pause > Status reads "<name> · Retinue", and the Rift's
+  Previous Hires lists every member as "★ <name> · Lv N" (the backup's level), matched by Offline ID. The Arisen, the
+  main pawn and other pawns stay plain. A missing game method or field leaves that page vanilla (menu line, one log line).
 
 ### Changed
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is

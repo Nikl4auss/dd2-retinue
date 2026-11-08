@@ -46,13 +46,18 @@
 -- disabled line with the cost, Cancel); the confirm row adopts or releases with the same rules as the Retinue menu, any other
 -- pick cancels, and both return to the root menu (a refusal shows as a notice). Anything unrecognised or missing leaves the
 -- menu vanilla (a missing one shows in the menu, an unrecognised root menu in the log).
+-- Marks: a present member's name header on pause > Status (the page's PawnInfo and CharaTab texts) reads "<name> · Retinue", and the
+-- Rift's Previous Hires lists every roster member as "★ <name> · Lv N" (N from the backup; no level: "★ <name>"), by Offline ID, from
+-- the posts of ui060601_01.setupPawn, PawnInfo2Ref.setup, CharaChangeRef.updateName and ui041401.ResItem.updateDisp. A mark is
+-- stripped and rewritten on every refresh, never stacked. The Status group and the Rift group each install all or nothing: a
+-- missing method or field leaves that page vanilla (a menu line, one log line).
 --
 -- Do NOT deploy tools/experiments/Retinue_Exp_Hooks.lua alongside this script: both would hook the same
 -- methods and rewrite the same arguments.
 --
 -- Layout: this file is only wiring (requires, the shared state, the REFramework callbacks and the menu).
 -- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot,backup,departure,
--- lifecycle,reconcile,archive,labels,notices,talk_menu}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus
+-- lifecycle,reconcile,archive,labels,notices,talk_menu,marks}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus
 -- Retinue/game/: jsonfile (verified JSON file
 -- reads and writes and deletes), config_store (config.json), roster_store (the active slot's roster.json),
 -- backup_store and pawn_state (the member backups and the pawn read behind them), archive_store (the archive of a
@@ -60,8 +65,8 @@
 -- the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views and status rows),
 -- slot_hooks (the start, load and save request hooks behind the save slot, and the in-the-world signal), lifecycle_hooks
 -- (the dismiss and hire hooks; pawn_state also does the restore writes) and notice_screen (the notice dialog: show,
--- hide, and the reads that say when it is safe) and talk_menu (the row in a hired pawn's talk menu, the confirm, the
--- pick and the action).
+-- hide, and the reads that say when it is safe), talk_menu (the row in a hired pawn's talk menu, the confirm, the
+-- pick and the action) and marks (the hooks and widget writes behind the Status and Previous Hires marks).
 -- Every hook body runs under pcall.
 
 local errlog = require("Retinue.errlog")
@@ -83,6 +88,7 @@ local labels = require("Retinue.labels")
 local notices = require("Retinue.notices")
 local notice_screen = require("Retinue.game.notice_screen")
 local talk_menu = require("Retinue.game.talk_menu")
+local marks_glue = require("Retinue.game.marks")
 
 local state = { enabled = true, available = false, targets = {}, in_world = false }
 
@@ -114,6 +120,7 @@ local flow = lifecycle.new{
 local talk = talk_menu.new(report, {
     store = retinue, party = party, backups = backups, notify = function(text) queue:push(text) end,
 })
+local marks = marks_glue.new(report, { store = retinue, backups = backups })
 
 -- UpdateBehavior, game thread, after flow.tick: the queued notices. notices.drive reads busy() in this callback, the one
 -- that shows, and is_mine(text) in the one that hides: a show or a hide over a game dialog softlocks the game (findings
@@ -216,6 +223,9 @@ local function draw()
     end
     for _, name in ipairs(talk.missing) do
         imgui.text("Talk menu unavailable: " .. name .. " not found (game update?)")
+    end
+    for _, name in ipairs(marks.missing) do
+        imgui.text("Retinue marks unavailable: " .. name .. " not found (game update?)")
     end
     for _, method_name in ipairs(prog_hooks.missing) do
         imgui.text("Progression unavailable: " .. method_name .. " not found (game update?)")
