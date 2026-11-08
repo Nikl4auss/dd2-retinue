@@ -125,7 +125,6 @@ local marks = marks_glue.new(report, { store = retinue, backups = backups })
 -- UpdateBehavior, game thread, after flow.tick: the queued notices. notices.drive reads busy() in this callback, the one
 -- that shows, and is_mine(text) in the one that hides: a show or a hide over a game dialog softlocks the game (findings
 -- 0009 P6).
-local last_described
 local function tick_notices(now)
     queue:sync(retinue.generation)
     if once:due(retinue.generation, state.in_world and flow.settled()) then
@@ -133,17 +132,7 @@ local function tick_notices(now)
         local text = labels.roster_problem(retinue.roster, tracker.session.unit)
         if text then queue:push(text) end
     end
-    -- Diagnostics (ticket 23 rerun): while a notice waits or shows, every change of the game's dialog state, and each
-    -- show, hide and drop, goes to the log.
-    if queue.showing ~= nil or #queue.waiting > 0 then
-        local d = screen.describe()
-        if d ~= last_described then
-            log.error("[Retinue] notice state: " .. d)
-            last_described = d
-        end
-    else
-        last_described = nil
-    end
+    -- One log line per show, hide and drop, with the game's dialog state (kept from the ticket 23 rerun diagnostics).
     local action, text = notices.drive(queue, screen, now, state.in_world)
     if action then
         log.error("[Retinue] notice " .. action .. ": " .. text .. " | " .. screen.describe())

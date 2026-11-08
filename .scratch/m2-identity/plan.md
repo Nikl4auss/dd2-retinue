@@ -7,9 +7,10 @@ guarantee, § Done when, § Known limits; checklist `docs/testing.md` § M2. Bas
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 
 - [x] Slice 1: `deploy.sh --probe-only`. Tier: **Opus, inline** (19 lines). Commit `173d69a`. Exercised on a fake `DD2_DIR`.
-- [ ] Slice 2: README, CHANGELOG, roadmap. Tier: **Opus, inline** (prose from facts already in context). Reviewer pending.
-- [ ] Slice 3: notice diagnostics from ticket 23 (`83b4485`): user decision pending. Recommended: drop the `notice state` log
-  lines, keep the "Close notice (game stuck)" button.
+- [x] Slice 2: README, CHANGELOG, roadmap. Tier: **Opus, inline**. Commit `5103ea5`. One review round: 1 should (M1 wording in
+  Compatibility) and 9 nits applied; skipped: rewording the M1 Added entries (the Changed entry covers it).
+- [x] Slice 3: notice diagnostics from ticket 23 (`83b4485`): the per-change `notice state` lines dropped; the per-action log
+  line and the "Close notice (game stuck)" button kept. Tier: **Opus, inline** (12 lines removed).
 - [ ] Slice 4: the checklist run on the final build (peer headless + the user), recorded in `docs/findings/0011-m2-checklist-run.md`.
 - [ ] Slice 5: close ticket 27; README status and roadmap say M2 done.
 

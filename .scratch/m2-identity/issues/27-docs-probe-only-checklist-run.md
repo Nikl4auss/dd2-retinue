@@ -10,9 +10,9 @@ roadmap and CHANGELOG are updated; `deploy.sh --probe-only` links the probe with
 
 **Status:** ready-for-agent
 
-- [ ] `deploy.sh --probe-only`; `--remove` never touches the data folder.
-- [ ] README: status, how to adopt/release, uninstall and reinstall behaviour, known limits from the spec.
-- [ ] Roadmap and `CHANGELOG.md` (Unreleased → Added) updated; no version bump.
+- [x] `deploy.sh --probe-only`; `--remove` never touches the data folder. (`173d69a`, `5103ea5`)
+- [x] README: status, how to adopt/release, uninstall and reinstall behaviour, known limits from the spec.
+- [x] Roadmap and `CHANGELOG.md` (Unreleased → Added) updated; no version bump.
 - [ ] Every checklist item passed, opportunistic ones recorded as passed or not reached; findings note written.
 
 ## Comments
@@ -30,3 +30,5 @@ Load-only part of checks 23–26 (2026-11-06, Slot 2, fixture `m2-adopted-folken
 - 2026-11-07, from ticket 23: decide whether to keep the notice diagnostics added in `83b4485`, namely the `notice state`
   lines on every change while a notice waits or shows, and the "Close notice (game stuck)" menu button (it hides the
   shared dialog, a game dialog included). The freeze they were added for, on `0b9de66`, did not reproduce.
+- 2026-11-08, decided (user approved the plan): the per-change `notice state` lines are dropped; the one log line per show,
+  hide and drop and the "Close notice (game stuck)" button stay.
