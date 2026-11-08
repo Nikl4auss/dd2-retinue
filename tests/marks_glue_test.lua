@@ -319,7 +319,10 @@ do
     world.by_addr[103] = chara_data(PRESENT_ID, false)
     fire(SETUP_PAWN, 100, 103)
     assert(tab_text.msg == "Ana \u{B7} Retinue") -- the readable widget still marks
-    assert(#reports == 1 and reports[1]:find("PawnInfo.TxtName unreadable", 1, true))
+    assert(#reports == 0) -- a nil ref at setupPawn's post is normal in game (ticket 26 run 1): skipped, not reported
+    world.by_addr[100] = obj({ PawnInfo = obj({ TxtName = nil }), CharaTab = obj({ TxtName = tab_text.widget }) })
+    fire(SETUP_PAWN, 100, 103)
+    assert(#reports == 1 and reports[1]:find("PawnInfo.TxtName unreadable", 1, true)) -- a ref without its widget is still reported
     reports = {}
     fire(SETUP_PAWN, 999, 103) -- no page
     assert(#reports == 1 and reports[1]:find("status page unreadable", 1, true))
@@ -418,6 +421,25 @@ do
     world.by_addr[104] = obj({ TxtPawnName = nil })
     fire(UPDATE_DISP, 104, 105)
     assert(#reports == 1 and reports[1]:find("TxtPawnName unreadable", 1, true))
+end
+
+do
+    -- get_elements failing (as in game, ticket 26 run 1): get_Length / GetValue read the widgets
+    reset()
+    make({ level = function() return 24 end })
+    local a, b = text("Ana"), text("Ana")
+    local arr = obj({ get_Length = 2, GetValue = function(_, i) return ({ [0] = a.widget, [1] = b.widget })[i] end })
+    function arr:get_elements() error("not an array view") end
+    world.by_addr[104] = obj({ TxtPawnName = arr })
+    world.by_addr[105] = obj({ OfflineId = PRESENT_ID })
+    fire(UPDATE_DISP, 104, 105)
+    assert(a.msg == "\u{2605} Ana \u{B7} Lv 24" and b.msg == a.msg and #reports == 0)
+    -- neither way readable: reported, nothing written
+    local bad = obj({ get_Length = function() error("no length") end })
+    function bad:get_elements() error("not an array view") end
+    world.by_addr[104] = obj({ TxtPawnName = bad })
+    fire(UPDATE_DISP, 104, 105)
+    assert(#reports == 1 and reports[1]:find("TxtPawnName elements unreadable", 1, true) and a.writes == 1)
 end
 
 do

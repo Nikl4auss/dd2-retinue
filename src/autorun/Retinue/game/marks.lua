@@ -208,9 +208,11 @@ function M.new(report, deps)
                   report("status marks", "status page unreadable")
                   return
               end
+              -- Both refs are nil at this post in game (findings 0009's run, ticket 26 run 1): the PawnInfo2Ref.setup and
+              -- updateName posts write the header then. A nil ref is skipped without a report; a ref that is there is marked.
               local info, tab = page:get_field("PawnInfo"), page:get_field("CharaTab")
-              mark_status("PawnInfo.TxtName", info and info:get_field("TxtName"), frame.arg)
-              mark_status("CharaTab.TxtName", tab and tab:get_field("TxtName"), frame.arg)
+              if info ~= nil then mark_status("PawnInfo.TxtName", info:get_field("TxtName"), frame.arg) end
+              if tab ~= nil then mark_status("CharaTab.TxtName", tab:get_field("TxtName"), frame.arg) end
           end },
         { key = "marks.PawnInfo2Ref.setup", type = PAWN_INFO, sig = PAWN_INFO_SETUP_SIG,
           pre = function(args)
@@ -271,6 +273,23 @@ function M.new(report, deps)
         return nil
     end
 
+    -- The widgets of a via.gui.Text[] (at most TEXTS_MAX), nil when unreadable. get_elements() fails on this array in game
+    -- (ticket 26 run 1, as on a talk node's _Choices in ticket 24), so get_Length / GetValue follow, as the experiment read it.
+    local function text_array(arr)
+        local ok, elems = pcall(function() return arr:get_elements() end)
+        if ok and type(elems) == "table" and #elems > 0 then return elems end
+        local okn, n = pcall(function() return arr:call("get_Length") end)
+        n = okn and type(n) == "number" and math.tointeger(n) or nil
+        if n == nil or n < 0 then return nil end
+        local out = {}
+        for i = 0, math.min(n, TEXTS_MAX) - 1 do
+            local oki, v = pcall(function() return arr:call("GetValue", i) end)
+            if not oki or v == nil then return nil end
+            out[i + 1] = v
+        end
+        return out
+    end
+
     local update_disp_stack = new_stack()
 
     local rift_entries = {
@@ -293,9 +312,13 @@ function M.new(report, deps)
               local member = marks_logic.rift_member(store.roster, hooks.guid_str(info:get_field("OfflineId")))
               local level = member and level_of(member.offline_id) or nil
               local arr = item:get_field("TxtPawnName")
-              local ok, texts = pcall(function() return arr:get_elements() end)
-              if not (ok and type(texts) == "table") then
+              if arr == nil then
                   report("rift marks", "TxtPawnName unreadable")
+                  return
+              end
+              local texts = text_array(arr)
+              if texts == nil then
+                  report("rift marks", "TxtPawnName elements unreadable")
                   return
               end
               for i = 1, math.min(#texts, TEXTS_MAX) do
