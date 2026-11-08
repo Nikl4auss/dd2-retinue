@@ -40,18 +40,19 @@
 -- cutscene or talk; out of the world it waits), and only a dialog that is still ours is closed. All of it runs in the
 -- UpdateBehavior callback, where the check and the call happen together (a script reset also closes a notice that is up).
 -- If a needed game method is missing, the texts go to the log instead ("notice (not shown)").
--- Talk menu: talking to a hired party pawn shows a last row, "Adopt" (a Rift pawn that is not in the roster) or "Release (Retinue
--- · Lv N)" (a member in the party), added in the pre of ui021601.reqDisp when the menu is the pawn's root menu. Picking it ends
--- the talk as Never mind does (the picked index is rewritten) and opens the game's Yes/No dialog (GuiManager.requestDialog);
--- Yes adopts or releases with the same rules as the Retinue menu, and a refusal shows as a notice. Anything unrecognised or
--- missing leaves the menu vanilla (a missing one shows in the menu, an unrecognised root menu in the log). While our dialog is open the notices wait.
+-- Talk menu: talking to a hired party pawn shows a fourth row, "Adopt" (a Rift pawn that is not in the roster) or "Release (Retinue
+-- · Lv N)" (a member in the party), inserted before Never mind in the pre of ui021601.reqDisp when the menu is the pawn's root
+-- menu. Picking it opens the Talk sub-menu, whose rows are relabelled as the confirm ("Confirm adopt" / "Confirm release", a
+-- disabled line with the cost, Cancel); the confirm row adopts or releases with the same rules as the Retinue menu, any other
+-- pick cancels, and both return to the root menu (a refusal shows as a notice). Anything unrecognised or missing leaves the
+-- menu vanilla (a missing one shows in the menu, an unrecognised root menu in the log).
 --
 -- Do NOT deploy tools/experiments/Retinue_Exp_Hooks.lua alongside this script: both would hook the same
 -- methods and rewrite the same arguments.
 --
 -- Layout: this file is only wiring (requires, the shared state, the REFramework callbacks and the menu).
 -- The decisions live in Retinue/{targets,roster,progression,errlog,status,opencalls,config,slot,backup,departure,
--- lifecycle,reconcile,archive,labels,notices,talk_menu,confirm}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus
+-- lifecycle,reconcile,archive,labels,notices,talk_menu}.lua (pure, tested by tests/run.sh). The REFramework glue is Retinue/hooks.lua plus
 -- Retinue/game/: jsonfile (verified JSON file
 -- reads and writes and deletes), config_store (config.json), roster_store (the active slot's roster.json),
 -- backup_store and pawn_state (the member backups and the pawn read behind them), archive_store (the archive of a
@@ -59,8 +60,8 @@
 -- the menu), progression_hooks (the four hooks and the isSubPawn lookup), party (the party views and status rows),
 -- slot_hooks (the start, load and save request hooks behind the save slot, and the in-the-world signal), lifecycle_hooks
 -- (the dismiss and hire hooks; pawn_state also does the restore writes) and notice_screen (the notice dialog: show,
--- hide, and the reads that say when it is safe), confirm_dialog (the Yes/No dialog: open it, read its answer) and
--- talk_menu (the row in a hired pawn's talk menu, the pick and the action).
+-- hide, and the reads that say when it is safe) and talk_menu (the row in a hired pawn's talk menu, the confirm, the
+-- pick and the action).
 -- Every hook body runs under pcall.
 
 local errlog = require("Retinue.errlog")
@@ -81,7 +82,6 @@ local lifecycle = require("Retinue.lifecycle")
 local labels = require("Retinue.labels")
 local notices = require("Retinue.notices")
 local notice_screen = require("Retinue.game.notice_screen")
-local confirm_dialog = require("Retinue.game.confirm_dialog")
 local talk_menu = require("Retinue.game.talk_menu")
 
 local state = { enabled = true, available = false, targets = {}, in_world = false }
@@ -112,7 +112,7 @@ local flow = lifecycle.new{
     report = report,
 }
 local talk = talk_menu.new(report, {
-    store = retinue, party = party, dialog = confirm_dialog.new(report), notify = function(text) queue:push(text) end,
+    store = retinue, party = party, notify = function(text) queue:push(text) end,
 })
 
 -- UpdateBehavior, game thread, after flow.tick: the queued notices. notices.drive reads busy() in this callback, the one
@@ -137,8 +137,7 @@ local function tick_notices(now)
     else
         last_described = nil
     end
-    -- Not while our Yes/No dialog is open: a notice must not replace it. Closing a notice does not depend on this.
-    local action, text = notices.drive(queue, screen, now, state.in_world and not talk.confirming())
+    local action, text = notices.drive(queue, screen, now, state.in_world)
     if action then
         log.error("[Retinue] notice " .. action .. ": " .. text .. " | " .. screen.describe())
     end

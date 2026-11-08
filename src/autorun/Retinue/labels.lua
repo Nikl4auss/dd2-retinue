@@ -16,9 +16,7 @@ function M.kept(name, level)
     return string.format("%s returned — kept Lv %s, newer than the backup", name, num(level))
 end
 
--- The talk menu's row and its Yes/No dialog (game/talk_menu.lua). The same words as the mod menu's confirmations.
-M.YES, M.NO = "Yes", "No"
-
+-- The talk menu's row and the confirm (game/talk_menu.lua). The same words as the mod menu's confirmations.
 function M.adopt_row() return "Adopt" end
 
 -- The member's row; the level when known ("\194\183" is U+00B7, as in the mod menu).
@@ -27,13 +25,11 @@ function M.release_row(level)
     return string.format("Release (Retinue \194\183 Lv %s)", num(level))
 end
 
-function M.ask_adopt(name)
-    return string.format("Adopt %s into your retinue?\nGear you give them is lost if they're dismissed or lost.", name)
-end
-
-function M.ask_release(name)
-    return string.format("Release %s? Their progress will be lost.", name)
-end
+-- The confirm replaces the Talk sub-menu's first two rows: the pick, and a disabled line saying what it costs.
+function M.confirm_adopt() return "Confirm adopt" end
+function M.confirm_release() return "Confirm release" end
+function M.warn_adopt() return "Gear you give them is lost if they're dismissed or lost." end
+function M.warn_release() return "Their progress will be lost." end
 
 -- refused(action, name, err) -> text. action "adopt" | "release"; err one of roster.ERRORS' keys.
 function M.refused(action, name, err)

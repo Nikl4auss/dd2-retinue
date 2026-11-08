@@ -6,7 +6,7 @@ Source: [issues/24-talk-menu-adopt-release.md](issues/24-talk-menu-adopt-release
 
 - [x] Slice 1: pure `talk_menu.lua` and `confirm.lua`, labels, glue `game/talk_menu.lua` and `game/confirm_dialog.lua`, wiring, tests. Tier: **Sonnet** (`implementer`). Two review rounds; the round-2 findings (re-arm on a reused list, the TalkSelect check after the row) applied inline.
 - [x] Slice 2: in-game run, checklist 2–4 and 7 (keys). Tier: **Opus, inline**; the user only if a step cannot be driven.
-- [ ] Slice 3 (only if a run sees the confirming press leak; none on run 3 with F taps, so not built; the manual pass checks pad A and a held F): the talk-menu confirm fallback. Designed after slice 2, from what it saw.
+- [ ] Slice 3: the confirm moves into the talk (the Talk sub-menu), and the row becomes the 4th. Tier: **Sonnet** (`implementer`); in-game runs by the peer session, then the user's manual pass.
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 
@@ -160,3 +160,65 @@ Backup first (`tools/saves.sh backup`). Keys, screenshots. Checklist 2–4 and 7
 Talk's sub-menu nor for a pawn outside the party; Adopt → dialog with the gear line; Yes: talk ends, `roster.json` and the backup exist, no jump, no pawn command;
 No on a second try changes nothing; talking again shows "Release (Retinue · Lv N)"; Release Yes: member and backup gone, row "Adopt" again. A refusal: a
 read-only roster (`"version": 2`) → the notice after the talk. Record the leak outcome (A / F press on Yes) in the ticket and in findings 0007.
+
+## Slice 3: Confirm inside the talk; the row 4th
+
+Why (the user's manual pass on `f5ac53a`, 2026-11-08): the Yes/No dialog opens after the talk has ended, so the confirming press leaks
+(pad A acts in the world; F held on Yes starts a talk behind the dialog). And B in the menu puts the cursor on the last row, Never mind in
+vanilla, so a last-row Adopt invites a wrong pick.
+
+Facts (run files of findings 0007, `_NextNodeCandidateOnSelect[0]._NextNodeId` of each choice):
+
+- Root `4c4acb4e-…` choice 0 Talk (`3a367899-f31c-46fc-b2e1-57f521e8ea0f`) → the Talk sub-menu `44dcab9b-2a86-4ab0-bd52-24dde93cfe60` (ShopChoiceNode, 3 choices:
+  0 Matters of import `388007d1-…`, 1 Small talk `ee458b93-…`, 2 Cancel `be249585-0fae-4db8-aa33-5113e5d98ea6` → back to the root).
+- Root choice 2 does NOT loop: it goes to another node (`76ad69b4-…`). Removing a favourite comes back to the root in under a second, so the root
+  re-shows cleanly through `reqDisp`.
+- The game maps the widget's `SelectedIndex` (display row) to the choice; a row past the game's own rows takes an unknown end path (no `nextNode`).
+
+**Design**
+
+Root menu (offer). The row is inserted before Never mind (`list:Insert(count - 1, item)`), so it holds the game's Never-mind index:
+display `Talk 0, Dismiss 1, Favorites 2, OURS 3, Never mind 4` against the game's `0 Talk, 1 Dismiss, 2 Favorites, 3 Never mind`.
+At the pick (same watcher, start of `UpdateBehavior`, `IsEndGUI` true):
+- `sel == ours` (count-1): a refusal (`talk_menu.refusal`) → write nothing (the game runs Never mind, the talk ends) + the notice, as now. Else write
+  `SelectedIndex = 0` (Talk), read back, and arm `confirm = { row, generation, deadline = now + 5 }`. Log `picked`.
+- `sel == count` (the Never mind shown last) → write `count - 1`. Anything else → nothing.
+- A missed watcher on our row runs Never mind (safe).
+
+Talk sub-menu (confirm). In `reqDisp` pre, when `confirm` is armed and the node is the Talk sub-menu (`talk_menu.is_talk_sub(node_id, choice_ids)`:
+node id `44dcab9b-…` or last choice Cancel; and exactly 3 choices), replace the list contents: keep the original items as they are and only relabel
+and disable, so the display rows keep the game's indices:
+- row 0 (Matters of import) → `Msg = labels.confirm_adopt()` / `labels.confirm_release()`, `_IsDecideEnable = true`;
+- row 1 (Small talk) → `Msg = labels.warn_adopt()` / `labels.warn_release()`, `_IsDecideEnable = false`;
+- row 2 (Cancel) untouched (the game's own text).
+Then `menu = { mode = "confirm", widget, row, generation }` and `confirm = nil`. A `reqDisp` of any other node while `confirm` is armed, or the deadline,
+drops it (log line). At the pick:
+- `sel == 0` → act (as `act` now: adopt / release, refusal notice on error), then write `SelectedIndex = 2` (Cancel → back to the root, whose
+  next `reqDisp` shows the new row). Log `confirmed` / `done`.
+- any other `sel` → write 2. Log `cancelled`.
+- Guard: a new hook `app.TalkEventPlayer nextNode(System.Int32)` pre. While `guard` is set (from the confirm pick until its next `nextNode`, or 2 s):
+  on the Talk sub-menu node, an index other than 2 is rewritten to 2 (`args[3] = sdk.to_ptr(2)`, as the experiment did at Exp l.893) and reported once.
+  So a failed `SelectedIndex` write never runs Matters of import or Small talk.
+
+Labels (pure, `labels.lua`): `confirm_adopt()` "Confirm adopt", `confirm_release()` "Confirm release", `warn_adopt()` "Gear you give them is lost if
+they're dismissed or lost.", `warn_release()` "Their progress will be lost." Remove `YES`, `NO`, `ask_adopt`, `ask_release`.
+
+Pure `talk_menu.lua`: add `TALK_CHOICE`, `TALK_SUB`, `CANCEL`; `is_root` also requires `choice_ids[1] == TALK_CHOICE` (the redirect goes to row 0);
+`is_talk_sub(node_id, choice_ids)`; `offer_pick(sel, count) -> { kind = "ours"|"never_mind"|"other", write = n|nil }` (count = the vanilla row count);
+`confirm_pick(sel) -> { kind = "confirm"|"cancel", write = 2 }`.
+
+Remove the Yes/No dialog path: delete `confirm.lua`, `game/confirm_dialog.lua`, `tests/confirm_test.lua`; `talk.confirming()` and the notice hold in
+`Retinue.lua` go (a talk already holds the notices through `_IsTalkingAny`). `talk_menu.new(report, deps)` loses `deps.dialog`. Resolution adds
+`app.TalkEventPlayer` `nextNode(System.Int32)`, `System.Collections.Generic.List` `Insert` is called by name (as `Add`). Update `Retinue.lua`'s header
+paragraph and layout lines.
+
+**Acceptance criteria**
+
+- [ ] `tests/talk_menu_test.lua`: `is_root` needs Talk first; `is_talk_sub` by id and by Cancel last, false with another count; `offer_pick` and `confirm_pick` tables.
+- [ ] `tests/talk_menu_glue_test.lua` (fake sdk): the row is inserted at count-1; our pick writes 0 and arms; Never mind shown writes count-1; a refusal
+      writes nothing and notifies; the sub-menu reqDisp relabels rows 0 and 1 (row 1 disabled) and leaves row 2; confirm acts then writes 2; cancel writes 2;
+      a reqDisp of another node drops the armed confirm; the deadline drops it; the nextNode guard rewrites 0 or 1 to 2 only on the sub-menu while guarded;
+      a missing name (nextNode included) installs nothing.
+- [ ] `tests/labels_test.lua` updated; `tests/run.sh` passes; `luac5.4 -p` clean.
+
+**Out of scope**: ticket 25's full-retinue flow; the mod menu; any change to the notices.

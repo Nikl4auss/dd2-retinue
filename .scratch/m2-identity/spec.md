@@ -18,7 +18,7 @@ mod leaves every save playable (the **uninstall guarantee**).
 In:
 
 - The roster per save slot: file format, validation, locked and read-only states.
-- Adopt and Release from the hired party pawn's talk menu, confirmed by the game's own dialog; the "retinue full" flow.
+- Adopt and Release from the hired party pawn's talk menu, confirmed inside the talk; the "retinue full" flow.
 - Departure (dismiss, lost, any other) and Return, by any route; the `returning` state and its retries.
 - Backups: contents, when written, restore on Return under the level guard.
 - Save-slot identity, new game / NG+, reconciliation of the roster with the loaded save.
@@ -217,28 +217,32 @@ semantics; everything else in M1 (hooks, swap-back, failure handling) is unchang
 From [How should adopt and release look and feel?](issues/06-adopt-release-ux.md),
 [findings 0007](../../docs/findings/0007-m2-talk-ui.md) and [0009](../../docs/findings/0009-m2-status-ui.md):
 
-- **Fifth row** in the talk menu of a hired party pawn: only on the root `app.ShopChoiceNode` recognised by `_NodeId`
-  `4c4acb4e-1531-45ea-9f6a-e4152e473e2e` or by the presence of the Dismiss choice (`7d3962d3…`); never in sub-menus,
-  never for a pawn outside the party. A new `ui021601.ListInfo` (`_IsDecideEnable = true`) appended in
-  `ui021601.reqDisp` pre. **Fail closed**: an unrecognised node leaves the menu vanilla.
+- **Fourth row** in the talk menu of a hired party pawn, inserted before Never mind (so Never mind stays last and keeps the
+  game's index; B in the menu puts the cursor on it): only on the root `app.ShopChoiceNode` recognised by `_NodeId`
+  `4c4acb4e-1531-45ea-9f6a-e4152e473e2e` or by the presence of the Dismiss choice (`7d3962d3…`), with Talk first and
+  Never mind last; never in sub-menus, never for a pawn outside the party. A new `ui021601.ListInfo`
+  (`_IsDecideEnable = true`) inserted in `ui021601.reqDisp` pre. **Fail closed**: an unrecognised node leaves the menu vanilla.
 - Labels: "Adopt" for an adoptable pawn; "Release (Retinue · Lv N)" for a present member. Rows for non-adoptable pawns
   (online, no OfflineID) are not added.
-- **Picking it**: when `ui021601.get_IsEndGUI()` is true with `SelectedIndex` on the appended row, `SelectedIndex` is
-  rewritten to the Never-mind row before the game maps it (start of `UpdateBehavior`), so the talk ends like Never mind.
-- **Confirmation**: the game's dialog, `GuiManager.requestDialog` with Yes/No, opened **before the talk ends**; the
-  answer read from the widget (`ui010101` `Ret` / `getRawRetVal()`: 1 Yes, 2 No).
-  - Adopt: "Adopt <name> into your retinue?\nGear you give them is lost if they're dismissed or lost."
-  - Release: "Release <name>? Their progress will be lost."
-  - **Fallback**, if the dialog leaks input inside a talk (verified first, see Open assumptions): confirm in the talk
-    menu, re-shown with "Confirm adopt" / "Confirm release" and Never mind.
-- **Adopt** (Yes): roster add (status present, cache set), first backup written, notice-free (the row label changes on
-  the next talk). Errors `full`, `already_adopted`, `locked`, `read_only`, `no_slot`, `no_offline_id` → notice with the
-  reason, talk ends like Never mind.
+- **Picking it**: when `ui021601.get_IsEndGUI()` is true with `SelectedIndex` on the inserted row (start of
+  `UpdateBehavior`), `SelectedIndex` is rewritten to Talk (row 0), so the talk goes on to the Talk sub-menu. A refusal
+  (locked, read-only, unknown slot, full) writes nothing: the game runs Never mind, the talk ends, and a notice shows.
+- **Confirmation**, inside the talk (no dialog, so no input leaks): the Talk sub-menu (`44dcab9b-2a86-4ab0-bd52-24dde93cfe60`,
+  3 choices) is re-shown through `reqDisp` with its first two rows relabelled and Cancel untouched:
+  - Adopt: "Confirm adopt" / "Gear you give them is lost if they're dismissed or lost." (disabled) / Cancel.
+  - Release: "Confirm release" / "Their progress will be lost." (disabled) / Cancel.
+  - Picking the first row acts; any other pick cancels. Both are rewritten to Cancel (row 2), which returns to the
+    root menu, where the new row shows ("Release (Retinue · Lv N)" after an adopt, "Adopt" after a release).
+  - A `nextNode` guard rewrites a stray Matters of import / Small talk to Cancel (and a stray root index to Never mind)
+    if a `SelectedIndex` write does not stick. Breaking off the talk with the confirm up changes nothing.
+- **Adopt** (confirmed): roster add (status present, cache set), first backup written, notice-free (the root menu the confirm
+  returns to shows the new row). Errors `full`, `already_adopted`, `locked`, `read_only`, `no_slot`, `no_offline_id` → notice with the
+  reason: `full`, `locked`, `read_only` and `no_slot` at the pick (the talk ends like Never mind), the rest at the confirm.
 - **Retinue full** (an away member holds a place and a new hired pawn fills its party slot): picking Adopt opens a
   dialog "Your retinue is full." with one button per away member, "Release <name> (away, Lv N)" (backup's level), and
   Cancel; choosing one asks "Release <name>? Their progress will be lost." (Yes/No); Yes releases it (backup deleted)
   and adopts the current pawn.
-- **Release** (Yes): roster remove (unknown keys go with it), backup deleted, the pawn stays in the party as an
+- **Release** (confirmed): roster remove (unknown keys go with it), backup deleted, the pawn stays in the party as an
   ordinary hired pawn at its level and stops progressing.
 - Locked, read-only or unknown slot: the row stays, picking it shows the reason in a notice and ends the talk.
 
@@ -326,7 +330,7 @@ The experiment scripts stay in `tools/experiments/` and are never deployed with 
 
 ## Open assumptions the checklist verifies
 
-- `requestDialog` opened inside a talk does not leak the confirming press (else the talk-menu confirm fallback).
+- ~~`requestDialog` opened inside a talk does not leak the confirming press~~ (it did not hold: the dialog opened after the talk had ended, and the press leaked, pad A acting in the world and F held starting a talk behind it, 2026-11-08; the confirm is now inside the talk, the fallback is the design).
 - The notice shows inside the Rift. (It does not show over menus, and `requestHideDialog()` does close a game dialog: findings 0009 P6, so the mod guards both.)
 - The talk-menu, Status-page and Rift hooks do not clash with Guild Contracts (none seen in 0007).
 - Natural lost (down timer, rest sweep) triggers the party diff like *Kill pawns* did.

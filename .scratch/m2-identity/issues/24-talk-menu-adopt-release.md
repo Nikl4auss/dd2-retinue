@@ -28,3 +28,8 @@ Refusals (full, locked, read-only, no slot) show a notice.
   the talk). Leak box and the in-game box stay open for the manual pass: pad A, F held on Yes (Hail prompt live under the dialog), Release No,
   a Rift stone talk, Talk's sub-menu on this build, a non-party pawn, and the feel.
 - 2026-11-08, `583ac7b`: trace replaced by one report when the root node id is seen but its choices do not qualify.
+- 2026-11-08, `f5ac53a`, manual pass by the user (pad and keyboard). Row, Release No, Talk's sub-menu and a non-party pawn pass.
+  **Leak confirmed**: (1) with the pad, the confirming A press acts in the world under the dialog; (2) F held on Yes starts a talk
+  that sits behind the dialog. The talk-menu confirm fallback applies (plan slice 3).
+  **UX**: the row must be the 4th, before Never mind: B in the menu moves the cursor to the last row, which in vanilla is Never mind,
+  so a last-row Adopt/Release invites a wrong pick.

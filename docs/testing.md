@@ -117,26 +117,31 @@ is entered, a fight, a save and a reload work, the Rift hires and dismisses, and
 1. **Fresh install**: load `fixture-2hired-at-rift`. The mod menu shows `Slot N` (matching the slot loaded), an empty
    roster, no warnings; no `slots/` directory was created. In a fight neither hired pawn levels (ordinary again: M1 is
    narrowed). *Grant exp* on one: exp rises, level does not.
-2. **Talk menu**: talk to a hired party pawn, in the field and at a Rift stone. A fifth row "Adopt" follows Never mind;
-   Talk's sub-menu has no extra row; a pawn not in the party (Hire menu) has none.
-3. **Adopt**: pick Adopt. The game's Yes/No dialog shows "Adopt <name> into your retinue?" and the gear warning line,
-   **while the talk is still open**; confirming with A does not make the Arisen jump and the d-pad issues no pawn
-   command. *Yes*: the talk ends like Never mind; `slots/<n>/roster.json` has the member (`present`, `character_id`)
-   and `backups/<offline_id>.json` exists. *No* on a second try: nothing changes. If the press leaks, record it: the
-   spec's talk-menu confirm fallback applies.
-4. **Adopted status**: talking again shows "Release (Retinue · Lv N)"; the Status page header reads "<name> · Retinue"
-   for that pawn only (not the Arisen, the main pawn or the other hired pawn).
+2. **Talk menu**: talk to a hired party pawn, in the field and at a Rift stone. A row "Adopt" comes before Never mind
+   (4th of 5; Never mind stays last); B in the menu puts the cursor on Never mind. Talk's sub-menu has no extra row; a
+   pawn not in the party (Hire menu) has none.
+3. **Adopt**: pick Adopt. There is no Yes/No dialog: the talk goes on to the Talk sub-menu, which reads "Confirm adopt" /
+   "Gear you give them is lost if they're dismissed or lost." (greyed, not selectable) / Cancel. *Confirm adopt*: back to
+   the root menu, which now shows "Release (Retinue · Lv N)"; `slots/<n>/roster.json` has the member (`present`,
+   `character_id`) and `backups/<offline_id>.json` exists; the Arisen does not jump and the d-pad issues no pawn command.
+   *Cancel* (or any other pick) on a second try: back to the root with nothing changed. A refusal (locked, read-only,
+   unknown slot, full) ends the talk like Never mind, then the notice shows.
+4. **Adopted status**: Release shows on the root menu the confirm returns to, and on the next talk; the Status page
+   header reads "<name> · Retinue" for that pawn only (not the Arisen, the main pawn or the other hired pawn).
 5. **Progression**: in a fight (or *Grant exp*) the adopted pawn levels with its own notification; the other hired pawn
    does not. Within ~10 s of the level-up the backup file shows the new level; 30 s idle (or a fight with no kill: any exp
    gain changes the file) leaves the file's modification time alone. The log shows `in the world: yes` after the
    load and never `in the world: no (phase N)` during normal play.
 6. **Toggle off**: untick progression. The adopted pawn stops levelling (exp banks), its backup still follows exp
    changes. Tick it again.
-7. **Release**: pick "Release (Retinue · Lv N)" → "Release <name>? Their progress will be lost." *Yes*: the pawn stays in
-   the party at its level, the row reads "Adopt" again, the member is gone and its backup file is gone or 0 bytes (log: `(backup removed)` or `(backup emptied)`;
+7. **Release**: pick "Release (Retinue · Lv N)" → the Talk sub-menu reads "Confirm release" / "Their progress will be
+   lost." (greyed) / Cancel. *Confirm release*: back to the root, which now reads "Adopt"; the pawn stays in
+   the party at its level, the member is gone and its backup file is gone or 0 bytes (log: `(backup removed)` or `(backup emptied)`;
    `(backup left in place)` is a failure), it no longer levels.
 8. **Cap**: adopt both hired pawns. Mod menu lists two members. (The full-retinue flow is check 13.)
-9. **Not adoptable** *(opportunistic)*: an online pawn (owner not `CAPCOM`) in the party gets no fifth row.
+9. **Not adoptable** *(opportunistic)*: an online pawn (owner not `CAPCOM`) in the party gets no Adopt row.
+9a. **Talk broken off** *(opportunistic)*: pick Adopt (or Release), then walk away or get hit while the confirm
+   sub-menu is up: nothing is adopted or released, and the next talk is vanilla plus our row.
 
 ### Departure and Return
 

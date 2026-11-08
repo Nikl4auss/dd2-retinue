@@ -9,18 +9,64 @@ local ID_C = "cccccccc-0000-0000-0000-000000000003"
 
 -- is_root
 do
-    local ROOT, DISMISS, NM = talk_menu.ROOT_NODE, talk_menu.DISMISS, talk_menu.NEVER_MIND
-    assert(talk_menu.is_root(ROOT, { OTHER, DISMISS, NM }) == true) -- by node id
-    assert(talk_menu.is_root(OTHER, { OTHER, DISMISS, OTHER, NM }) == true) -- by Dismiss
-    assert(talk_menu.is_root(ROOT, { OTHER, NM }) == true)
-    assert(talk_menu.is_root(OTHER, { OTHER, NM }) == false) -- a sub-menu: no Dismiss
-    assert(talk_menu.is_root(OTHER, { OTHER, OTHER }) == false)
-    assert(talk_menu.is_root(ROOT, { OTHER, DISMISS }) == false) -- Never mind not last
-    assert(talk_menu.is_root(ROOT, { NM, OTHER }) == false)
-    assert(talk_menu.is_root(OTHER, { DISMISS, NM, OTHER }) == false)
+    local ROOT, DISMISS, NM, TALK = talk_menu.ROOT_NODE, talk_menu.DISMISS, talk_menu.NEVER_MIND, talk_menu.TALK_CHOICE
+    assert(talk_menu.is_root(ROOT, { TALK, DISMISS, NM }) == true) -- by node id
+    assert(talk_menu.is_root(OTHER, { TALK, DISMISS, OTHER, NM }) == true) -- by Dismiss
+    assert(talk_menu.is_root(ROOT, { TALK, NM }) == true)
+    assert(talk_menu.is_root(OTHER, { TALK, OTHER, NM }) == false) -- a sub-menu: no Dismiss
+    assert(talk_menu.is_root(OTHER, { TALK, OTHER }) == false)
+    assert(talk_menu.is_root(ROOT, { TALK, OTHER, DISMISS }) == false) -- Never mind not last
+    assert(talk_menu.is_root(ROOT, { NM, TALK }) == false)
+    assert(talk_menu.is_root(OTHER, { DISMISS, NM, TALK }) == false)
+    assert(talk_menu.is_root(ROOT, { OTHER, DISMISS, NM }) == false) -- Talk not first
+    assert(talk_menu.is_root(OTHER, { DISMISS, TALK, NM }) == false)
+    assert(talk_menu.is_root(ROOT, { NM }) == false)
     assert(talk_menu.is_root(ROOT, {}) == false)
     assert(talk_menu.is_root(ROOT, nil) == false)
-    assert(talk_menu.is_root(nil, { DISMISS, NM }) == true)
+    assert(talk_menu.is_root(nil, { TALK, DISMISS, NM }) == true)
+end
+
+-- is_talk_sub: by node id or by Cancel last, exactly 3 choices
+do
+    local SUB, CANCEL = talk_menu.TALK_SUB, talk_menu.CANCEL
+    assert(talk_menu.is_talk_sub(SUB, { OTHER, OTHER, CANCEL }) == true)
+    assert(talk_menu.is_talk_sub(SUB, { OTHER, OTHER, OTHER }) == true) -- by node id
+    assert(talk_menu.is_talk_sub(OTHER, { OTHER, OTHER, CANCEL }) == true) -- by Cancel last
+    assert(talk_menu.is_talk_sub(OTHER, { OTHER, OTHER, OTHER }) == false)
+    assert(talk_menu.is_talk_sub(OTHER, { CANCEL, OTHER, OTHER }) == false)
+    assert(talk_menu.is_talk_sub(SUB, { OTHER, CANCEL }) == false) -- another count
+    assert(talk_menu.is_talk_sub(SUB, { OTHER, OTHER, OTHER, CANCEL }) == false)
+    assert(talk_menu.is_talk_sub(SUB, {}) == false)
+    assert(talk_menu.is_talk_sub(SUB, nil) == false)
+    assert(talk_menu.is_talk_sub(nil, { OTHER, OTHER, CANCEL }) == true)
+    -- the root menu is not the sub-menu
+    assert(talk_menu.is_talk_sub(talk_menu.ROOT_NODE, { talk_menu.TALK_CHOICE, talk_menu.DISMISS, talk_menu.NEVER_MIND }) == false)
+end
+
+-- offer_pick: the root menu has count vanilla rows, ours at count - 1, Never mind shown at count
+do
+    local function same(a, kind, write) return a.kind == kind and a.write == write end
+    assert(same(talk_menu.offer_pick(3, 4), "ours", 0))
+    assert(same(talk_menu.offer_pick(4, 4), "never_mind", 3))
+    assert(same(talk_menu.offer_pick(0, 4), "other", nil))
+    assert(same(talk_menu.offer_pick(1, 4), "other", nil))
+    assert(same(talk_menu.offer_pick(2, 4), "other", nil))
+    assert(same(talk_menu.offer_pick(5, 4), "other", nil))
+    assert(same(talk_menu.offer_pick(-1, 4), "other", nil))
+    assert(same(talk_menu.offer_pick(nil, 4), "other", nil))
+    assert(same(talk_menu.offer_pick(3.5, 4), "other", nil))
+    assert(same(talk_menu.offer_pick(9, 10), "ours", 0)) -- 10 vanilla rows: ours is 9
+    assert(same(talk_menu.offer_pick(10, 10), "never_mind", 9))
+end
+
+-- confirm_pick: row 0 confirms, anything else cancels; both write Cancel's index
+do
+    local c = talk_menu.confirm_pick(0)
+    assert(c.kind == "confirm" and c.write == 2)
+    for _, sel in ipairs({ 1, 2, 3, -1 }) do
+        c = talk_menu.confirm_pick(sel)
+        assert(c.kind == "cancel" and c.write == 2)
+    end
 end
 
 -- view_of: hired slots only
