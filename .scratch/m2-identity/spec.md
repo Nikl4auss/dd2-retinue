@@ -226,7 +226,7 @@ From [How should adopt and release look and feel?](issues/06-adopt-release-ux.md
   (online, no OfflineID) are not added.
 - **Picking it**: when `ui021601.get_IsEndGUI()` is true with `SelectedIndex` on the inserted row (start of
   `UpdateBehavior`), `SelectedIndex` is rewritten to Talk (row 0), so the talk goes on to the Talk sub-menu. A refusal
-  (locked, read-only, unknown slot, full) writes nothing: the game runs Never mind, the talk ends, and a notice shows.
+  (locked, read-only, unknown slot, full with nobody away) writes nothing: the game runs Never mind, the talk ends, and a notice shows.
 - **Confirmation**, inside the talk (no dialog, so no input leaks): the Talk sub-menu (`44dcab9b-2a86-4ab0-bd52-24dde93cfe60`,
   3 choices) is re-shown through `reqDisp` with its first row relabelled, Small talk removed and Cancel untouched:
   - Adopt: "Confirm adopt" / Cancel. Release: "Confirm release" / Cancel.
@@ -236,12 +236,17 @@ From [How should adopt and release look and feel?](issues/06-adopt-release-ux.md
   - A `nextNode` guard rewrites a stray Matters of import / Small talk to Cancel (and a stray root index to Never mind)
     if a `SelectedIndex` write does not stick. A talk cannot be broken off (no movement, hits do not end it).
 - **Adopt** (confirmed): roster add (status present, cache set), first backup written, notice-free (the root menu the confirm
-  returns to shows the new row). Errors `full`, `already_adopted`, `locked`, `read_only`, `no_slot`, `no_offline_id` → notice with the
+  returns to shows the new row). Errors `full` (only when no member is away), `already_adopted`, `locked`, `read_only`, `no_slot`, `no_offline_id` → notice with the
   reason: `full`, `locked`, `read_only` and `no_slot` at the pick (the talk ends like Never mind), the rest at the confirm.
-- **Retinue full** (an away member holds a place and a new hired pawn fills its party slot): picking Adopt opens a
-  dialog "Your retinue is full." with one button per away member, "Release <name> (away, Lv N)" (backup's level), and
-  Cancel; choosing one asks "Release <name>? Their progress will be lost." (Yes/No); Yes releases it (backup deleted)
-  and adopts the current pawn.
+- **Retinue full** (an away member holds a place and a new hired pawn fills its party slot): no dialog (it leaks input), the
+  choice lives in the Talk sub-menu like the confirm. Picking Adopt goes to the Talk sub-menu, which lists one row per away
+  member in roster order, "Release <name> (away, Lv N)" (the backup's level; "Release <name> (away)" if unknown), in
+  place of Matters of import and Small talk (a lone member removes Small talk's row), then Cancel.
+  - Picking a member row releases it (roster entry removed, backup deleted) and adopts the pawn; the root menu it returns to
+    shows "Release (Retinue · Lv N)". One step, no second confirmation (2026-11-08, the user).
+  - Cancel changes nothing and returns to the root.
+  - Full with no member away (`present`, or `returning`) is refused as any other error: notice "Cannot adopt <name>: the
+    retinue is full (2 members)", the talk ends.
 - **Release** (confirmed): roster remove (unknown keys go with it), backup deleted, the pawn stays in the party as an
   ordinary hired pawn at its level and stops progressing.
 - Locked, read-only or unknown slot: the row stays, picking it shows the reason in a notice and ends the talk.

@@ -69,6 +69,23 @@ do
     end
 end
 
+-- full_pick: n member rows then Cancel; a member row releases it, anything else cancels; both write Cancel's index
+do
+    local function same(p, kind, index) return p.kind == kind and p.index == index and p.write == 2 end
+    assert(same(talk_menu.full_pick(0, 1), "release", 1))
+    assert(same(talk_menu.full_pick(1, 1), "cancel", nil)) -- the shown Cancel
+    assert(same(talk_menu.full_pick(2, 1), "cancel", nil))
+    assert(same(talk_menu.full_pick(0, 2), "release", 1))
+    assert(same(talk_menu.full_pick(1, 2), "release", 2))
+    assert(same(talk_menu.full_pick(2, 2), "cancel", nil)) -- the game's Cancel
+    assert(same(talk_menu.full_pick(3, 2), "cancel", nil))
+    assert(same(talk_menu.full_pick(-1, 2), "cancel", nil))
+    assert(same(talk_menu.full_pick(nil, 2), "cancel", nil))
+    assert(same(talk_menu.full_pick(0.5, 2), "cancel", nil))
+    assert(same(talk_menu.full_pick(0, 0), "cancel", nil))
+    assert(same(talk_menu.full_pick(0, nil), "cancel", nil))
+end
+
 -- view_of: hired slots only
 do
     local views = {
@@ -164,6 +181,31 @@ do
     assert(talk_menu.row(s, v, 5).action == "release")
 end
 
+-- away_members: status away only, in roster order, with the backup's level
+do
+    local function away(id, name) local m = member(id, name); m.status = roster.AWAY; return m end
+    local returning = member(ID_C, "Cal"); returning.status = roster.RETURNING
+    local levels = { [ID_A] = 28, [ID_B] = 31.0 }
+    local function level_of(id) return levels[id] end
+    local list = talk_menu.away_members(store({ away(ID_A, "Folken"), away(ID_B, "Bea") }), level_of)
+    assert(#list == 2 and list[1].offline_id == ID_A and list[1].name == "Folken" and list[1].level == 28)
+    assert(list[2].offline_id == ID_B and list[2].name == "Bea" and list[2].level == 31)
+    -- present and returning members are left out; roster order is kept
+    list = talk_menu.away_members(store({ member(ID_A, "Ana"), away(ID_B, "Bea") }), level_of)
+    assert(#list == 1 and list[1].name == "Bea")
+    list = talk_menu.away_members(store({ returning, away(ID_A, "Folken") }), level_of)
+    assert(#list == 1 and list[1].offline_id == ID_A)
+    assert(#talk_menu.away_members(store({ returning, member(ID_A, "Ana") }), level_of) == 0)
+    -- an unknown level, or no level_of, is nil
+    list = talk_menu.away_members(store({ away(ID_C, "Cal") }), level_of)
+    assert(#list == 1 and list[1].level == nil)
+    list = talk_menu.away_members(store({ away(ID_A, "Folken") }), nil)
+    assert(#list == 1 and list[1].level == nil)
+    -- no roster, no members
+    assert(#talk_menu.away_members(bare("roster"), level_of) == 0)
+    assert(#talk_menu.away_members(store(), level_of) == 0)
+end
+
 -- refusal
 do
     local r = talk_menu.refusal
@@ -182,6 +224,34 @@ do
     s.roster.mode = roster.LOCKED -- locked wins over full
     s.roster.members[2] = member(ID_C, "C")
     assert(r(s, "adopt") == "locked")
+end
+
+-- refusal: a full retinue with an away member is not refused, and the second result lists the away members
+do
+    local r = talk_menu.refusal
+    local function away(id, name) local m = member(id, name); m.status = roster.AWAY; return m end
+    local function level_of(id) return id == ID_A and 28 or nil end
+    local err, list = r(store({ away(ID_A, "Folken"), member(ID_B, "Bea") }), "adopt", level_of)
+    assert(err == nil and #list == 1 and list[1].name == "Folken" and list[1].level == 28)
+    err, list = r(store({ away(ID_A, "Folken"), away(ID_B, "Bea") }), "adopt", level_of)
+    assert(err == nil and #list == 2 and list[2].name == "Bea" and list[2].level == nil)
+    err, list = r(store({ away(ID_A, "Folken"), away(ID_B, "Bea") }), "adopt") -- no level_of
+    assert(err == nil and #list == 2 and list[1].level == nil)
+    -- full with nobody away (a returning member does not count)
+    local returning = member(ID_B, "Bea"); returning.status = roster.RETURNING
+    err, list = r(store({ member(ID_A, "Ana"), returning }), "adopt", level_of)
+    assert(err == "full" and list == nil)
+    -- not full: no list, even with a member away
+    err, list = r(store({ away(ID_A, "Folken") }), "adopt", level_of)
+    assert(err == nil and list == nil)
+    -- release is never full
+    err, list = r(store({ away(ID_A, "Folken"), away(ID_B, "Bea") }), "release")
+    assert(err == nil and list == nil)
+    -- locked wins over full
+    local s = store({ away(ID_A, "Folken"), away(ID_B, "Bea") })
+    s.roster.mode = roster.LOCKED
+    err, list = r(s, "adopt", level_of)
+    assert(err == "locked" and list == nil)
 end
 
 print("talk_menu_test ok")

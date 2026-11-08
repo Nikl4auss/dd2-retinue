@@ -112,7 +112,7 @@ local flow = lifecycle.new{
     report = report,
 }
 local talk = talk_menu.new(report, {
-    store = retinue, party = party, notify = function(text) queue:push(text) end,
+    store = retinue, party = party, backups = backups, notify = function(text) queue:push(text) end,
 })
 
 -- UpdateBehavior, game thread, after flow.tick: the queued notices. notices.drive reads busy() in this callback, the one

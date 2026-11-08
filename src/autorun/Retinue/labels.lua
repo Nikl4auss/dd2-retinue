@@ -25,7 +25,14 @@ function M.release_row(level)
     return string.format("Release (Retinue \194\183 Lv %s)", num(level))
 end
 
--- The confirm replaces the Talk sub-menu's first two rows: the pick, and a disabled line saying what it costs.
+-- A full retinue's sub-menu row for an away member (the pick releases it and adopts the pawn talked to); the level is the
+-- backup's, when known.
+function M.release_away(name, level)
+    if level == nil then return string.format("Release %s (away)", name) end
+    return string.format("Release %s (away, Lv %s)", name, num(level))
+end
+
+-- The confirm replaces the Talk sub-menu's first row; Small talk is removed.
 function M.confirm_adopt() return "Confirm adopt" end
 function M.confirm_release() return "Confirm release" end
 

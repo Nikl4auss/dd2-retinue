@@ -9,7 +9,9 @@
 -- import, Small talk removed, Cancel untouched. Picking the confirm acts, any other pick cancels, and
 -- both are rewritten to Cancel (row 2), which returns to the root menu. Two nextNode guards back up a failed rewrite: on the
 -- root, after our pick, any choice but Talk becomes Never mind; on the Talk sub-menu, after the confirm pick, Matters of import
--- or Small talk becomes Cancel. Anything unknown, missing or thrown leaves the menu vanilla. All of it runs on the game
+-- or Small talk becomes Cancel. A full retinue with an away member takes the same road, but its Talk sub-menu shows "Release
+-- <name> (away, Lv N)" per away member (rows 0 and 1, Cancel last); picking one releases that member and adopts the pawn.
+-- Anything unknown, missing or thrown leaves the menu vanilla. All of it runs on the game
 -- thread: the hooks inside the game's calls, tick() in Retinue.lua's UpdateBehavior callback.
 local hooks = require("Retinue.hooks")
 local labels = require("Retinue.labels")
@@ -95,7 +97,8 @@ local function elements(arr)
 end
 
 -- M.new(report, deps) -> talk
---   deps = { store = game/roster_store's, party = game/party's, notify = function(text), clock = function() -> seconds (optional) }
+--   deps = { store = game/roster_store's, party = game/party's, notify = function(text), clock = function() -> seconds (optional),
+--            backups = game/backup_store's (optional: the away members' levels) }
 --   talk.available   boolean  everything below was found and the hooks are installed
 --   talk.missing     { string }  what was not found, for the menu's "unavailable" lines
 --   talk.tick(now)   -- once per UpdateBehavior, on the game thread: the picks on our row and on the confirm, the action
@@ -103,10 +106,14 @@ function M.new(report, deps)
     local talk = { available = false, missing = {} }
     local missing = talk.missing
     local store, party, notify = deps.store, deps.party, deps.notify
+    local backups = deps.backups
     local clock = deps.clock or os.clock -- the hooks have no tick's `now`
 
-    local menu = nil -- the menu we changed: { mode = "offer" | "confirm", widget, row, generation, count (offer: vanilla rows) }
-    local armed = nil -- our pick on the root menu, waiting for the Talk sub-menu: { row, generation, deadline }
+    -- the menu we changed: { mode = "offer" | "confirm" | "full", widget, row, generation, count (offer: vanilla rows),
+    -- full (full: the away members shown), label (confirm, full: row 0's text) }
+    local menu = nil
+    -- our pick on the root menu, waiting for the Talk sub-menu: { row, generation, deadline, full (the away members, when the retinue is full) }
+    local armed = nil
     local guard = nil -- the confirm pick's rewrite to Cancel, waiting for its nextNode on the Talk sub-menu: { deadline }
     local root_guard = nil -- our pick's rewrite to Talk, waiting for its nextNode on the root menu: { deadline }
 
@@ -188,6 +195,14 @@ function M.new(report, deps)
         log.error(string.format("[Retinue] talk menu: %s %s: %s", action, name, result))
     end
 
+    -- The backup's level of a member (nil when unknown or unreadable).
+    local function level_of(id)
+        if backups == nil then return nil end
+        local ok, level = pcall(backups.level, id)
+        if ok then return level end
+        return nil
+    end
+
     -- The Talk sub-menu showing after our pick: row 0 relabelled as the confirm, row 1 (Small talk) removed, Cancel as the game
     -- has it, now shown second. Every pick is written to the game's Cancel (index 2); a missed write on the shown Cancel would
     -- run Small talk, which the nextNode guard turns into Cancel. No warning row: the user found a disabled row still takes the
@@ -201,6 +216,28 @@ function M.new(report, deps)
         local adopt = c.row.action == "adopt"
         local confirm_row = list:call("get_Item", 0)
         if confirm_row == nil then return end
+        if c.full then
+            -- The sub-menu has two rows before Cancel: more away members (a higher CAP) would put a member on Cancel's index.
+            if #c.full > 2 then
+                report("talk menu", "more than 2 away members")
+                return
+            end
+            -- A full retinue: one row per away member in place of Matters of import and Small talk (a second row kept only
+            -- for a second member), Cancel as the game has it.
+            local second = c.full[2] and list:call("get_Item", 1)
+            if c.full[2] and second == nil then return end
+            local label = labels.release_away(c.full[1].name, c.full[1].level)
+            confirm_row:set_field("Msg", sdk.create_managed_string(label))
+            confirm_row:set_field("_IsDecideEnable", true)
+            if second then
+                second:set_field("Msg", sdk.create_managed_string(labels.release_away(c.full[2].name, c.full[2].level)))
+                second:set_field("_IsDecideEnable", true)
+            else
+                list:call("RemoveAt", 1)
+            end
+            menu = { mode = "full", widget = widget, row = c.row, generation = c.generation, full = c.full, label = label }
+            return
+        end
         local confirm_label = adopt and labels.confirm_adopt() or labels.confirm_release()
         confirm_row:set_field("Msg", sdk.create_managed_string(confirm_label))
         confirm_row:set_field("_IsDecideEnable", true)
@@ -274,7 +311,7 @@ function M.new(report, deps)
         end
         -- The same Talk sub-menu list handed to reqDisp twice (never seen): its first row already reads as the confirm. Watched
         -- again, so a pick there is still ours and not the game's Matters of import.
-        if prev and prev.mode == "confirm" and node_id ~= nil and talk_menu.is_talk_sub(node_id, choice_ids)
+        if prev and (prev.mode == "confirm" or prev.mode == "full") and node_id ~= nil and talk_menu.is_talk_sub(node_id, choice_ids)
             and is_talk_select(widget) then
             local first = list:call("get_Item", 0)
             if first and as_string(first:get_field("Msg")) == prev.label then
@@ -353,6 +390,37 @@ function M.new(report, deps)
         return nil
     end
 
+    -- The full retinue's pick: release the away member, then adopt the pawn talked to. The pawn must still be in the party
+    -- and the member still away before anything is released; a failed release adopts nothing.
+    local function act_full(row, member)
+        local current = roster.find(store.roster, member.offline_id)
+        if current == nil or current.status ~= roster.AWAY then
+            line("release", member.name, "refused (not_adopted)")
+            notify(labels.refused("release", member.name, "not_adopted"))
+            return
+        end
+        local view = view_by_id(row.offline_id)
+        if view == nil then
+            line(row.action, row.name, "refused (not_in_party)")
+            notify(labels.refused("adopt", row.name, "not_in_party"))
+            return
+        end
+        local ok, err = store:release(member.offline_id)
+        if not ok then
+            line("release", member.name, "refused (" .. tostring(err) .. ")")
+            notify(labels.refused("release", member.name, err))
+            return
+        end
+        line("release", member.name, "done")
+        ok, err = store:adopt(view)
+        if ok then
+            line(row.action, row.name, "done")
+        else
+            line(row.action, row.name, "refused (" .. tostring(err) .. ")")
+            notify(labels.refused("adopt", row.name, err))
+        end
+    end
+
     local function act(row)
         local ok, err
         if row.action == "adopt" then
@@ -392,7 +460,7 @@ function M.new(report, deps)
             line(row.action, row.name, "dropped (the roster changed)")
             return
         end
-        local err = talk_menu.refusal(store, row.action)
+        local err, away = talk_menu.refusal(store, row.action, level_of)
         if err then
             line(row.action, row.name, "refused (" .. err .. ")")
             notify(labels.refused(row.action, row.name, err))
@@ -402,8 +470,8 @@ function M.new(report, deps)
             report("talk menu", "SelectedIndex could not be redirected to Talk") -- it stays on our row: Never mind runs
             return
         end
-        line(row.action, row.name, "picked")
-        armed = { row = row, generation = m.generation, deadline = now + CONFIRM_SECONDS }
+        line(row.action, row.name, away and string.format("picked (full: %d away)", #away) or "picked")
+        armed = { row = row, generation = m.generation, deadline = now + CONFIRM_SECONDS, full = away }
         root_guard = { deadline = now + GUARD_SECONDS }
     end
 
@@ -434,13 +502,48 @@ function M.new(report, deps)
         end
     end
 
+    -- The pick on the full retinue's sub-menu: a member row releases it and adopts the pawn, anything else cancels; both go
+    -- back through Cancel.
+    local function watch_full(w, m, now)
+        local selected = w:get_field("SelectedIndex")
+        guard = { deadline = now + GUARD_SECONDS } -- first: whatever the pick, the talk goes on through Cancel
+        if type(selected) ~= "number" or math.tointeger(selected) == nil then
+            menu = nil
+            return
+        end
+        local p = talk_menu.full_pick(math.tointeger(selected), #m.full)
+        menu = nil
+        local row = m.row
+        if p.kind == "release" then
+            local member = m.full[p.index]
+            if store.generation ~= m.generation then
+                line(row.action, row.name, "dropped (the roster changed)")
+            else
+                line(row.action, row.name, "confirmed (release " .. member.name .. ")")
+                local ok, err = pcall(act_full, row, member)
+                if not ok then report("talk menu", err) end
+            end
+        else
+            line(row.action, row.name, "cancelled")
+        end
+        if not write_index(w, p.write) then
+            report("talk menu", "SelectedIndex could not be redirected to Cancel") -- the nextNode guard follows
+        end
+    end
+
     -- The widget's state, then the rewrite of a pick. Only an exact match acts: anything unread waits for the next frame.
     local function watch_menu(now)
         local w = talk_select()
         if w == nil or w:get_address() ~= menu.widget then return end
         if w:call("get_IsEndGUI") ~= true then return end
         local m = menu
-        if m.mode == "offer" then watch_offer(w, m, now) else watch_confirm(w, m, now) end
+        if m.mode == "offer" then
+            watch_offer(w, m, now)
+        elseif m.mode == "full" then
+            watch_full(w, m, now)
+        else
+            watch_confirm(w, m, now)
+        end
     end
 
     function talk.tick(now)

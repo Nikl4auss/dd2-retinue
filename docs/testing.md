@@ -155,9 +155,10 @@ Restore `fixture-levelled-pawn`, adopt Folken (Lv 27), grant exp until Lv 28. Sn
     equal `m2-a` (equipment differs: regenerated). Status page matches. Log `away→returning`, `returning→present
     restored Lv 23→28`. Save, reload, then full relaunch: unchanged.
 13. **Retinue full**: from `m2-adopted-folken`, adopt the second hired pawn too, dismiss Folken, hire a fresh pawn into
-    the free slot and pick Adopt. Dialog "Your retinue is full." with "Release Folken (away, Lv 28)" and Cancel.
-    Cancel: nothing changes. Again, choose Folken → "Release Folken? Their progress will be lost." → Yes: Folken's
-    member is gone, its backup gone or 0 bytes (as in check 7), the new pawn is adopted.
+    the free slot and pick Adopt. The Talk sub-menu opens with "Release Folken (away, Lv 28)" and Cancel (no dialog).
+    Cancel: nothing changes, back at the root. Again, pick Folken: Folken's member is gone, its backup gone or 0 bytes
+    (as in check 7), the new pawn is adopted, and the root shows its "Release (Retinue · Lv N)" row. No movement or
+    attack on the picks (pad A and F).
 14. **Lost**: restore `m2-adopted-folken`. *Kill pawns* (Nick's Devtools): the main pawn leaves too, so the log shows
     `in the world: no` and Folken stays `present`. Revive the main pawn (or travel to a Rift stone): within ~3 s of its return
     (`in the world: yes`), log `present→away (absence)`; backup = the last poll (Lv 28). Re-hire: restored as in

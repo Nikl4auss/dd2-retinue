@@ -1,6 +1,6 @@
 -- The talk menu's extra row for a hired party pawn: which pawn, which row, whether the pick is refused, and what a pick
--- on the root menu or on the confirm (the Talk sub-menu) does. Pure: no REFramework globals, so it runs under plain Lua in
--- tests; game/talk_menu.lua reads the menu and acts on the pick.
+-- on the root menu, on the confirm or on the full retinue's sub-menu (both are the Talk sub-menu) does. Pure: no
+-- REFramework globals, so it runs under plain Lua in tests; game/talk_menu.lua reads the menu and acts on the pick.
 local labels = require("Retinue.labels")
 local roster = require("Retinue.roster")
 
@@ -60,13 +60,33 @@ function M.row(store, view, level)
     return { action = "adopt", label = labels.adopt_row(), offline_id = id, name = name }
 end
 
--- refusal(store, action) -> err | nil, checked when the row is picked, before the confirm (the same errors as roster.adopt / release).
-function M.refusal(store, action)
+-- away_members(store, level_of) -> { { offline_id, name, level } } in roster order: the members with status roster.AWAY.
+-- level_of(id) -> number | nil (the backup's level); nil level_of, or no roster, gives no levels / an empty list.
+function M.away_members(store, level_of)
+    local out = {}
+    local r = store.roster
+    if r == nil then return out end
+    for _, m in ipairs(r.members) do
+        if m.status == roster.AWAY then
+            out[#out + 1] = { offline_id = m.offline_id, name = m.name, level = level_of and level_of(m.offline_id) or nil }
+        end
+    end
+    return out
+end
+
+-- refusal(store, action, level_of) -> err | nil, away: checked when the row is picked, before the confirm (the same errors as
+-- roster.adopt / release). An adopt into a full retinue with an away member is not refused: it returns nil, away (the
+-- away_members list), and the pick goes to the full sub-menu; with none away it is "full". level_of may be nil.
+function M.refusal(store, action, level_of)
     local r = store.roster
     if store.unit == nil or r == nil then return "no_slot" end
     if r.mode == roster.LOCKED then return "locked" end
     if r.mode == roster.READ_ONLY then return "read_only" end
-    if action == "adopt" and #r.members >= roster.CAP then return "full" end
+    if action == "adopt" and #r.members >= roster.CAP then
+        local away = M.away_members(store, level_of)
+        if #away == 0 then return "full" end
+        return nil, away
+    end
     return nil
 end
 
@@ -92,6 +112,16 @@ end
 -- Row 0 is the confirmation; any other pick cancels. Both go back to the root through Cancel (row 2).
 function M.confirm_pick(sel)
     return { kind = sel == 0 and "confirm" or "cancel", write = M.CANCEL_INDEX }
+end
+
+-- full_pick(sel, n) -> { kind = "release" | "cancel", index = i | nil, write = 2 }: the pick on the full retinue's sub-menu,
+-- which shows n (1 or 2) member rows in place of Matters of import and Small talk, then Cancel. 0 <= sel < n releases member
+-- index sel + 1; anything else (Cancel, nil, out of range) cancels. Both go back to the root through Cancel (row 2).
+function M.full_pick(sel, n)
+    if math.type(sel) == "integer" and math.type(n) == "integer" and sel >= 0 and sel < n then
+        return { kind = "release", index = sel + 1, write = M.CANCEL_INDEX }
+    end
+    return { kind = "cancel", write = M.CANCEL_INDEX }
 end
 
 return M

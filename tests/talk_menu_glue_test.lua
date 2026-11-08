@@ -200,18 +200,31 @@ do
     local adopted, released
     local adopt_result = { true }
     local adopt_throws = false
+    local release_result = { true }
+    local events = {} -- the store's calls in order
+    local levels = {} -- the backups' levels by Offline ID
+    local pawn_left = false -- the party no longer holds the pawn
     local store = { generation = 1, found = {}, ambiguous = {}, unit = 0,
         roster = { mode = roster.OK, members = {}, warnings = {} },
         adopt = function(self, v)
             if adopt_throws then error("adopt boom") end
             adopted = v
+            events[#events + 1] = "adopt"
             return table.unpack(adopt_result)
         end,
-        release = function(self, id) released = id; return true end }
+        release = function(self, id)
+            released = id
+            events[#events + 1] = "release " .. id
+            return table.unpack(release_result)
+        end }
     local pushed = {}
     local talk = talk_menu.new(report, {
         store = store, notify = function(t) pushed[#pushed + 1] = t end, clock = function() return world.now end,
-        party = { views = function() return { { slot = 0, character_id = 100 }, view } end, level = function() return 30 end },
+        backups = { level = function(id) return levels[id] end },
+        party = { views = function()
+            if pawn_left then return { { slot = 0, character_id = 100 } } end
+            return { { slot = 0, character_id = 100 }, view }
+        end, level = function() return 30 end },
     })
     assert(talk.available and #hooked == 2)
     local req_disp, next_node = hooked[1].pre, hooked[2].pre
@@ -559,6 +572,156 @@ do
     pick(0, 101)
     assert(released == OFFLINE and has_log("release Ana: done"))
     store.roster.members, store.found = {}, {}
+
+    -- a full retinue (ticket 25): the Talk sub-menu lists the away members, a pick releases one and adopts the pawn
+    do
+        local FOLKEN, BEA = "bbbbbbbb-0000-0000-0000-000000000002", "cccccccc-0000-0000-0000-000000000003"
+        local function away(id, name) return { offline_id = id, name = name, status = roster.AWAY, character_id = 0 } end
+        local function present(id, name) return { offline_id = id, name = name, status = roster.PRESENT, character_id = 201 } end
+        local function setup(members)
+            store.roster.members = members
+            store.generation = 1
+            pushed, logs, reports, events, released, adopted = {}, {}, {}, {}, nil, nil
+            to_root_node(); show_root(); clear_writes()
+        end
+        levels[FOLKEN], levels[BEA] = 28, nil
+        local t = 400
+
+        -- one away member: row 0 relabelled, row 1 removed, Cancel shown second
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        assert(list_items[4].sets.Msg == "Adopt")
+        pick(3, t); t = t + 1
+        assert(written() == 0 and has_log("adopt Ana: picked (full: 1 away)") and #pushed == 0)
+        show_sub()
+        assert(vanilla[1].sets.Msg == "Release Folken (away, Lv 28)" and vanilla[1].sets._IsDecideEnable == true)
+        assert(next(vanilla[2].sets) == nil and #list_items == 2 and list_items[1] == vanilla[1] and list_items[2] == vanilla[3])
+        clear_writes()
+        pick(0, t); t = t + 1
+        assert(events[1] == "release " .. FOLKEN and events[2] == "adopt" and #events == 2 and adopted == view)
+        assert(written() == 2 and #pushed == 0 and #reports == 0)
+        assert(has_log("adopt Ana: confirmed (release Folken)") and has_log("release Folken: done") and has_log("adopt Ana: done"))
+        -- the pick of the shown Cancel (row 1 of the list, written index 1 by the game's SelectedIndex): cancels
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub(); clear_writes()
+        pick(1, t); t = t + 1
+        assert(#events == 0 and written() == 2 and has_log("adopt Ana: cancelled"))
+        -- Cancel itself (the game's row 2)
+        to_root_node(); show_root(); pick(3, t); t = t + 1; show_sub(); clear_writes()
+        pick(2, t); t = t + 1
+        assert(#events == 0 and written() == 2)
+
+        -- two away members: rows 0 and 1 relabelled (no level when unknown), three rows; row 1 releases the second
+        setup({ away(FOLKEN, "Folken"), away(BEA, "Bea") })
+        pick(3, t); t = t + 1
+        assert(written() == 0 and has_log("picked (full: 2 away)"))
+        show_sub()
+        assert(vanilla[1].sets.Msg == "Release Folken (away, Lv 28)" and vanilla[2].sets.Msg == "Release Bea (away)")
+        assert(vanilla[2].sets._IsDecideEnable == true and #list_items == 3 and list_items[3] == vanilla[3])
+        clear_writes()
+        pick(1, t); t = t + 1
+        assert(events[1] == "release " .. BEA and events[2] == "adopt" and #events == 2 and written() == 2)
+        assert(has_log("adopt Ana: confirmed (release Bea)"))
+        -- and Cancel (row 2) with two members acts on nothing
+        to_root_node(); show_root(); pick(3, t); t = t + 1; show_sub(); clear_writes(); events = {}
+        pick(2, t); t = t + 1
+        assert(#events == 0 and written() == 2)
+        -- the same list handed to reqDisp twice: not relabelled again, the pick is still ours
+        to_root_node(); show_root(); pick(3, t); t = t + 1; show_sub()
+        req_disp({ [2] = WIDGET, [3] = SUB_ADDR })
+        assert(vanilla[1].sets.Msg == "Release Folken (away, Lv 28)" and #list_items == 3)
+        clear_writes(); events = {}
+        pick(0, t); t = t + 1
+        assert(events[1] == "release " .. FOLKEN and written() == 2)
+
+        -- full with no away member (a returning one is not offered): refused as today, nothing written
+        setup({ present(OTHER, "Cal"), { offline_id = FOLKEN, name = "Folken", status = roster.RETURNING, character_id = 0 } })
+        pick(3, t); t = t + 1
+        assert(written() == nil and #pushed == 1 and pushed[1] == "Cannot adopt Ana: the retinue is full (2 members)")
+        show_sub()
+        assert(next(vanilla[1].sets) == nil and #list_items == 3, "no sub-menu change")
+
+        -- the roster changed between our pick and the sub-menu pick: dropped, still Cancel
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub()
+        store.generation = 5
+        clear_writes()
+        pick(0, t); t = t + 1
+        assert(#events == 0 and written() == 2 and has_log("dropped (the roster changed)"))
+        store.generation = 1
+
+        -- the nextNode guard on a failed write in full mode (member row and Cancel row alike)
+        for _, sel in ipairs({ 0, 1 }) do
+            setup({ away(FOLKEN, "Folken"), away(BEA, "Bea") })
+            pick(3, t); t = t + 1; show_sub()
+            select.set_field = function() end
+            pick(sel, t); t = t + 1
+            select.set_field = real_set
+            assert(#reports == 1 and reports[1]:find("could not be redirected to Cancel", 1, true))
+            player_props._CurrentNode = sub_node
+            args = { [2] = PLAYER_ADDR, [3] = sel }
+            next_node(args)
+            assert(args[3] == 2, "full mode: any index but Cancel becomes Cancel")
+        end
+        -- the guard stands for an unreadable SelectedIndex too
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub(); clear_writes(); events = {}
+        pick("?", t); t = t + 1
+        assert(written() == nil and #events == 0)
+        args = { [2] = PLAYER_ADDR, [3] = 0 }
+        next_node(args)
+        assert(args[3] == 2)
+
+        -- the member is not away any more at the pick: no release, no adopt, a notice
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub()
+        store.roster.members[2].status = roster.RETURNING
+        clear_writes()
+        pick(0, t); t = t + 1
+        assert(#events == 0 and written() == 2 and #pushed == 1 and pushed[1]:find("Cannot release Folken", 1, true))
+        -- the member is gone altogether
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub()
+        store.roster.members = {}
+        pick(0, t); t = t + 1
+        assert(#events == 0 and #pushed == 1 and pushed[1] == "Cannot release Folken: not in the retinue", pushed[1])
+
+        -- the pawn left the party before the pick: nothing is released
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub()
+        pawn_left = true
+        clear_writes()
+        pick(0, t); t = t + 1
+        pawn_left = false
+        assert(#events == 0 and written() == 2 and #pushed == 1 and pushed[1] == "Cannot adopt Ana: no longer in the party", pushed[1])
+
+        -- release fails: no adopt, a notice
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub()
+        release_result = { false, "locked" }
+        pick(0, t); t = t + 1
+        release_result = { true }
+        assert(events[1] == "release " .. FOLKEN and #events == 1 and #pushed == 1 and written() == 2)
+        assert(pushed[1] == "Cannot release Folken: the roster is locked (see the menu)", pushed[1])
+
+        -- adopt fails after the release: a notice for the adopt
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub()
+        adopt_result = { false, "already_adopted" }
+        pick(0, t); t = t + 1
+        adopt_result = { true }
+        assert(#events == 2 and #pushed == 1 and pushed[1]:find("Cannot adopt Ana", 1, true) and written() == 2)
+
+        -- the action throws: reported, Cancel still written
+        setup({ present(OTHER, "Cal"), away(FOLKEN, "Folken") })
+        pick(3, t); t = t + 1; show_sub(); clear_writes()
+        adopt_throws = true
+        pick(0, t); t = t + 1
+        adopt_throws = false
+        assert(#reports == 1 and reports[1]:find("adopt boom", 1, true) and written() == 2)
+
+        store.roster.members, store.found = {}, {}
+        store.generation = 1
+    end
 
     -- _Choices whose get_elements fails (ticket 24 run 2): read as a List, then as an array
     local choices = {}
