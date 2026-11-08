@@ -27,3 +27,6 @@ Load-only part of checks 23–26 (2026-11-06, Slot 2, fixture `m2-adopted-folken
 - 23, three members (F): `roster locked: more than 2 members ...`, no pass, nothing changed.
 - 26, present member (G): `backup of Folken: damaged: not valid JSON`, no correction, file rewritten at Lv 28 by the end of the run (16 s in the world; the moment was not measured).
 - 26, `returning` (G2, stands in for the away → Return case): `returning→present skipped: no backup (damaged: not valid JSON)`, roster `present`, file rewritten at Lv 28.
+- 2026-11-07, from ticket 23: decide whether to keep the notice diagnostics added in `83b4485`, namely the `notice state`
+  lines on every change while a notice waits or shows, and the "Close notice (game stuck)" menu button (it hides the
+  shared dialog, a game dialog included). The freeze they were added for, on `0b9de66`, did not reproduce.
