@@ -8,7 +8,8 @@
 # Headless: nothing shows on the desktop and the PC stays usable during a run. The game draws into gamescope's headless
 # backend (1920x1080); keys go to gamescope's own Xwayland through XTEST, so they never reach the desktop and need no
 # focus. Never use ydotool here: it types into whatever window the user has active.
-# Needs gamescope (with gamescopectl), Python with python-xlib and Pillow, and pactl/paplay for the mute.
+# Needs gamescope (with gamescopectl), Python with python-xlib and Pillow, pactl/paplay for the mute, and systemd-run.
+# The game runs capped (12 FPS, 3 cores at lowest priority) unless DD2_AUTOTEST_FULL=1; DD2_AUTOTEST_FPS sets the cap.
 # Screenshots go to $DD2_AUTOTEST_DIR (default: a new temporary folder, printed at the start).
 #
 # The game's audio is muted while it runs. WirePlumber remembers a stream's mute by application name, so on exit the
@@ -171,8 +172,17 @@ if pgrep -x DD2.exe >/dev/null; then
     exit 1
 fi
 
-gamescope --backend headless -W 1920 -H 1080 -w 1920 -h 1080 -- "$CRUCIBLE" --launch "Dragon's Dogma 2" \
-    >"$WORK/gamescope.log" 2>&1 &
+GS=(gamescope --backend headless -W 1920 -H 1080 -w 1920 -h 1080 -- "$CRUCIBLE" --launch "Dragon's Dogma 2")
+if [ "${DD2_AUTOTEST_FULL:-}" = 1 ]; then
+    "${GS[@]}" >"$WORK/gamescope.log" 2>&1 &
+else
+    # Capped by default so the PC stays usable: MangoHud's limiter holds the game at 12 FPS (the variable reaches the game
+    # through Crucible), and a systemd scope keeps it on 6 of the 12 threads at 3 cores and lowest priority. Measured
+    # 2026-11-08: system CPU 43% -> 26%, GPU busy 47% -> 28%, load to world 185 s -> 220 s. DD2_AUTOTEST_FULL=1 runs uncapped.
+    MANGOHUD_CONFIG="fps_limit=${DD2_AUTOTEST_FPS:-12},fps_limit_method=late,fps,cpu_stats,gpu_stats" \
+        systemd-run --user --scope -q -p AllowedCPUs=0-5 -p CPUQuota=300% nice -n 19 "${GS[@]}" \
+        >"$WORK/gamescope.log" 2>&1 &
+fi
 GS_PID=$!
 
 # The game's X display is gamescope's Xwayland, read from the game itself; the screenshot socket from gamescope's child,
