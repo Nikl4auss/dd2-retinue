@@ -8,13 +8,13 @@ Every player-facing string lives in one place.
 
 **Blocked by:** [19: Dismiss and Return restore an adopted pawn's progress](19-dismiss-return-restore.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] `requestNoButtonDialog` notice, closed by the mod after 3 s with `requestHideDialog()`, only if it is still the mod's notice on screen.
 - [x] A notice is deferred while a game dialog or menu is up.
 - [x] Pure `labels` module with tests for every string (Return, guard skip, locked / read-only / no slot reasons).
 - [x] Fails closed: missing methods → log only.
-- [ ] Verified in game: Return notice shows and closes; a locked roster gives one notice on load.
+- [x] Verified in game: Return notice shows and closes; a locked roster gives one notice on load.
 
 ## Comments
 
@@ -38,3 +38,19 @@ Every player-facing string lives in one place.
   for the server-error dialog (seen only through `netErr`; `dialogGui` and `D.disp` stay false while it is up), showed
   about 1 s after it closed, and was hidden at 3 s while still ours. Files unchanged. The first freeze did not reproduce;
   that run also had a fight, an exp grant and a system-menu save before the title. Logging stays on for tests 2-8.
+- 2026-11-07, `83b4485`, rest of the run: 1-6 and 8 pass, 7 skipped. Ticket closed.
+  - Locked: after the fix and Reset scripts, "roster ok (1/2)", no notice.
+  - Read-only (`"version": 2`): one notice per load, after the server error closed; Folken levelled; `slots/2` unchanged.
+  - Reset scripts with the notice up: the old instance closed it (the new one first read `D.disp=false`), and the game was not
+    stuck. The new instance counts as a new load and shows the notice once more. Accepted: Reset scripts is a developer action.
+  - New Game: "the roster waits for the new game's first save", no notice; no `slots/3` created.
+  - Guard skip: `skipped: guard (game Lv 23, backup Lv 22)`, notice "Folken returned — kept Lv 23, newer than the backup", hidden
+    at 3 s; the backup is then Lv 23.
+  - F held through the close: nothing opened, no turn, input normal.
+  - Pause menu (check 33): open about 22 s, the notice showed 1 s after it closed. A game Yes/No (`dialogGui=true`, `D.noButton=false`)
+    stayed open about 20 s and was left alone; the notice came 1 s after it closed.
+  - Talk opened after queueing: skipped (no time to open a talk within the 1 s settle). The talk wait is still covered by the
+    Rift run on `0b9de66` (the notice waited for the talk's last line). It also re-ran Return on load: restored Lv 23→28, and
+    the notice waited for two pause-menu openings.
+  - Open: the freeze on `0b9de66` (reload in the same session after a fight, an exp grant and a save) did not reproduce. The
+    state logging and the "Close notice (game stuck)" button stay in for now; decide in ticket 27 whether to keep them.
