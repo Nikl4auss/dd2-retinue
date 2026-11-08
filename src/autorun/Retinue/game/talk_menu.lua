@@ -159,23 +159,21 @@ function M.new(report, deps)
         local widget = sdk.to_int64(args[2])
         local list = to_managed(args[3])
         if widget == nil or widget == 0 or list == nil then return end
-        -- Diagnostics (ticket 24 run 1: no row and no line): one line per menu with what each step saw.
-        local ok_t, node_id, choice_ids, speaker, listener = pcall(read_talk)
-        if not ok_t then
-            log.error("[Retinue] talk menu trace: read_talk threw: " .. tostring(node_id))
+        local node_id, choice_ids, speaker, listener = read_talk()
+        if node_id == nil then return end
+        if not talk_menu.is_root(node_id, choice_ids) then
+            -- The root node's id with choices that do not qualify (unreadable, or Never mind not last): after a game update the
+            -- row would vanish without a word (ticket 24 runs 1-2). Logged once per distinct case.
+            if node_id == talk_menu.ROOT_NODE then
+                report("talk menu", string.format("root menu not recognised: %s choices, last %s",
+                    choice_ids and #choice_ids or "unreadable", choice_ids and tostring(choice_ids[#choice_ids]) or "-"))
+            end
             return
         end
         local views = party.views()
         local view = talk_menu.view_of(views, speaker) or talk_menu.view_of(views, listener)
-        local root = node_id ~= nil and talk_menu.is_root(node_id, choice_ids)
-        local row = root and view and talk_menu.row(store, view, party.level(view)) or nil
-        local slots = {}
-        for _, v in ipairs(views) do slots[#slots + 1] = tostring(v.slot) .. ":" .. tostring(v.character_id) end
-        log.error(string.format("[Retinue] talk menu trace: node=%s choices=%s last=%s speaker=%s (%s) listener=%s (%s) party=%s view=%s root=%s row=%s",
-            tostring(node_id), choice_ids and #choice_ids or "nil", choice_ids and tostring(choice_ids[#choice_ids]) or "nil",
-            tostring(speaker), type(speaker), tostring(listener), type(listener), table.concat(slots, ","),
-            view and tostring(view.slot) or "nil", tostring(root), row and row.action or "nil"))
-        if not root or row == nil then return end
+        local row = view and talk_menu.row(store, view, party.level(view))
+        if row == nil then return end
         -- The pick is read on GuiManager.TalkSelect, so the widget showing this list must be that one. Checked after the row
         -- is known, so the line names a row that was withheld, not any menu of the game.
         local gm = sdk.get_managed_singleton(GUI_MANAGER)

@@ -383,8 +383,10 @@ do
     info = obj("info", { ["<CurrentNode>k__BackingField"] = node, ["<Speaker>k__BackingField"] = 202, ["<Listener>k__BackingField"] = 100 })
     world.singletons["app.TalkEventManager"] = obj("tm", { ["<CurrentTalkInfo>k__BackingField"] = info })
     fresh()
+    reports = {}
     hook.pre({ [2] = 1000, [3] = 2000 })
     assert(#list_items == 3)
+    assert(#reports == 1 and reports[1]:find("root menu not recognised: unreadable choices", 1, true), reports[1])
 end
 
 print("talk_menu_glue_test ok")
