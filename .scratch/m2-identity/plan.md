@@ -6,7 +6,7 @@ bodies: `setup_pawn_post`, `name_ref_post`, `rift_item_post`, `mark_text`). Base
 (Plans of earlier tickets are in git history.)
 
 - [x] Slice 1: pure marks + glue + wiring + tests + docs. Tier: **Sonnet** (`implementer`). Commit `34f604e`. Two review rounds: round 1 asked for availability guards in the pres (a partial install), a real nil-roster test, push-then-fill frames; round 2 APPROVE. Gap accepted: the Rift guard has no test of its own (same one-line check as the tested Status guard).
-- [ ] Slice 2: in-game run, checklist 4 and 11. Tier: **Opus, inline** (driving the peer `dd2-own-pawns-ee`), then the user's look. Run 1 found two game facts (get_elements fails on TxtPawnName; setupPawn's refs are nil), fixed inline in `1abfddc` (reviewer APPROVE); run 2 passes headless. User pass open.
+- [x] Slice 2: in-game run, checklist 4 and 11. Tier: **Opus, inline** (driving the peer `dd2-own-pawns-ee`), then the user's look. Run 1 found two game facts (get_elements fails on TxtPawnName; setupPawn's refs are nil), fixed inline in `1abfddc` (reviewer APPROVE); run 2 passes headless; the user's manual pass (optional step included) passes.
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 

@@ -7,12 +7,12 @@ Parent: [M2 spec](../spec.md) (§ Status (native))
 
 **Blocked by:** [19: Dismiss and Return restore an adopted pawn's progress](19-dismiss-return-restore.md)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Status page: only members, never the Arisen or the main pawn.
-- [ ] Previous Hires matched by `ResInfo.OfflineId`; ordinary entries untouched.
-- [ ] Fails closed when a widget field is missing (no mark, logged once).
-- [ ] Verified in game (checklist 4, 11).
+- [x] Status page: only members, never the Arisen or the main pawn.
+- [x] Previous Hires matched by `ResInfo.OfflineId`; ordinary entries untouched.
+- [x] Fails closed when a widget field is missing (no mark, logged once).
+- [x] Verified in game (checklist 4, 11).
 
 ## Comments
 
@@ -28,3 +28,7 @@ Parent: [M2 spec](../spec.md) (§ Status (native))
   in this save. Backups `20261108-122004-m2-t26-pre` (restored after each run), `20261108-123258-m2-t26-run2-pre`.
   Left for the user's manual pass: a non-member hired pawn on the Status page, Release then Previous Hires (stale mark stripped),
   an away member's entry after a real dismiss, and how the marks look.
+- 2026-11-08, `1abfddc`, manual pass by the user: all pass, the optional step included. Status page: Diamonds marked, Klauss and
+  Shaira plain, Folken (hired, not a member) plain. Previous Hires: "★ Diamonds · Lv 24"; after Release, Diamonds plain on both
+  pages (stale mark stripped); Folken adopted then dismissed at the Rift shows "★ Folken · Lv N". Saves restored to
+  `20261108-122004-m2-t26-pre`. Ticket closed.
