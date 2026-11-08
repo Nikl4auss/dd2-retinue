@@ -70,7 +70,9 @@ function Queue:reopen(text, now)
     self.showing, self.deadline = text, now
 end
 
--- drive(queue, screen, now, in_world): one UpdateBehavior tick of the notices, the part of Retinue.lua that is not wiring.
+-- drive(queue, screen, now, in_world) -> nil | "show", text | "hide", text | "gone", text: one UpdateBehavior tick of the
+-- notices, the part of Retinue.lua that is not wiring. The result is for the log: "gone" is a notice that was due to close
+-- but was proven not ours any more, so it was left alone.
 --   screen: game/notice_screen's object (.resolved .available busy() is_mine(text) show(text) hide() -> boolean).
 --   Texts that cannot be shown (the screen is not available) go to screen.show, which logs them. A notice that is up is
 --   closed whether or not the screen is still available: it only needs the methods to exist.
@@ -83,12 +85,16 @@ function M.drive(queue, screen, now, in_world)
         end
     end
     local can_show = screen.available and in_world and not screen.busy()
+    local was = queue.showing
     local action, text = queue:step(now, can_show, screen.is_mine)
     if action == "show" then
         screen.show(text)
     elseif action == "hide" then
         if not screen.hide() then queue:reopen(text, now) end
+    elseif was ~= nil and queue.showing == nil then
+        return "gone", was
     end
+    return action, text
 end
 
 -- new_once() -> once: due(generation, ready) is true on the first ready call of each generation.

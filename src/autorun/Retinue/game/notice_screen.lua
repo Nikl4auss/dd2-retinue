@@ -145,6 +145,31 @@ function M.new(report)
         return res
     end
 
+    -- describe() -> string: every input of busy() and is_mine(), for the log. Diagnostics only; never decides anything.
+    function screen.describe()
+        if not screen.resolved then return "unresolved" end
+        local function read(f)
+            local ok, v = pcall(f)
+            if not ok then return "err" end
+            return tostring(v)
+        end
+        local gm = singleton(GUI_MANAGER)
+        if gm == nil then return "GuiManager nil" end
+        local dialog = gm:get_field("Dialog")
+        local talk, demo = singleton(TALK_MANAGER), singleton(DEMO_MEDIATOR)
+        return table.concat({
+            "dialogGui=" .. read(function() return gm:call("IsDispDialogGui") end),
+            "mainFlow=" .. read(function() return gm:call("IsOpenMainFlowUI") end),
+            "movie=" .. read(function() return gm:call("isDispMovieScreen") end),
+            "netErr=" .. read(function() return gm:get_field("NetworkErrorDialog"):call("get_IsDisp") end),
+            "talk=" .. read(function() return talk:get_field("_IsTalkingAny") end),
+            "demo=" .. read(function() return demo:call("get_IsPlayingDemo") end),
+            "D.disp=" .. read(function() return dialog:call("get_IsDisp") end),
+            "D.noButton=" .. read(function() return dialog:get_field("IsNoButton") end),
+            "D.text=" .. read(function() return as_string(dialog:get_field("MainText")) end),
+        }, " ")
+    end
+
     function screen.show(text)
         if not screen.available then
             log.error("[Retinue] notice (not shown): " .. text)

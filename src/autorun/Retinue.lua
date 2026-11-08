@@ -107,6 +107,7 @@ local flow = lifecycle.new{
 -- UpdateBehavior, game thread, after flow.tick: the queued notices. notices.drive reads busy() in this callback, the one
 -- that shows, and is_mine(text) in the one that hides: a show or a hide over a game dialog softlocks the game (findings
 -- 0009 P6).
+local last_described
 local function tick_notices(now)
     queue:sync(retinue.generation)
     if once:due(retinue.generation, state.in_world and flow.settled()) then
@@ -114,7 +115,21 @@ local function tick_notices(now)
         local text = labels.roster_problem(retinue.roster, tracker.session.unit)
         if text then queue:push(text) end
     end
-    notices.drive(queue, screen, now, state.in_world)
+    -- Diagnostics (ticket 23 rerun): while a notice waits or shows, every change of the game's dialog state, and each
+    -- show, hide and drop, goes to the log.
+    if queue.showing ~= nil or #queue.waiting > 0 then
+        local d = screen.describe()
+        if d ~= last_described then
+            log.error("[Retinue] notice state: " .. d)
+            last_described = d
+        end
+    else
+        last_described = nil
+    end
+    local action, text = notices.drive(queue, screen, now, state.in_world)
+    if action then
+        log.error("[Retinue] notice " .. action .. ": " .. text .. " | " .. screen.describe())
+    end
 end
 
 -- Clear the open-call stack at the start of each game update, on the game thread: re.on_frame may run on
@@ -174,6 +189,12 @@ local function draw()
     local rows = party.rows(state.targets)
     imgui.text(party.failed and "Status unavailable (see log)" or status.format(rows))
     menu:draw(retinue, party, slot.label(tracker.unit()), backups, flow)
+    -- Escape hatch (ticket 23 rerun): a notice nobody closed blocks the game's input. Hides the shared dialog whatever is
+    -- on it, so a game dialog up now would be closed too: only for a game that is stuck with nothing visible.
+    if imgui.button("Close notice (game stuck)") then
+        log.error("[Retinue] notice force-hide: " .. screen.describe())
+        screen.hide()
+    end
     for _, method_name in ipairs(tracker.missing) do
         imgui.text("Slot tracking unavailable: " .. method_name .. " not found (game update?)")
     end

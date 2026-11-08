@@ -27,3 +27,10 @@ Every player-facing string lives in one place.
   - Rerun: locked and read-only need only a file edit and a load, so start there. Dismiss from the talk: F on Dismiss, right click on the gift screen, Yes,
     F on the rating, F on the last line. Then re-hire through a new summon: it appears behind the stone. Leaving the Rift autosaves (global 5), which is how a
     dismissal reaches the save for the guard skip. Each Rift cycle takes several minutes.
+- 2026-11-07, `0b9de66`, rerun test 1 (locked): FAILED. First load: one notice, closed by itself, no level-up, files unchanged.
+  Return to Title Without Saving, then Load from Last Saved Data: the server-error dialog came up, and after the user
+  closed it the game stopped responding (closed with SIGTERM); our notice was never seen. The log has no show/hide lines.
+  A second notice on that reload is by design (once per load); the rerun guide wrongly said it would not repeat.
+  Leading guess: an invisible notice of ours, left up (modal, blocks input) because the deadline read it as not ours.
+  Next build logs every dialog-state change while a notice waits or shows, and each show/hide/gone, and adds a
+  "Close notice (game stuck)" button to the REFramework menu.

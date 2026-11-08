@@ -308,3 +308,24 @@ do
 end
 
 print("notices_test ok")
+
+-- drive: its result names what happened, for the log; a notice proven not ours at the deadline is "gone", not hidden
+do
+    local q, sc = new(), fake_screen()
+    q:sync(1)
+    q:push("one")
+    assert(notices.drive(q, sc, 0, true) == nil)
+    local a, t = notices.drive(q, sc, 1, true)
+    assert(a == "show" and t == "one")
+    assert(notices.drive(q, sc, 2, true) == nil)
+    sc.mine = false
+    a, t = notices.drive(q, sc, 4, true)
+    assert(a == "gone" and t == "one" and sc.calls[#sc.calls] == "is_mine")
+    assert(notices.drive(q, sc, 5, true) == nil)
+    q:push("two")
+    sc.mine = true
+    notices.drive(q, sc, 5, true)
+    notices.drive(q, sc, 6, true)
+    a, t = notices.drive(q, sc, 9, true)
+    assert(a == "hide" and t == "two")
+end
