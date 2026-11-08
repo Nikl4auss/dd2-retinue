@@ -1,116 +1,155 @@
-# M2 plan: ticket 25 (a full retinue offers to release an away member)
+# M2 plan: ticket 26 (Retinue marks on the Status page and in Previous Hires)
 
-Source: [issues/25-retinue-full-release-away.md](issues/25-retinue-full-release-away.md), [spec.md](spec.md) § Adopt and Release (native),
-[findings 0007](../../docs/findings/0007-m2-talk-ui.md) § Follow-up. Base commit: `dd6e340`.
+Source: [issues/26-status-page-rift-marks.md](issues/26-status-page-rift-marks.md), [spec.md](spec.md) § Status (native),
+[findings 0009](../../docs/findings/0009-m2-status-ui.md) P3 and P4, `tools/experiments/Retinue_Exp_StatusUI.lua` (the verified hook
+bodies: `setup_pawn_post`, `name_ref_post`, `rift_item_post`, `mark_text`). Base commit: `492039a`.
 (Plans of earlier tickets are in git history.)
 
-- [x] Slice 1: the "full" sub-menu in the talk: pure decisions, labels, glue, tests, spec and checklist 13. Tier: **Sonnet** (`implementer`). One review round, APPROVE; nits (a guard for more than 2 away members, a stale labels comment) applied inline.
-- [x] Slice 2: in-game run, checklist 13. Headless run 1 by the peer `dd2-own-pawns-ee` (fake away member) and the user's manual pass (real route) pass; full with no away member not run in game. Tier: **Opus, inline** (driving the peer).
+- [ ] Slice 1: pure marks + glue + wiring + tests + docs. Tier: **Sonnet** (`implementer`).
+- [ ] Slice 2: in-game run, checklist 4 and 11. Tier: **Opus, inline** (driving the peer `dd2-own-pawns-ee`), then the user's look.
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 
 Decisions:
 
-- **No dialog.** The spec's `requestDialog` flow leaks input (pad A, F held; ticket 24 manual pass). The choice lives in the Talk sub-menu,
-  like ticket 24's confirm.
-- **One step after Adopt** (the user, 2026-11-08): the sub-menu lists one row per away member, "Release <name> (away, Lv N)", then Cancel;
-  picking a member row releases it and adopts the pawn. No separate "Their progress will be lost" step: the Talk route gives one sub-menu
-  per root pick, and a second one would need a second root pick. Same depth as ticket 24's Release (root row, then the confirm row).
-  The ticket's second criterion and the spec change accordingly.
-- **Away** means status `away` only. `returning` and a `present` member missing from the party are not offered. Full with no away member
-  keeps today's refusal: notice "Cannot adopt <name>: the retinue is full (2 members)", the talk ends.
-- Level N is the backup's (`backups.level(id)`); unknown level prints "Release <name> (away)".
-- CAP is 2, so at most 2 away rows: they take the sub-menu's rows 0 and 1 (Matters of import, Small talk) in place; with one away member,
-  row 1 is removed as in ticket 24. Cancel stays the game's row 2 either way, so the same Cancel write and the same nextNode guard apply.
+- **Who is marked.** Status page: a roster member with status `present` whose CharaData is not the main pawn (`IsMainPawn`); the Arisen
+  and the main pawn have no member Offline ID, so they never match. Previous Hires: every roster member, any status (away, returning,
+  present: the list shows party pawns too, P4), matched by `ResInfo.OfflineId`.
+- **Texts.** Status: the game's shown name + " · Retinue". Previous Hires: "★ " + the game's shown name + " · Lv N", N = the backup's
+  level (`backups.level(id)`); no backup level -> "★ <name>". The shown text is the base (not the roster's name), as in the experiment.
+- **Idempotent and self-cleaning.** Each write starts from the shown text with our own mark stripped, so a re-run never stacks a mark, a
+  changed backup level replaces the old one, and a widget reused for a non-member loses a stale mark. Nothing is written when the text is
+  already right.
+- **Fail closed per surface.** Two hook groups (Status: 3 hooks; Rift: 1 hook), each looked up and installed all-or-nothing on its own: a
+  missing type, method or field leaves that surface vanilla, shows in the mod menu and logs once. At run time an unreadable widget or
+  argument writes nothing (no mark), reported once through `report` (errlog dedups).
+- **Shared helpers.** `guid_str`, `to_managed` and `as_string` move from `game/talk_menu.lua` into `hooks.lua` (`hooks.guid_str`,
+  `hooks.to_managed`, `hooks.as_string`); talk_menu aliases them as locals. Pure move, no behaviour change.
 
-## Slice 1: The "full" sub-menu
+## Slice 1: The marks
 
-**Goal**: with the roster full (2 members) and at least one member away, talking to a hired party pawn that is not a member and picking
-"Adopt" goes into the Talk sub-menu, shown as "Release <name> (away, Lv N)" per away member (in roster order) and Cancel. Cancel changes
-nothing and returns to the root menu. Picking a member releases it (roster entry removed, backup deleted, as `store:release`) and adopts the
-talked-to pawn (as `store:adopt`), then returns to the root menu, which shows "Release (Retinue · Lv N)" for the new member. Full with no
-away member: refused as today.
+**Goal**: opening pause > Status on a present member shows "<name> · Retinue" in the name header (both the page's `PawnInfo.TxtName` and
+`CharaTab.TxtName`); the Arisen, the main pawn and non-members stay plain. The Rift's Previous Hires shows "★ <name> · Lv N" for every
+roster member (N the backup's level), other entries plain. A game update that removes a hooked method or field leaves that surface
+vanilla with a menu line and one log line.
 
-**Context**: read first `src/autorun/Retinue/talk_menu.lua` (pure: `row`, `refusal`, `confirm_pick`), `src/autorun/Retinue/game/talk_menu.lua`
-(glue: `show_confirm`, `watch_offer`, `watch_confirm`, `act`, the re-show check in `on_req_disp`, the nextNode guards), `labels.lua`,
-`roster.lua` (`CAP`, `AWAY`, `find`, `error_text`), `game/roster_store.lua` (`store:release(id)`, `store:adopt(view)`, `store.generation`),
-`game/backup_store.lua` (`backups.level(id)`), `src/autorun/Retinue.lua` l. 114 (wiring of `talk_menu.new`), `tests/talk_menu_test.lua`,
-`tests/talk_menu_glue_test.lua` (fake sdk; the adopt and release scenarios to copy), `tests/labels_test.lua`. Findings 0007 § Follow-up for
-the game facts (SelectedIndex is the *shown* row index; writing 2 returns to the root through Cancel).
+**Context**: read first `tools/experiments/Retinue_Exp_StatusUI.lua` l. 985-1005 (`mark_text`), 1157-1312 (hook bodies), 1381-1405 (hook
+specs: types and signatures), findings 0009 P3/P4; `src/autorun/Retinue/hooks.lua` (`install`: entry.pre(args), entry.post(retval) only, so
+pre must hand `this`/the argument to post through an upvalue); `src/autorun/Retinue/game/talk_menu.lua` (the lookup pattern `type_of` /
+`method_of` / `field_of` / `missing`, `guid_str`, `to_managed`, `as_string`); `labels.lua`; `roster.lua` (`find`, `PRESENT`,
+`canonical_id`); `game/backup_store.lua` (`backups.level(id)`); `src/autorun/Retinue.lua` (wiring, header comment, `draw` "unavailable"
+lines); `tests/talk_menu_glue_test.lua` (the fake sdk to copy); `tests/labels_test.lua`.
+
+Game facts (dump, verified 2026-11-08):
+
+| Type | Member |
+|---|---|
+| `app.ui060601_01` | F `app.GUIBase.PawnInfo2Ref PawnInfo`, F `app.GUIBase.CharaChangeRef CharaTab`, M `setupPawn(app.GUIBase.CharaData)` |
+| `app.GUIBase.PawnInfo2Ref` | F `via.gui.Text TxtName`, M `setup(app.GUIBase.CharaData)` |
+| `app.GUIBase.CharaChangeRef` | F `via.gui.Text TxtName`, M `updateName()`, M `get_SelectedCharaData()` |
+| `app.GUIBase.CharaData` | F `app.PawnOwnerContext CopyOwner`, F `System.Boolean <IsMainPawn>k__BackingField` |
+| `app.PawnOwnerContext` | F `System.Guid _OfflineID` |
+| `app.ui041401.ResItem` | F `via.gui.Text[] TxtPawnName`, M `updateDisp(app.ui041401.ResInfo)` |
+| `app.ui041401.ResInfo` | F `System.Guid OfflineId` |
+| `via.gui.Text` | M `get_Message()`, M `set_Message(System.String)` |
+
+Instance methods: `this` is `args[2]`, the first parameter `args[3]` (raw pointers: `hooks.to_managed`).
 
 **Design**
+
+`hooks.lua` gains (moved verbatim from `game/talk_menu.lua`, which then uses them as `local guid_str = hooks.guid_str` etc.):
+
+```lua
+function M.guid_str(v) end   -- System.Guid / string -> canonical lowercase string | "unreadable" | nil
+function M.to_managed(a) end -- raw hook argument -> managed object | nil
+function M.as_string(v) end  -- Lua or managed string -> Lua string | nil
+```
 
 `labels.lua`:
 
 ```lua
--- "Release <name> (away, Lv N)"; level nil -> "Release <name> (away)". num() as the other labels.
-function M.release_away(name, level) end
+M.STATUS_MARK = " \194\183 Retinue"   -- " · Retinue"
+M.RIFT_STAR = "\226\152\133 "          -- "★ "
+function M.status_name(name) end       -- name .. STATUS_MARK
+function M.rift_name(name, level) end  -- "★ <name> · Lv N" (num() as the other labels); level nil -> "★ <name>"
 ```
 
-`talk_menu.lua` (pure):
+New pure module `src/autorun/Retinue/marks.lua`:
 
 ```lua
--- away_members(store, level_of) -> { { offline_id, name, level } } in roster order: members with status roster.AWAY.
--- level_of(id) -> number | nil (the backup's level). store.roster nil -> {}.
-function M.away_members(store, level_of) end
-
--- refusal(store, action, level_of) -> err | nil, plus a second result:
---   adopt with #members >= CAP: away = away_members(...) non-empty -> nil, away (the pick goes to the full sub-menu);
---   empty -> "full". Everything else as today (no_slot, locked, read_only first). level_of may be nil for release.
-function M.refusal(store, action, level_of) end
-
--- full_pick(sel, n) -> { kind = "release" | "cancel", index = i | nil, write = M.CANCEL_INDEX }: the pick on the full
--- sub-menu showing n (1 or 2) member rows then Cancel. 0 <= sel < n -> release member index sel + 1; anything else
--- (Cancel, nil, out of range) cancels.
-function M.full_pick(sel, n) end
+-- status_member(r, offline_id, is_main_pawn) -> boolean: not is_main_pawn, and roster.find(r, offline_id) has status roster.PRESENT.
+--   r nil, offline_id nil/unreadable -> false.
+function M.status_member(r, offline_id, is_main_pawn) end
+-- rift_member(r, offline_id) -> member | nil: roster.find(r, offline_id), any status.
+function M.rift_member(r, offline_id) end
+-- status_text(shown, member) -> text | nil (nil = write nothing). shown nil or "" -> nil. base = shown without a trailing
+--   labels.STATUS_MARK. member -> labels.status_name(base), else base. nil when the result equals shown.
+function M.status_text(shown, member) end
+-- rift_text(shown, member, level) -> text | nil. shown nil or "" -> nil. base = shown; if it starts with labels.RIFT_STAR, drop the
+--   star and then a trailing " · Lv <digits>" if present. member -> labels.rift_name(base, level), else base. nil when equal to shown.
+--   An empty base (shown was only our mark) -> nil.
+function M.rift_text(shown, member, level) end
 ```
 
-Glue (`game/talk_menu.lua`):
+New glue `src/autorun/Retinue/game/marks.lua`:
 
-- `deps.backups` (game/backup_store's; optional: nil -> no level). `Retinue.lua` passes `backups = backups`.
-- `watch_offer`: `local err, away = talk_menu.refusal(store, row.action, level_of)`. With `away`, arm as today but with `full = away` in the
-  armed record (`armed = { row, generation, deadline, full = away }`); log line `picked (full: <n> away)`.
-- `show_confirm`: when `c.full`, relabel row 0 to `labels.release_away` of `full[1]`; with two away members relabel row 1 to `full[2]`
-  (set `_IsDecideEnable = true` on both) and keep it; with one, `RemoveAt(1)` as today. `menu = { mode = "full", widget, row, generation,
-  full, label = <row 0's label> }`. The count-3 check stays.
-- Re-show check in `on_req_disp`: accept `prev.mode == "full"` as well as `"confirm"` (same first-row label test).
-- `watch_menu`: `mode == "full"` -> `watch_full`, like `watch_confirm` (guard set first, unreadable SelectedIndex -> nothing, write Cancel at the
-  end) but with `talk_menu.full_pick(sel, #m.full)`:
-  - `release`: generation unchanged -> log `confirmed (release <member>)`, then `pcall(act_full, row, member)`; changed -> `dropped (the roster changed)`.
-  - `cancel`: log `cancelled`.
-- `act_full(row, member)`: re-check `roster.find(store.roster, member.offline_id)` is still `AWAY` (else notify `labels.refused("release",
-  member.name, "not_adopted")` and stop); find the view (`view_by_id(row.offline_id)`, else notify refused adopt `not_in_party` and stop,
-  **before** releasing); `store:release(member.offline_id)` (on failure notify `labels.refused("release", member.name, err)` and stop);
-  then `store:adopt(view)` (on failure notify `labels.refused("adopt", row.name, err)`). Log lines through `line()` for each.
-- The nextNode guard for the sub-menu applies unchanged to `full` mode (any index but Cancel becomes Cancel).
-- Update the module header comment for the new mode.
+```lua
+-- M.new(report, deps) -> marks
+--   deps = { store = game/roster_store's (reads store.roster at each call), backups = game/backup_store's (optional: no level) }
+--   marks.status_available, marks.rift_available  booleans: that group's lookups passed and its hooks are installed
+--   marks.missing  { string }  "<type>.<member>" not found, for the menu
+function M.new(report, deps) end
+```
 
-Docs:
+- Lookups at `new` (pcall'd `sdk.find_type_definition`, `hooks.find_method`, `td:get_field`), per group, as talk_menu's `type_of` /
+  `method_of` / `field_of`. Status group: every Status row of the table above plus `CharaData`, `PawnOwnerContext._OfflineID`,
+  `via.gui.Text`'s two methods. Rift group: `ResItem`, `ResInfo`, `via.gui.Text`. A group with anything missing installs nothing; one
+  `report("status marks" | "rift marks", "unavailable, not found (game update?): ...")`. The other group is unaffected.
+- Hooks via `hooks.install`, one call per group. Each pre pushes `{ this, arg }` (`hooks.to_managed(args[2])`, `args[3]` where it
+  exists) onto that hook's own stack; its post pops it and does the work (a stack, not one slot, so a nested call of the same method
+  cannot cross wires). A post with an empty stack does nothing.
+- CharaData decode: `cd:get_field("CopyOwner")` -> `owner:get_field("_OfflineID")` -> `hooks.guid_str`; `cd:get_field("<IsMainPawn>k__BackingField")`.
+  `cd` nil -> write nothing at all. Owner nil / id unreadable -> not a member.
+- `setupPawn` post: `cd = hooks.to_managed(arg)`; for `page.PawnInfo.TxtName` and `page.CharaTab.TxtName`: `apply(text, marks.status_text(read(text), member))`.
+- `PawnInfo2Ref.setup` post: `this.TxtName`, cd from the argument. `CharaChangeRef.updateName` post: cd = `this:call("get_SelectedCharaData")`.
+- `ResItem.updateDisp` post: `info = hooks.to_managed(arg)`; id = `hooks.guid_str(info:get_field("OfflineId"))`; `m = marks.rift_member(store.roster, id)`;
+  level = `m and backups and backups.level(m.offline_id)`; for each `via.gui.Text` of `TxtPawnName` (get_elements, at most 6):
+  `apply(text, marks.rift_text(read(text), m ~= nil, level))`.
+- `read(text)` = `hooks.as_string(text:call("get_Message"))`; `apply(text, new)`: new nil -> nothing; else `text:call("set_Message", new)`.
+  A nil widget or field read where one is expected -> `report("status marks" | "rift marks", "<what> unreadable")` and write nothing.
+- One log line `[Retinue] marked (status|rift): <text>` the first time a given written text is seen (a seen set), so the in-game
+  run can grep it without a line per refresh.
+- Header comment explaining both surfaces, as the other game/ modules.
 
-- `spec.md` § Adopt and Release (native): replace the **Retinue full** bullet with the decided flow (no dialog; the Talk sub-menu; one row per
-  away member, Lv from the backup; picking one releases and adopts; Cancel; full with no away member is refused). In the **Adopt** bullet,
-  `full` refuses only when no member is away.
-- `docs/testing.md` check 13: the sub-menu instead of the dialog: "Release Folken (away, Lv 28)" and Cancel; Cancel changes nothing and
-  returns to the root; again, pick Folken: Folken's member gone, backup gone or 0 bytes, the new pawn adopted, the root shows its Release row.
-  Add: no movement or attack on the picks (pad A and F).
-- Ticket 25: second criterion reworded to the one-step pick (keep the checkbox unticked); a comment line with the decision (2026-11-08, the user).
+`Retinue.lua`: `local marks_glue = require("Retinue.game.marks")`; `local marks = marks_glue.new(report, { store = retinue, backups = backups })`
+after `talk`; in `draw`, per `marks.missing`: `"Retinue marks unavailable: " .. name .. " not found (game update?)"`. Header comment: one
+paragraph for the marks; add `marks` to the pure module list and `marks` to the game/ list.
+
+Docs: `CHANGELOG.md` [Unreleased] Added: one line for the two marks. `spec.md` § Status (native): already matches; add "(no backup level:
+"★ <name>")" to the Rift bullet. Ticket 26: append a `## Comments` line naming the slice commit (the ticket's checkboxes stay unticked
+until slice 2).
 
 **Acceptance criteria**:
-- [ ] `away_members`, `refusal` (both results), `full_pick`, `release_away` unit-tested, including level nil, one and two away members, a
-      `returning` member excluded, full with no away -> `"full"`, CAP not full -> no `away`.
-- [ ] Glue test scenarios: full with one away member (row 0 relabelled, row 1 removed, Cancel shown second; the member pick releases then
-      adopts, writes 2); two away members (rows 0 and 1 relabelled, 3 rows; picking row 1 releases the second); Cancel (nothing acted,
-      writes 2); full with no away (refused, nothing written, notice); the roster changed before the pick (dropped, writes 2); the nextNode
-      guard on a failed write in full mode; the member not away any more at the pick (no release, notice); adopt fails after release (notice).
-- [ ] Ticket 24 behaviour unchanged: every existing test passes untouched (edits only if a shared helper's signature must change).
-- [ ] Spec, checklist 13 and ticket 25 updated as above.
+- [ ] `tests/marks_test.lua`: `status_member` (present yes; away, returning, non-member, main pawn, nil roster, nil id no);
+      `status_text` (marks; already marked -> nil; non-member with a stale mark -> stripped; non-member plain -> nil; nil/"" -> nil);
+      `rift_text` (marks with level; level nil; level change replaces the old " · Lv N"; already right -> nil; non-member with a stale
+      mark -> stripped; non-member plain -> nil; only-mark text -> nil); `rift_member` any status.
+- [ ] `tests/labels_test.lua`: `status_name`, `rift_name` with and without level (an integral float prints without ".0").
+- [ ] `tests/marks_glue_test.lua` (fake sdk modelled on talk_menu_glue_test): both groups install (4 hooks); a missing Status field
+      installs only the Rift hook and lists the name in `missing` (and vice versa); setupPawn post marks both TxtName for a present
+      member, leaves an away member, the main pawn and a non-member plain; updateName marks; a second identical call writes nothing;
+      updateDisp marks a member with the backup's level, without backups -> "★ <name>", a non-member untouched; set_Message throwing ->
+      reported once, no error escapes; nil CharaData -> nothing written.
+- [ ] `tests/talk_menu_test.lua` and `tests/talk_menu_glue_test.lua` pass untouched after the helper move.
+- [ ] Retinue.lua wiring, menu lines, header comment; CHANGELOG; spec line; ticket comment.
 
-**Verify**: `tests/run.sh` (all PASS). `luac5.4 -p` on every changed `.lua` if available.
+**Verify**: `tests/run.sh` (all PASS); `luac5.4 -p` on every changed `.lua` if available.
 
-**Out of scope**: the mod menu (it already has Release per away member), notices beyond the refusals listed, the Previous Hires and status
-marks, any dialog code, gear.
+**Out of scope**: the talk menu's behaviour, notices, the mod menu's roster lines, any other Rift list (Hire / Favorite), marking by name
+instead of Offline ID, gear.
 
-## Slice 2: In-game run (checklist 13)
+## Slice 2: In-game run (checklist 4 and 11)
 
-Headless, by the peer session `dd2-own-pawns-ee` (gamescope, XTEST keys). Then the user's feel pass (pad A on the member row, the cursor, B
-on Cancel). Results go into ticket 25's comments and findings 0007 § Follow-up.
+Headless, by the peer session `dd2-own-pawns-ee` (gamescope, XTEST keys): check 4 (Status page header for an adopted present member only)
+and check 11 (Previous Hires mark with the backup's level after a dismiss). Then the user's look at both pages. Results go into ticket 26's
+comments.
