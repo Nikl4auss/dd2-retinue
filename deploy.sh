@@ -9,6 +9,8 @@
 #
 #   ./deploy.sh                         link the mod
 #   ./deploy.sh --probe                 link the mod and the probe
+#   ./deploy.sh --probe-only            link the read-only probe WITHOUT the mod (uninstall checks); refuses while
+#                                       the mod is linked (run --remove first) and takes no other option
 #   ./deploy.sh --experiments           link the M1 experiment INSTEAD of the mod (it rewrites the hooked calls:
 #                                       back up first, see tools/experiments/README.md)
 #   ./deploy.sh --probe --experiments   link the M1 experiment and the probe, not the mod
@@ -29,17 +31,19 @@
 # The mod and the M1 experiment hook the same methods, so they are never linked together: linking one while the
 # other is linked fails (run --remove first). --lifecycle, --talkui, --restore, --statusui and --saveslot have no such
 # conflict and combine with any of the above.
-#   ./deploy.sh --remove                remove every link this script created (mod, probe and experiments)
+#   ./deploy.sh --remove                remove every link this script created (mod, probe and experiments); it never
+#                                       touches reframework/data/Retinue (deleting that by hand is the clean uninstall)
 set -euo pipefail
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 GAME="${DD2_DIR:-$HOME/Documentos/Games/Dragon Dogma 2}"
 AUTORUN="$GAME/reframework/autorun"
 
-probe=0 experiments=0 lifecycle=0 talkui=0 restore=0 statusui=0 saveslot=0 remove=0
+probe=0 probeonly=0 experiments=0 lifecycle=0 talkui=0 restore=0 statusui=0 saveslot=0 remove=0
 for arg in "$@"; do
     case "$arg" in
         --probe) probe=1 ;;
+        --probe-only) probeonly=1 ;;
         --experiments) experiments=1 ;;
         --lifecycle) lifecycle=1 ;;
         --talkui) talkui=1 ;;
@@ -52,7 +56,18 @@ for arg in "$@"; do
     esac
 done
 
+if (( probeonly && $# > 1 )); then echo "--probe-only takes no other option" >&2; exit 2; fi
+
 [[ -d "$AUTORUN" ]] || { echo "Not found: $AUTORUN (set DD2_DIR)" >&2; exit 1; }
+
+if (( probeonly )); then
+    for other in "$AUTORUN/Retinue.lua" "$AUTORUN/Retinue"; do
+        if [[ -e "$other" || -L "$other" ]]; then
+            echo "Already linked: $other. --probe-only links the probe without the mod; run --remove first." >&2
+            exit 1
+        fi
+    done
+fi
 
 if (( !remove )); then
     if (( experiments )); then other="$AUTORUN/Retinue.lua"; else other="$AUTORUN/Retinue_Exp_Hooks.lua"; fi
@@ -63,10 +78,10 @@ if (( !remove )); then
 fi
 
 sources=()
-if (( remove || !experiments )); then
+if (( remove || (!experiments && !probeonly) )); then
     for f in "$ROOT"/src/autorun/*; do [[ "$(basename "$f")" == .gitkeep ]] || sources+=("$f"); done
 fi
-if (( probe || remove )); then for f in "$ROOT"/tools/probe/*.lua; do sources+=("$f"); done; fi
+if (( probe || probeonly || remove )); then for f in "$ROOT"/tools/probe/*.lua; do sources+=("$f"); done; fi
 if (( experiments || remove )); then sources+=("$ROOT/tools/experiments/Retinue_Exp_Hooks.lua"); fi
 if (( lifecycle || remove )); then sources+=("$ROOT/tools/experiments/Retinue_Exp_Lifecycle.lua"); fi
 if (( talkui || remove )); then sources+=("$ROOT/tools/experiments/Retinue_Exp_TalkUI.lua"); fi
