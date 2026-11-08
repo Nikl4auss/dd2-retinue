@@ -26,11 +26,13 @@ M2 narrows it to the roster. All tickets done; checklist run in
 Spec: [.scratch/m1-progression/spec.md](../.scratch/m1-progression/spec.md) (from the wayfinder map
 [map.md](../.scratch/m1-progression/map.md)); in-game checklist in [testing.md](testing.md#m1--progression).
 
-## M2 — Identity and persistence · in progress
+## M2 — Identity and persistence · in progress (checklist run)
 
 Adopt up to two pawns (the party is main pawn + two adopted); they keep their identity and progress across dismiss,
-lost and re-hire, and uninstalling leaves ordinary hired pawns. Being charted as a wayfinder map:
-[.scratch/m2-identity/map.md](../.scratch/m2-identity/map.md).
+lost and re-hire, and uninstalling leaves ordinary hired pawns. Tickets 16–26 are done; ticket 27 (docs and the
+checklist run) is open, ticket 28 (new-game leftovers) awaits triage.
+Spec: [.scratch/m2-identity/spec.md](../.scratch/m2-identity/spec.md) (from the wayfinder map
+[map.md](../.scratch/m2-identity/map.md)); in-game checklist in [testing.md](testing.md#m2--identity-and-persistence).
 
 ## M3 — Vocation
 

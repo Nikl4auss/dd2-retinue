@@ -16,6 +16,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - `reframework/data/Retinue/config.json` holding the checkbox: written only on change, per-key validation with
   warnings in the menu and log, unknown keys kept.
 - `tests/run.sh`: pure-Lua test runner for the mod's logic.
+- Retinue (M2): up to two adopted pawns per save slot, kept in `reframework/data/Retinue/slots/<n>/roster.json` (the
+  mod knows which save slot is loaded). Adopt and Release from the pawn's talk menu (a row before Never mind, confirmed
+  inside the talk) and from the mod menu, which also lists the slot, each member's status and level, and warnings. A
+  damaged roster locks the retinue, one written by a newer Retinue is read-only; neither is ever overwritten.
+- A full retinue offers to release an away member, inside the talk, when a third pawn is adopted (M2).
 - Backups (M2): every present adopted pawn in the party has `slots/<n>/backups/<offline_id>.json` (level, exp, stat
   increases, discipline, vocation exp; item IDs and skills recorded), written on adopt and refreshed about every 10 s
   in the world, only when a value changed. A member below its backup lowers it (the save wins). Release empties or
@@ -41,7 +46,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Retinue marks (M2): a present member's name header on pause > Status reads "<name> · Retinue", and the Rift's
   Previous Hires lists every member as "★ <name> · Lv N" (the backup's level), matched by Offline ID. The Arisen, the
   main pawn and other pawns stay plain. A missing game method or field leaves that page vanilla (menu line, one log line).
+- `deploy.sh --probe-only`: links the read-only probe without the mod, for the uninstall checks. `--remove` never
+  touches `reframework/data/Retinue`.
 
 ### Changed
+- Progression (M2): only adopted pawns gain levels and vocation ranks; other hired pawns are vanilla again. The menu
+  checkbox reads *Adopted pawns gain levels and vocation ranks*.
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is
   linked.

@@ -42,8 +42,8 @@
 -- If a needed game method is missing, the texts go to the log instead ("notice (not shown)").
 -- Talk menu: talking to a hired party pawn shows a fourth row, "Adopt" (a Rift pawn that is not in the roster) or "Release (Retinue
 -- · Lv N)" (a member in the party), inserted before Never mind in the pre of ui021601.reqDisp when the menu is the pawn's root
--- menu. Picking it opens the Talk sub-menu, whose rows are relabelled as the confirm ("Confirm adopt" / "Confirm release", a
--- disabled line with the cost, Cancel); the confirm row adopts or releases with the same rules as the Retinue menu, any other
+-- menu. Picking it opens the Talk sub-menu, whose rows are relabelled as the confirm ("Confirm adopt" / "Confirm release",
+-- Cancel); the confirm row adopts or releases with the same rules as the Retinue menu, any other
 -- pick cancels, and both return to the root menu (a refusal shows as a notice). Anything unrecognised or missing leaves the
 -- menu vanilla (a missing one shows in the menu, an unrecognised root menu in the log).
 -- Marks: a present member's name header on pause > Status (the page's PawnInfo and CharaTab texts) reads "<name> · Retinue", and the

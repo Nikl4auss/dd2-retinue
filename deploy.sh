@@ -67,9 +67,15 @@ if (( probeonly )); then
             exit 1
         fi
     done
+    for other in "$AUTORUN"/Retinue_Exp_*.lua; do
+        if [[ -e "$other" || -L "$other" ]]; then
+            echo "Already linked: $other. --probe-only links the probe alone; run --remove first." >&2
+            exit 1
+        fi
+    done
 fi
 
-if (( !remove )); then
+if (( !remove && !probeonly )); then
     if (( experiments )); then other="$AUTORUN/Retinue.lua"; else other="$AUTORUN/Retinue_Exp_Hooks.lua"; fi
     if [[ -e "$other" || -L "$other" ]]; then
         echo "Already linked: $other. The mod and the experiments must not run together; run --remove first." >&2
