@@ -16,6 +16,30 @@ function M.kept(name, level)
     return string.format("%s returned — kept Lv %s, newer than the backup", name, num(level))
 end
 
+-- The talk menu's row and its Yes/No dialog (game/talk_menu.lua). The same words as the mod menu's confirmations.
+M.YES, M.NO = "Yes", "No"
+
+function M.adopt_row() return "Adopt" end
+
+-- The member's row; the level when known ("\194\183" is U+00B7, as in the mod menu).
+function M.release_row(level)
+    if level == nil then return "Release (Retinue)" end
+    return string.format("Release (Retinue \194\183 Lv %s)", num(level))
+end
+
+function M.ask_adopt(name)
+    return string.format("Adopt %s into your retinue?\nGear you give them is lost if they're dismissed or lost.", name)
+end
+
+function M.ask_release(name)
+    return string.format("Release %s? Their progress will be lost.", name)
+end
+
+-- refused(action, name, err) -> text. action "adopt" | "release"; err one of roster.ERRORS' keys.
+function M.refused(action, name, err)
+    return string.format("Cannot %s %s: %s", action, name, roster.error_text(err))
+end
+
 -- roster_problem(r, unit) -> text | nil. r is the active roster (retinue.roster), unit the session's unit
 -- (tracker.session.unit, not the roster unit). No roster with a unit set is a NewGame waiting for its first save:
 -- nothing is wrong, so no text.

@@ -23,4 +23,18 @@ do
     assert(p({ mode = roster.OK, members = {} }, 0) == nil)
 end
 
+-- the talk menu's row, its dialog and the refusals: exact texts
+do
+    assert(labels.YES == "Yes" and labels.NO == "No")
+    assert(labels.adopt_row() == "Adopt")
+    assert(labels.release_row(27) == "Release (Retinue \u{B7} Lv 27)")
+    assert(labels.release_row(27.0) == "Release (Retinue \u{B7} Lv 27)")
+    assert(labels.release_row(nil) == "Release (Retinue)")
+    assert(labels.ask_adopt("Ana") == "Adopt Ana into your retinue?\nGear you give them is lost if they're dismissed or lost.")
+    assert(labels.ask_release("Ana") == "Release Ana? Their progress will be lost.")
+    assert(labels.refused("adopt", "Ana", "locked") == "Cannot adopt Ana: the roster is locked (see the menu)")
+    assert(labels.refused("release", "Ana", "not_in_party") == "Cannot release Ana: no longer in the party")
+    assert(labels.refused("adopt", "Ana", "full") == "Cannot adopt Ana: the retinue is full (2 members)")
+end
+
 print("labels_test ok")
