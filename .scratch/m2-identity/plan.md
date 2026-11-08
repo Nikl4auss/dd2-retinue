@@ -5,7 +5,7 @@ Source: [issues/25-retinue-full-release-away.md](issues/25-retinue-full-release-
 (Plans of earlier tickets are in git history.)
 
 - [x] Slice 1: the "full" sub-menu in the talk: pure decisions, labels, glue, tests, spec and checklist 13. Tier: **Sonnet** (`implementer`). One review round, APPROVE; nits (a guard for more than 2 away members, a stale labels comment) applied inline.
-- [ ] Slice 2: in-game run, checklist 13, headless by the peer session `dd2-own-pawns-ee`; then the user's feel pass. Tier: **Opus, inline** (driving the peer).
+- [~] Slice 2: in-game run, checklist 13. Headless run 1 by the peer `dd2-own-pawns-ee` passes (fake away member); the user's pass is open. Tier: **Opus, inline** (driving the peer).
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 

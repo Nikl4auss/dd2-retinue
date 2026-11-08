@@ -98,3 +98,7 @@ Confirm inside the talk (`e3b12ac`, run 4, after the user's manual pass found th
 - Writing `SelectedIndex = 0` on our pick takes the talk into the Talk sub-menu; relabelling its three `ListInfo` in place at `reqDisp` pre
   shows them; writing `SelectedIndex = 2` after the pick returns to the root, whose next `reqDisp` already sees the roster change.
 - `_IsDecideEnable = false` makes a row inert (F does nothing) but **not greyed**: the cursor still lands on it and highlights it.
+
+Retinue full (`725bbe9`, ticket 25 run 1): the same Talk sub-menu, with rows 0 (and 1 for a second away member) relabelled
+"Release <name> (away, Lv N)" and Small talk removed with one away member. It shows 2 rows. The cursor stays on them, B lands on Cancel,
+and writing 2 on either pick returns to the root, which already shows the new member's Release row. No guard needed.
