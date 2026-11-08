@@ -28,8 +28,6 @@ end
 -- The confirm replaces the Talk sub-menu's first two rows: the pick, and a disabled line saying what it costs.
 function M.confirm_adopt() return "Confirm adopt" end
 function M.confirm_release() return "Confirm release" end
-function M.warn_adopt() return "Gear you give them is lost if they're dismissed or lost." end
-function M.warn_release() return "Their progress will be lost." end
 
 -- refused(action, name, err) -> text. action "adopt" | "release"; err one of roster.ERRORS' keys.
 function M.refused(action, name, err)

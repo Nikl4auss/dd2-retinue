@@ -6,7 +6,7 @@
 -- inserted into the list before Never mind shows as a fourth row, so Never mind keeps the game's index. When the player picks
 -- it (the widget's GUI ended with SelectedIndex on it), SelectedIndex is rewritten to Talk (row 0), so the talk goes on to the
 -- Talk sub-menu; there its next reqDisp relabels the rows: "Confirm adopt" / "Confirm release" in place of Matters of
--- import, a disabled warning in place of Small talk, Cancel untouched. Picking the confirm acts, any other pick cancels, and
+-- import, Small talk removed, Cancel untouched. Picking the confirm acts, any other pick cancels, and
 -- both are rewritten to Cancel (row 2), which returns to the root menu. Two nextNode guards back up a failed rewrite: on the
 -- root, after our pick, any choice but Talk becomes Never mind; on the Talk sub-menu, after the confirm pick, Matters of import
 -- or Small talk becomes Cancel. Anything unknown, missing or thrown leaves the menu vanilla. All of it runs on the game
@@ -188,8 +188,10 @@ function M.new(report, deps)
         log.error(string.format("[Retinue] talk menu: %s %s: %s", action, name, result))
     end
 
-    -- The Talk sub-menu showing after our pick: rows 0 and 1 relabelled (row 1 disabled), row 2 (Cancel) as the game has it.
-    -- The items stay the game's own, so the display rows keep the game's indices.
+    -- The Talk sub-menu showing after our pick: row 0 relabelled as the confirm, row 1 (Small talk) removed, Cancel as the game
+    -- has it, now shown second. Every pick is written to the game's Cancel (index 2); a missed write on the shown Cancel would
+    -- run Small talk, which the nextNode guard turns into Cancel. No warning row: the user found a disabled row still takes the
+    -- cursor, and the gear question waits for M4 (2026-11-08).
     local function show_confirm(list, widget, c)
         local count = list:call("get_Count")
         if count ~= 3 then
@@ -197,13 +199,12 @@ function M.new(report, deps)
             return
         end
         local adopt = c.row.action == "adopt"
-        local confirm_row, warn_row = list:call("get_Item", 0), list:call("get_Item", 1)
-        if confirm_row == nil or warn_row == nil then return end
+        local confirm_row = list:call("get_Item", 0)
+        if confirm_row == nil then return end
         local confirm_label = adopt and labels.confirm_adopt() or labels.confirm_release()
         confirm_row:set_field("Msg", sdk.create_managed_string(confirm_label))
         confirm_row:set_field("_IsDecideEnable", true)
-        warn_row:set_field("Msg", sdk.create_managed_string(adopt and labels.warn_adopt() or labels.warn_release()))
-        warn_row:set_field("_IsDecideEnable", false)
+        list:call("RemoveAt", 1)
         menu = { mode = "confirm", widget = widget, row = c.row, generation = c.generation, label = confirm_label }
     end
 

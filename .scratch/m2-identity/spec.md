@@ -22,7 +22,7 @@ In:
 - Departure (dismiss, lost, any other) and Return, by any route; the `returning` state and its retries.
 - Backups: contents, when written, restore on Return under the level guard.
 - Save-slot identity, new game / NG+, reconciliation of the roster with the loaded save.
-- Native status: talk row, Status page header, Rift Previous Hires marks, transient notices, gear warning.
+- Native status: talk row, Status page header, Rift Previous Hires marks, transient notices.
 - M1 narrowed: only present adopted pawns progress.
 - The mod menu mirroring all of the above.
 
@@ -228,13 +228,13 @@ From [How should adopt and release look and feel?](issues/06-adopt-release-ux.md
   `UpdateBehavior`), `SelectedIndex` is rewritten to Talk (row 0), so the talk goes on to the Talk sub-menu. A refusal
   (locked, read-only, unknown slot, full) writes nothing: the game runs Never mind, the talk ends, and a notice shows.
 - **Confirmation**, inside the talk (no dialog, so no input leaks): the Talk sub-menu (`44dcab9b-2a86-4ab0-bd52-24dde93cfe60`,
-  3 choices) is re-shown through `reqDisp` with its first two rows relabelled and Cancel untouched:
-  - Adopt: "Confirm adopt" / "Gear you give them is lost if they're dismissed or lost." (disabled) / Cancel.
-  - Release: "Confirm release" / "Their progress will be lost." (disabled) / Cancel.
-  - Picking the first row acts; any other pick cancels. Both are rewritten to Cancel (row 2), which returns to the
+  3 choices) is re-shown through `reqDisp` with its first row relabelled, Small talk removed and Cancel untouched:
+  - Adopt: "Confirm adopt" / Cancel. Release: "Confirm release" / Cancel.
+  - No warning line (2026-11-08, the user: a disabled row still takes the cursor, and gear waits for M4).
+  - Picking the first row acts; any other pick cancels. Both are rewritten to the game's Cancel (index 2), which returns to the
     root menu, where the new row shows ("Release (Retinue · Lv N)" after an adopt, "Adopt" after a release).
   - A `nextNode` guard rewrites a stray Matters of import / Small talk to Cancel (and a stray root index to Never mind)
-    if a `SelectedIndex` write does not stick. Breaking off the talk with the confirm up changes nothing.
+    if a `SelectedIndex` write does not stick. A talk cannot be broken off (no movement, hits do not end it).
 - **Adopt** (confirmed): roster add (status present, cache set), first backup written, notice-free (the root menu the confirm
   returns to shows the new row). Errors `full`, `already_adopted`, `locked`, `read_only`, `no_slot`, `no_offline_id` → notice with the
   reason: `full`, `locked`, `read_only` and `no_slot` at the pick (the talk ends like Never mind), the rest at the confirm.

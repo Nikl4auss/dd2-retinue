@@ -121,7 +121,7 @@ is entered, a fight, a save and a reload work, the Rift hires and dismisses, and
    (4th of 5; Never mind stays last); B in the menu puts the cursor on Never mind. Talk's sub-menu has no extra row; a
    pawn not in the party (Hire menu) has none.
 3. **Adopt**: pick Adopt. There is no Yes/No dialog: the talk goes on to the Talk sub-menu, which reads "Confirm adopt" /
-   "Gear you give them is lost if they're dismissed or lost." (greyed, not selectable) / Cancel. *Confirm adopt*: back to
+   Cancel (no warning line: gear waits for M4). *Confirm adopt*: back to
    the root menu, which now shows "Release (Retinue · Lv N)"; `slots/<n>/roster.json` has the member (`present`,
    `character_id`) and `backups/<offline_id>.json` exists; the Arisen does not jump and the d-pad issues no pawn command.
    *Cancel* (or any other pick) on a second try: back to the root with nothing changed. A refusal (locked, read-only,
@@ -134,14 +134,12 @@ is entered, a fight, a save and a reload work, the Rift hires and dismisses, and
    load and never `in the world: no (phase N)` during normal play.
 6. **Toggle off**: untick progression. The adopted pawn stops levelling (exp banks), its backup still follows exp
    changes. Tick it again.
-7. **Release**: pick "Release (Retinue · Lv N)" → the Talk sub-menu reads "Confirm release" / "Their progress will be
-   lost." (greyed) / Cancel. *Confirm release*: back to the root, which now reads "Adopt"; the pawn stays in
+7. **Release**: pick "Release (Retinue · Lv N)" → the Talk sub-menu reads "Confirm release" /
+   Cancel. *Confirm release*: back to the root, which now reads "Adopt"; the pawn stays in
    the party at its level, the member is gone and its backup file is gone or 0 bytes (log: `(backup removed)` or `(backup emptied)`;
    `(backup left in place)` is a failure), it no longer levels.
 8. **Cap**: adopt both hired pawns. Mod menu lists two members. (The full-retinue flow is check 13.)
 9. **Not adoptable** *(opportunistic)*: an online pawn (owner not `CAPCOM`) in the party gets no Adopt row.
-9a. **Talk broken off** *(opportunistic)*: pick Adopt (or Release), then walk away or get hit while the confirm
-   sub-menu is up: nothing is adopted or released, and the next talk is vanilla plus our row.
 
 ### Departure and Return
 
@@ -172,8 +170,8 @@ Restore `fixture-levelled-pawn`, adopt Folken (Lv 27), grant exp until Lv 28. Sn
     the backup is then overwritten by the poll with Lv 23.
 16. **Return by another route** *(opportunistic)*: an away member hired from the regular Rift list or met in the world
     is restored the same way.
-17. **Gear**: give Folken a piece of armour, dismiss him: the armour is gone from storage (known limit, matches the
-    Adopt warning).
+17. **Gear**: give Folken a piece of armour, dismiss him: the armour is gone from storage (known limit until M4; the
+    talk menu no longer warns about it).
 
 ### Save slots and reconciliation
 

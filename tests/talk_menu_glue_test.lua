@@ -177,6 +177,7 @@ do
         get_Count = function() return #list_items end,
         get_Item = function(_, i) return list_items[i + 1] end,
         Insert = function(_, i, item) table.insert(list_items, i + 1, item) end,
+        RemoveAt = function(_, i) table.remove(list_items, i + 1) end,
     })
     world.by_addr[ROOT_ADDR], world.by_addr[SUB_ADDR] = list, list
     local vanilla -- the game's own row objects of the current list
@@ -248,11 +249,11 @@ do
     -- our pick: written to Talk, and armed
     pick(3, 2)
     assert(written() == 0 and has_log("adopt Ana: picked") and #pushed == 0)
-    -- the Talk sub-menu: rows 0 and 1 relabelled, row 1 disabled, row 2 as the game has it
+    -- the Talk sub-menu: row 0 the confirm, Small talk removed, Cancel as the game has it, shown second
     show_sub()
     assert(vanilla[1].sets.Msg == "Confirm adopt" and vanilla[1].sets._IsDecideEnable == true)
-    assert(vanilla[2].sets.Msg == "Gear you give them is lost if they're dismissed or lost." and vanilla[2].sets._IsDecideEnable == false)
-    assert(next(vanilla[3].sets) == nil and #list_items == 3)
+    assert(next(vanilla[2].sets) == nil and next(vanilla[3].sets) == nil)
+    assert(#list_items == 2 and list_items[1] == vanilla[1] and list_items[2] == vanilla[3])
     -- the confirm pick: acts, then Cancel
     clear_writes()
     pick(0, 3)
@@ -394,7 +395,7 @@ do
     -- the same Talk sub-menu list handed to reqDisp twice: the pick is still watched
     to_root_node(); show_root(); pick(3, 211); show_sub()
     req_disp({ [2] = WIDGET, [3] = SUB_ADDR })
-    assert(vanilla[1].sets.Msg == "Confirm adopt" and #list_items == 3)
+    assert(vanilla[1].sets.Msg == "Confirm adopt" and #list_items == 2, "not removed twice")
     adopted = nil; clear_writes()
     pick(0, 212)
     assert(adopted == view and written() == 2)
@@ -554,8 +555,7 @@ do
     assert(#list_items == 5 and list_items[4].sets.Msg == "Release (Retinue \u{B7} Lv 30)")
     pick(3, 100)
     show_sub()
-    assert(vanilla[1].sets.Msg == "Confirm release" and vanilla[2].sets.Msg == "Their progress will be lost."
-        and vanilla[2].sets._IsDecideEnable == false)
+    assert(vanilla[1].sets.Msg == "Confirm release" and #list_items == 2 and list_items[2] == vanilla[3])
     pick(0, 101)
     assert(released == OFFLINE and has_log("release Ana: done"))
     store.roster.members, store.found = {}, {}

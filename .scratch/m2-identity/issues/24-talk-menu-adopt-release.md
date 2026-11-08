@@ -13,7 +13,7 @@ Refusals (full, locked, read-only, no slot) show a notice.
 - [x] Row only on the root party-pawn talk node (by node id or Dismiss choice); never in sub-menus or for a pawn outside the party; not added for non-adoptable pawns; unrecognised node → menu vanilla.
 - [x] Pick redirected to Never mind before the game maps it.
 - [x] `requestDialog` Yes/No opened before the talk ends; answer read from the widget.
-- [ ] If the confirming press leaks to the character, switch to the talk-menu confirm fallback ("Confirm adopt" / "Confirm release" + Never mind) and record it.
+- [x] If the confirming press leaks to the character, switch to the talk-menu confirm fallback ("Confirm adopt" / "Confirm release" + Never mind) and record it.
 - [x] Same roster rules and errors as the mod menu; texts from `labels`.
 - [ ] Verified in game (checklist 2–4, 7): adopt and release natively, no jump or pawn command on confirm.
 
@@ -40,3 +40,6 @@ Refusals (full, locked, read-only, no slot) show a notice.
   highlights like a choice, but F on it does nothing. Not done headless: breaking off the talk with the confirm up (Esc and B move to Cancel).
   `"members": null` after the last release is the known empty-list form, read back as empty (roster.lua).
   Left for the user's manual pass: break off (checklist 9a), pad A through the new flow, and the feel (the warning row that takes the cursor).
+- 2026-11-08, manual pass by the user on `e3b12ac`: pad A through the new flow works, no leak. A talk cannot be broken off (no movement
+  while talking, hits do not end it), so checklist 9a is dropped. The warning row goes (it takes the cursor; gear waits for M4): the confirm
+  is "Confirm adopt" / Cancel.
