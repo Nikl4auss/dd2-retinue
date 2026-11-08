@@ -88,3 +88,13 @@ Three headless runs (gamescope, XTEST keys, F taps of 0.2 s; no pad) on the mod,
   flicker, no second dialog.
 - **No input leak** on 4 confirms (2 Yes, 2 No) with F taps: no jump, no attack, no interaction, no pawn command. Untested:
   the pad's A, and F held about 1 s on the dialog (the Hail prompt is live under it).
+
+Confirm inside the talk (`e3b12ac`, run 4, after the user's manual pass found the Yes/No dialog leaks with the pad's A and a held F):
+
+- Root choice 0 Talk leads to the Talk sub-menu `44dcab9b-…` (3 choices), whose choice 2 Cancel leads back to the root; root choice 2 does
+  not loop to the root (it goes to `76ad69b4-…`). From the 2026-11-04 run files' `_NextNodeCandidateOnSelect`.
+- `List.Insert(count - 1, item)` puts the row before Never mind; the row then holds the game's Never-mind index, and the shown Never mind
+  (one past the game's rows) works once `SelectedIndex` is written back to `count - 1`. B (right click) puts the cursor on the last row.
+- Writing `SelectedIndex = 0` on our pick takes the talk into the Talk sub-menu; relabelling its three `ListInfo` in place at `reqDisp` pre
+  shows them; writing `SelectedIndex = 2` after the pick returns to the root, whose next `reqDisp` already sees the roster change.
+- `_IsDecideEnable = false` makes a row inert (F does nothing) but **not greyed**: the cursor still lands on it and highlights it.

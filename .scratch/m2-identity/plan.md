@@ -6,7 +6,7 @@ Source: [issues/24-talk-menu-adopt-release.md](issues/24-talk-menu-adopt-release
 
 - [x] Slice 1: pure `talk_menu.lua` and `confirm.lua`, labels, glue `game/talk_menu.lua` and `game/confirm_dialog.lua`, wiring, tests. Tier: **Sonnet** (`implementer`). Two review rounds; the round-2 findings (re-arm on a reused list, the TalkSelect check after the row) applied inline.
 - [x] Slice 2: in-game run, checklist 2–4 and 7 (keys). Tier: **Opus, inline**; the user only if a step cannot be driven.
-- [ ] Slice 3: the confirm moves into the talk (the Talk sub-menu), and the row becomes the 4th. Tier: **Sonnet** (`implementer`); in-game runs by the peer session, then the user's manual pass.
+- [x] Slice 3: the confirm moves into the talk (the Talk sub-menu), and the row becomes the 4th. Tier: **Sonnet** (`implementer`); in-game runs by the peer session, then the user's manual pass.
 
 Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewer` only.
 

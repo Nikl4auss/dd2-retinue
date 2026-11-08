@@ -33,3 +33,10 @@ Refusals (full, locked, read-only, no slot) show a notice.
   that sits behind the dialog. The talk-menu confirm fallback applies (plan slice 3).
   **UX**: the row must be the 4th, before Never mind: B in the menu moves the cursor to the last row, which in vanilla is Never mind,
   so a last-row Adopt/Release invites a wrong pick.
+- 2026-11-08, `e3b12ac`, run 4 (headless, Folken path): the confirm now lives in the Talk sub-menu (plan slice 3). Pass: the row 4th, B lands on
+  Never mind, Never mind ends the talk; Cancel returns to the root, nothing changed; Confirm release / Confirm adopt act and the root shows the new
+  row at once (no stale frame), backup emptied / written, no movement; Talk's own sub-menu stays vanilla; read-only: no sub-menu, the talk ends,
+  "Cannot release Folken: …" 1.5 s after the pick for 3 s. No guard fired. Seen: the warning row is not greyed: the cursor can land on it and it
+  highlights like a choice, but F on it does nothing. Not done headless: breaking off the talk with the confirm up (Esc and B move to Cancel).
+  `"members": null` after the last release is the known empty-list form, read back as empty (roster.lua).
+  Left for the user's manual pass: break off (checklist 9a), pad A through the new flow, and the feel (the warning row that takes the cursor).
