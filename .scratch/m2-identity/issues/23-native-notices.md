@@ -34,3 +34,7 @@ Every player-facing string lives in one place.
   Leading guess: an invisible notice of ours, left up (modal, blocks input) because the deadline read it as not ours.
   Next build logs every dialog-state change while a notice waits or shows, and each show/hide/gone, and adds a
   "Close notice (game stuck)" button to the REFramework menu.
+- 2026-11-07, `83b4485`, test 1 rerun (locked, two loads in one session): passed, no freeze. On each load the notice waited
+  for the server-error dialog (seen only through `netErr`; `dialogGui` and `D.disp` stay false while it is up), showed
+  about 1 s after it closed, and was hidden at 3 s while still ours. Files unchanged. The first freeze did not reproduce;
+  that run also had a fight, an exp grant and a system-menu save before the title. Logging stays on for tests 2-8.
