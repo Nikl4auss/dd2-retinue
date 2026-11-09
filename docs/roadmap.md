@@ -30,8 +30,8 @@ Spec: [.scratch/m1-progression/spec.md](../.scratch/m1-progression/spec.md) (fro
 
 Adopt up to two pawns (the party is main pawn + two adopted); they keep their identity and progress across dismiss,
 lost and re-hire, and uninstalling leaves ordinary hired pawns. Tickets 16–27 are done; checklist run in
-[findings/0011](findings/0011-m2-checklist-run.md). Follow-ups awaiting triage: ticket 28 (new-game leftovers), ticket 29
-(exp on the Status page).
+[findings/0011](findings/0011-m2-checklist-run.md). Follow-ups done: ticket 28 (a restart over a cleared slot keeps the
+roster), ticket 29 (a member's exp on the Status page).
 Spec: [.scratch/m2-identity/spec.md](../.scratch/m2-identity/spec.md) (from the wayfinder map
 [map.md](../.scratch/m2-identity/map.md)); in-game checklist in [testing.md](testing.md#m2--identity-and-persistence).
 
