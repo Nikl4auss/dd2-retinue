@@ -7,7 +7,7 @@ probably not the vocation rank's either. Members progress like the main pawn, so
 
 **Blocked by:** none (needs a short experiment first).
 
-**Status:** ready-for-agent
+**Status:** done
 
 Reported by the user during the ticket 27 checklist run (2026-11-08).
 
@@ -67,3 +67,5 @@ Reported by the user during the ticket 27 checklist run (2026-11-08).
   - 6: no side effect seen. Diamonds' Pawn tab is the vanilla one (Arisen CAPCOM, Pawn Quest "Not Set"); no main-pawn rows or tabs
     appear for her; Shaira's page and numbers are unchanged apart from the fight's gain; the party HUD in the world is normal
     after closing the page.
+- 2026-11-09, `63af8d8`, manual pass by the user: all pass, the optional step included. Each character shows its own numbers on
+  both tabs, no flicker when switching; a hired non-member still shows "-" (vanilla); the numbers move after a fight. Ticket closed.
