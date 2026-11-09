@@ -1,5 +1,8 @@
 -- REFramework glue: tracks which save slot is loaded from the game's start, load and save requests (uses sdk and log).
 -- The decisions live in Retinue/slot.lua. Read-only: the pre-hooks never change arguments.
+-- A restart ("RedoNewGame") is also what "Start from Beginning" over a cleared slot sends, and only the game's clear
+-- flag tells them apart. The flag (app.GuiManager._IsGameClearData, with _IsRestartData) is false at the start and load
+-- requests and true a frame or so later, so tracker.decide_restart reads it every game update until the session decides.
 
 local hooks = require("Retinue.hooks")
 local slot = require("Retinue.slot")
@@ -17,6 +20,8 @@ local SDM = "app.SaveDataManager"
 --   app.SaveDataManager requestSaveSlot(System.Int32, ...)              global slot at args[3]; every save passes here
 -- Returns a tracker: { available = bool, missing = {strings}, session = slot.new_session(),
 --                      update(has_main_pawn) -- call every frame; the title phase is read in here
+--                      decide_restart(now) -- call every game update (UpdateBehavior, game thread) with os.clock();
+--                      does nothing unless a restart waits for the clear flag
 --                      unit() -> integer|nil  the unit whose roster is active (session:roster_unit()),
 --                      in_world(has_main_pawn) -> boolean }
 -- When a hook method is missing the session is never fed, so the unit stays unknown (fail closed, no fallback).
@@ -201,6 +206,41 @@ function M.install(report)
 
     function tracker.unit()
         return session:roster_unit()
+    end
+
+    -- A restart waits for the game's clear flag (Session:decide_restart): read it and log the decision, once. Does nothing
+    -- (no game read) when no restart waits. An unreadable field counts as nil; the error is reported once per restart.
+    local reported_starts = nil -- the starts count a read error was reported for
+    function tracker.decide_restart(now)
+        if not session.restart_pending then return end
+        local clear, restart_data = nil, nil
+        local gui = sdk.get_managed_singleton("app.GuiManager")
+        if gui then
+            local function field(name)
+                local ok, v = pcall(function() return gui:get_field(name) end)
+                if ok then return v end
+                if reported_starts ~= session.starts then
+                    reported_starts = session.starts
+                    report("slot", v)
+                end
+                return nil
+            end
+            clear, restart_data = field("_IsGameClearData"), field("_IsRestartData")
+        end
+        local result = session:decide_restart(clear, restart_data, now)
+        local label = slot.label(session.unit)
+        if result == "kept" then
+            log.error(string.format("[Retinue] slot: %s restart over a cleared slot; the roster stays (NG+)", label))
+        elseif result == "archived" then
+            if type(clear) == "boolean" then
+                log.error(string.format("[Retinue] slot: %s restart over a slot not cleared; the roster is archived", label))
+            else
+                log.error(string.format("[Retinue] slot: %s restart: clear flag unreadable; the roster is archived", label))
+            end
+        elseif result == "timeout" then
+            log.error(string.format("[Retinue] slot: %s restart: no clear flag after %d s; the roster is archived", label,
+                slot.RESTART_WAIT))
+        end
     end
 
     return tracker

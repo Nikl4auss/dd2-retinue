@@ -50,8 +50,8 @@ update?)` and that feature does nothing.
 - A member's Status page header reads "<name> · Retinue".
 - On every load the retinue follows the loaded save: load an older save and the member is as that save has it (the
   save wins; the backup is lowered), except a save from before a Return, which gets the backup back.
-- A new game (on its first save) or a restart over a slot archives that slot's retinue to `slots/<n>/archive-<date-time>/` and starts it
-  empty. A new game plus keeps it.
+- A new game (on its first save) or a restart over a slot not cleared archives that slot's retinue to `slots/<n>/archive-<date-time>/` and starts it
+  empty. A new game plus keeps it, and so does a restart over a cleared slot ("Start from Beginning").
 - A notice shows once per load when the roster is damaged (the retinue is locked: nothing is written), written by a
   newer Retinue (read-only), or the save slot is unknown (the retinue is off for that session). A damaged backup gives
   a warning in the menu and log instead.

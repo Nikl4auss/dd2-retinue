@@ -55,8 +55,8 @@ function M.refused(action, name, err)
 end
 
 -- roster_problem(r, unit) -> text | nil. r is the active roster (retinue.roster), unit the session's unit
--- (tracker.session.unit, not the roster unit). No roster with a unit set is a NewGame waiting for its first save:
--- nothing is wrong, so no text.
+-- (tracker.session.unit, not the roster unit). No roster with a unit set is a NewGame waiting for its first save or a
+-- restart waiting for the clear flag: nothing is wrong, so no text.
 function M.roster_problem(r, unit)
     if r == nil then
         if unit == nil then return "Retinue is off: the save slot is unknown" end

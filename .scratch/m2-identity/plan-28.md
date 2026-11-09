@@ -8,7 +8,7 @@ Spike (peer, 2026-11-09, logs in ticket 28): at `requestStartType` / `requestLoa
 frame after the start (~0.7 s): cleared slot Beginning `G=true R=true`; uncleared restart `G=false R=true`; Vernworth
 (`RedoNewGameSkip`) `G=true R=true`. At the title all false again.
 
-## Slice 1: decide a RedoNewGame from the game's clear flag — implementer (Sonnet) — [ ]
+## Slice 1: decide a RedoNewGame from the game's clear flag — implementer (Sonnet) — [x] (2 review rounds)
 
 **Goal**: a `RedoNewGame` restart over a cleared slot ("Start from Beginning") keeps the slot's roster, like NG+; a restart over
 an uncleared slot still archives. If the flag cannot be read, it archives (as today; the archive is never deleted).

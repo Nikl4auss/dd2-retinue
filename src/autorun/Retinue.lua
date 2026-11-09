@@ -25,11 +25,14 @@
 -- follows what the loaded party shows (a rollback, a member that left or was re-hired without the mod), one log line per
 -- correction. Until then the hook events, the party check, the restores, the backup poll and the cache refresh wait.
 -- Starting a new game or a restart (RedoNewGame) over a slot archives its roster and backups: from the update loop,
--- every file is copied to slots/<n>/archive-<yyyymmdd-hhmmss>/ and emptied, so the slot starts empty. A restart archives
--- at once, because the game has converted the old saves. A new game leaves them on disk until its first save, so it
--- archives then: until that save no roster is active, and a new game given up leaves the roster as it was. A new game
--- plus (RedoNewGameSkip) keeps the roster. If the copy fails the roster stays in place
--- (log line). Archives are never read or deleted by the mod.
+-- every file is copied to slots/<n>/archive-<yyyymmdd-hhmmss>/ and emptied, so the slot starts empty. A restart over a
+-- slot not cleared archives, because the game has converted the old saves; a restart over a cleared slot ("Start from
+-- Beginning") keeps the roster like a new game plus, the same playthrough. The two are told apart by
+-- GuiManager._IsGameClearData, which the game sets a frame or so after the start: decided in the game's update, and until
+-- then no roster is active. A flag that cannot be read, or none within 10 seconds, archives. A new game leaves the old
+-- saves on disk until its first save, so it archives then: until that save no roster is active, and a new game given up
+-- leaves the roster as it was. A new game plus (RedoNewGameSkip) keeps the roster. If the copy fails the roster stays in
+-- place (log line). Archives are never read or deleted by the mod.
 -- The four progression hooks install all or nothing: if any hooked method cannot be found after a game update, no
 -- hook is installed and the menu says so. The menu also shows the loaded save slot (Slot 1-3, or "Slot unknown"),
 -- tracked from the game's start and load requests; the decisions live in Retinue/slot.lua.
@@ -145,6 +148,9 @@ end
 re.on_pre_application_entry("UpdateBehavior", function()
     prog_hooks.clear_calls()
     life_hooks.begin_update()
+    -- A restart waits for the game's clear flag: decided here, on the game thread, with the start and load hooks.
+    local ok_s, err_s = pcall(tracker.decide_restart, os.clock())
+    if not ok_s then report("slot", err_s) end
     local ok_t, err_t = pcall(talk.tick, os.clock())
     if not ok_t then report("talk menu", err_t) end
     local ok, err = pcall(flow.tick, os.clock(), state.in_world)

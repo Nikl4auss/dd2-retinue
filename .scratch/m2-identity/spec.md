@@ -71,12 +71,18 @@ From [Which save slot is loaded…?](issues/14-save-slot-identity-experiment.md)
 - **New playthrough** (`requestStartType` with `NewGame` or `RedoNewGame`): if the unit has a roster, its directory
   contents (roster and backups) move to `slots/<n>/archive-<yyyymmdd-hhmmss>/`, never deleted, and the unit starts
   with an empty roster. Done from the update loop right after the hook, never inside it.
-  - `RedoNewGame` archives at once: the game has already converted the old saves.
+  - `RedoNewGame` is also what "Start from Beginning" over a cleared slot sends, and only the clear flag tells them
+    apart. A frame or so after the start (`GuiManager._IsRestartData` true), `GuiManager._IsGameClearData` true means the
+    slot was cleared: the same playthrough, roster kept (NG+); false means archive at once (the game has already
+    converted the old saves). Until it is decided no roster is active. An unreadable clear flag, or no restart flag within
+    10 s, archives. The decision runs in the update loop (`UpdateBehavior`), never inside a hook. The wait lives in the
+    session, so closing the game before the decision (normally about 1 s) archives nothing, and the old roster stays
+    active over the restarted playthrough, where its members go away through reconciliation. This is accepted.
   - `NewGame` archives on its first save (`SaveDataManager.requestSaveSlot` for a global slot of the unit, not type 3,
     the copy a conversion writes at the title), because the old saves stay on disk until then. Until that save no
     roster is active. A later start or load gives the new game up: nothing is archived and the roster is active again.
     So does closing the game: the wait lives in the session.
-- **NG+** (`RedoNewGameSkip`): same playthrough, roster kept; members not in the party become away by the general rule.
+- **NG+** (`RedoNewGameSkip`, or a `RedoNewGame` over a cleared slot): same playthrough, roster kept; members not in the party become away by the general rule.
 - Any other `StartType`: a load within the playthrough.
 - Switching units in one session (title → another start) activates the new unit's roster and cancels the previous
   one's pending work (returning retries, diff counters) without writing to it.

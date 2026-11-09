@@ -191,11 +191,13 @@ do
     assert(s:take_archive() == 1 and s.archives == 1)
     assert(s.archive_pending == false and s:take_archive() == nil and s.archives == 1)
 
-    -- RedoNewGame: pending, but nothing to hand out until its load request names the unit
+    -- RedoNewGame: nothing is due until decide_restart says so, and nothing to hand out until the load names the unit
     s:on_start_request("RedoNewGame", 0)
-    assert(s.archive_pending == true and s.unit == nil)
-    assert(s:take_archive() == nil and s.archives == 1 and s.archive_pending == true)
+    assert(s.archive_pending == false and s.restart_pending == true and s.unit == nil)
+    assert(s:take_archive() == nil and s.archives == 1)
     s:on_load_request(9, 5)
+    assert(s:take_archive() == nil and s.archives == 1)
+    assert(s:decide_restart(false, true, 0) == "archived")
     assert(s:take_archive() == 1 and s.archives == 2)
     assert(s:take_archive() == nil and s.archives == 2)
 end
@@ -231,9 +233,10 @@ do
     local s = slot.new_session()
     s:on_start_request("RedoNewGame", 0)
     s:on_start_request("Latest", 0)
-    assert(s.archive_pending == false)
+    assert(s.archive_pending == false and s.restart_pending == false)
     s:on_load_request(9, 5)
     assert(s:take_archive() == nil and s.archives == 0)
+    assert(s:decide_restart(false, true, 0) == nil)
 
     -- a load alone (death reload) does not set it either
     s:on_load_request(9, 5)
@@ -284,6 +287,8 @@ do
     local s = slot.new_session()
     s:on_start_request("RedoNewGame", 1)
     s:on_load_request(8, 5)
+    assert(not s.first_save_pending and s:roster_unit() == nil and s:take_archive() == nil)
+    assert(s:decide_restart(false, true, 0) == "archived")
     assert(not s.first_save_pending and s:roster_unit() == 1 and s:take_archive() == 1)
 
     s = slot.new_session()
@@ -335,6 +340,117 @@ do
     end })
     spy:on_start_request("RedoNewGame", 0)
     assert(order[#order] == "archive_pending")
+
+    -- the restart flag too: after the unit and the source, before the archive flag
+    s, order = slot.new_session(), {}
+    spy = setmetatable({}, { __index = s, __newindex = function(_, k, v)
+        order[#order + 1] = k
+        s[k] = v
+    end })
+    spy:on_start_request("RedoNewGame", 0)
+    local at = {}
+    for i, k in ipairs(order) do at[k] = i end
+    assert(at.unit < at.restart_pending and at.source < at.restart_pending and at.restart_pending < at.archive_pending)
+
+    -- a decision flags the archive before it ends the wait
+    s = slot.new_session()
+    s:on_start_request("RedoNewGame", 0)
+    s:on_load_request(9, 5)
+    order = {}
+    spy = setmetatable({}, { __index = s, __newindex = function(_, k, v)
+        order[#order + 1] = k
+        s[k] = v
+    end })
+    assert(spy:decide_restart(false, true, 0) == "archived")
+    assert(order[#order - 1] == "archive_pending" and order[#order] == "restart_pending")
+end
+
+-- decide_restart: a restart over a cleared slot keeps the roster (NG+), over a slot not cleared it archives once
+do
+    local s = slot.new_session()
+    s:on_load_request(4, 5)
+    s:on_start_request("RedoNewGame", 0)
+    s:on_load_request(4, 5)
+    assert(s.restart_pending and s:roster_unit() == nil and s:take_archive() == nil)
+    assert(s:decide_restart(true, true, 100) == "kept")
+    assert(not s.restart_pending and not s.archive_pending and s:roster_unit() == 0)
+    assert(s:take_archive() == nil and s.archives == 0)
+    assert(s:decide_restart(true, true, 101) == nil) -- nothing pending any more
+
+    s:on_start_request("RedoNewGame", 0)
+    s:on_load_request(9, 5)
+    assert(s:roster_unit() == nil)
+    assert(s:decide_restart(false, true, 100) == "archived")
+    assert(not s.restart_pending and s:roster_unit() == 1)
+    assert(s:take_archive() == 1 and s.archives == 1 and s:take_archive() == nil)
+
+    -- restart data true and a clear flag that is not a boolean: fail closed
+    for _, bad in ipairs({ "nil", "number" }) do
+        s = slot.new_session()
+        s:on_start_request("RedoNewGame", 0)
+        s:on_load_request(4, 5)
+        local clear = nil
+        if bad == "number" then clear = 1 end
+        assert(s:decide_restart(clear, true, 0) == "archived")
+        assert(s:take_archive() == 0 and s.archives == 1, bad)
+    end
+end
+
+-- decide_restart: no load request yet (unit nil) -> nil, no timer, however late
+do
+    local s = slot.new_session()
+    s:on_start_request("RedoNewGame", 0)
+    assert(s:decide_restart(true, true, 0) == nil and s.restart_since == nil)
+    assert(s:decide_restart(nil, nil, 1000) == nil and s.restart_since == nil)
+    assert(s.restart_pending and not s.archive_pending and s:roster_unit() == nil)
+    s:on_load_request(4, 5)
+    assert(s:decide_restart(nil, nil, 1001) == nil and s.restart_since == 1001) -- the timer starts with the unit
+    assert(s:decide_restart(true, true, 1002) == "kept")
+end
+
+-- decide_restart: without the restart flag the wait ends in RESTART_WAIT seconds with an archive
+do
+    assert(slot.RESTART_WAIT == 10)
+    for _, rd in ipairs({ "nil", "false" }) do
+        local s = slot.new_session()
+        s:on_start_request("RedoNewGame", 0)
+        s:on_load_request(4, 5)
+        local restart_data = nil
+        if rd == "false" then restart_data = false end
+        assert(s:decide_restart(true, restart_data, 50) == nil and s.restart_since == 50)
+        assert(s:decide_restart(true, restart_data, 59.9) == nil)
+        assert(s.restart_pending and not s.archive_pending and s:roster_unit() == nil and s:take_archive() == nil)
+        assert(s:decide_restart(true, restart_data, 60) == "timeout")
+        assert(not s.restart_pending and s:roster_unit() == 0)
+        assert(s:take_archive() == 0 and s.archives == 1 and s:take_archive() == nil, rd)
+        assert(s:decide_restart(true, restart_data, 61) == nil)
+    end
+    -- the flags can arrive late, before the limit
+    local s = slot.new_session()
+    s:on_start_request("RedoNewGame", 0)
+    s:on_load_request(4, 5)
+    assert(s:decide_restart(nil, nil, 0) == nil and s:decide_restart(true, true, 9) == "kept")
+end
+
+-- a later start or a new restart cancels the wait: nothing archived, the timer starts over
+do
+    local s = slot.new_session()
+    s:on_start_request("RedoNewGame", 0)
+    s:on_load_request(4, 5)
+    assert(s:decide_restart(nil, nil, 0) == nil)
+    s:on_start_request("Latest", 0)
+    s:on_load_request(4, 5)
+    assert(not s.restart_pending and s:roster_unit() == 0)
+    assert(s:decide_restart(nil, nil, 100) == nil and s:take_archive() == nil and s.archives == 0)
+
+    s:on_start_request("RedoNewGame", 0)
+    s:on_load_request(4, 5)
+    assert(s:decide_restart(nil, nil, 100) == nil)
+    s:on_start_request("RedoNewGame", 0)
+    assert(s.restart_since == nil)
+    s:on_load_request(4, 5)
+    assert(s:decide_restart(nil, nil, 105) == nil and s.restart_since == 105)
+    assert(s:decide_restart(nil, nil, 114.9) == nil and s:decide_restart(nil, nil, 115) == "timeout")
 end
 
 -- to_int: integral floats become integers, anything else nil

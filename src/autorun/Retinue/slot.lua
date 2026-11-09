@@ -8,6 +8,7 @@ local M = {}
 M.NEW_PLAYTHROUGH, M.NG_PLUS, M.LOAD = "new_playthrough", "ng_plus", "load"
 M.ROOT = "Retinue/slots" -- relative to reframework/data, like config.PATH
 M.CLEAR_TYPE = 3 -- save type of the copy a restart's conversion writes at the title (SAVE_SLOT_CLEAR, findings 0010)
+M.RESTART_WAIT = 10 -- seconds (os.clock) a restart waits for the game's clear flag before it archives (decide_restart)
 
 -- Integer view of a number: integral floats accepted (2.0 -> 2); anything else -> nil.
 function M.to_int(n)
@@ -24,7 +25,9 @@ function M.unit_of(global_slot, per_unit)
 end
 
 -- classify(start_name) -> NEW_PLAYTHROUGH for "NewGame" and "RedoNewGame", NG_PLUS for "RedoNewGameSkip",
--- LOAD for any other string, nil for a non-string (name unreadable).
+-- LOAD for any other string, nil for a non-string (name unreadable). By name only: a "RedoNewGame" is also what
+-- "Start from Beginning" over a cleared slot sends (the same playthrough, like NG+), so the session decides which it
+-- is from the game's clear flag (Session:decide_restart).
 function M.classify(start_name)
     if type(start_name) ~= "string" then return nil end
     if start_name == "NewGame" or start_name == "RedoNewGame" then return M.NEW_PLAYTHROUGH end
@@ -70,8 +73,11 @@ end
 --               same unit, by comparing it)
 --   first_save_pending  boolean  a NewGame waits for its first save: the old saves are still on disk until then, so
 --               the slot's roster is neither active nor archived (see roster_unit and on_save_request)
---   archive_pending  boolean  the slot's roster is to be archived now (see on_start_request, on_save_request and
---               take_archive)
+--   restart_pending  boolean  a "RedoNewGame" waits for the game's clear flag (see decide_restart): a restart over a
+--               cleared slot keeps the roster (NG+), over a slot not cleared it archives. No roster is active meanwhile
+--   restart_since  number | nil  the clock (os.clock) at the first decide_restart with a unit; the wait is timed from it
+--   archive_pending  boolean  the slot's roster is to be archived now (see on_start_request, on_save_request,
+--               decide_restart and take_archive)
 --   archives    integer  count of take_archive results (the roster store's request count includes it: see Retinue.lua)
 local Session = {}
 Session.__index = Session
@@ -79,7 +85,7 @@ Session.__index = Session
 function M.new_session()
     return setmetatable({
         unit = nil, source = nil, seen = false, last_start = nil, starts = 0, loads = 0,
-        first_save_pending = false, archive_pending = false, archives = 0,
+        first_save_pending = false, restart_pending = false, restart_since = nil, archive_pending = false, archives = 0,
     }, Session)
 end
 
@@ -95,9 +101,9 @@ end
 
 -- requestStartType pre: seen = true; starts += 1; last_start = { name, kind }. If name == "NewGame": unit =
 -- unit_number's integer view if >= 0 else nil, source = unit and "new_game" or nil. Any other name (including
--- nil): unit = nil, source = nil (the load request that follows sets it). Every start replaces both archive flags:
--- first_save_pending = a "NewGame" with a known unit; archive_pending = a "RedoNewGame" (see below). So a restart whose
--- load never came cannot archive a slot loaded later.
+-- nil): unit = nil, source = nil (the load request that follows sets it). Every start replaces the three flags:
+-- first_save_pending = a "NewGame" with a known unit; restart_pending = a "RedoNewGame" (decide_restart settles it);
+-- archive_pending = false. So a restart whose load never came cannot archive a slot loaded later.
 function Session:on_start_request(name, unit_number)
     self.seen = true
     self.starts = self.starts + 1
@@ -111,10 +117,12 @@ function Session:on_start_request(name, unit_number)
     self.first_save_pending = name == "NewGame" and unit ~= nil
     self.unit = unit
     self.source = unit and "new_game" or nil
-    -- Assigned last: a reader that sees the flag must also see the new unit (with the previous unit it would archive the
-    -- wrong slot). A RedoNewGame has already converted the old saves, so it archives at once. A NewGame leaves them on
-    -- disk until its first save.
-    self.archive_pending = name == "RedoNewGame"
+    -- Assigned last: a reader that sees a flag must also see the new unit (with the previous unit it would archive the
+    -- wrong slot). A RedoNewGame has already converted the old saves, but whether it archives depends on the clear flag,
+    -- which the game sets a frame or so later: decide_restart. A NewGame leaves the saves on disk until its first save.
+    self.restart_since = nil
+    self.restart_pending = name == "RedoNewGame"
+    self.archive_pending = false
 end
 
 -- SaveDataManager.requestSaveSlot pre -> true when this is the first save of a NewGame: a save of its unit while
@@ -131,14 +139,44 @@ function Session:on_save_request(global_slot, per_unit)
 end
 
 -- roster_unit() -> the unit whose roster is active: nil while a NewGame waits for its first save (nothing of the old
--- roster is shown, used or written, and giving the game up leaves it as it was), else unit.
+-- roster is shown, used or written, and giving the game up leaves it as it was) or a restart waits for the clear flag,
+-- else unit.
 function Session:roster_unit()
-    if self.first_save_pending then return nil end
+    if self.first_save_pending or self.restart_pending then return nil end
     return self.unit
 end
 
+-- decide_restart(clear, restart_data, now) -> nil | "kept" | "archived" | "timeout". Called by the glue every game update
+-- with the game's flags (GuiManager._IsGameClearData, _IsRestartData; nil = unreadable) and the clock. Nothing pending, or
+-- the restart's load request not seen yet (unit nil): nil, nothing changes. The first call with a unit starts the timer.
+--   restart_data true, clear true      -> "kept": the slot is cleared, the same playthrough (NG+); the roster stays
+--   restart_data true, clear false     -> "archived" (archive_pending set)
+--   restart_data true, clear not a boolean -> "archived" (fail closed)
+--   restart_data not true              -> nil (wait), or "timeout" (archive_pending set) after RESTART_WAIT seconds
+-- A decision sets archive_pending before it ends the wait, so the old roster is never active with no archive flagged.
+function Session:decide_restart(clear, restart_data, now)
+    if not self.restart_pending then return nil end
+    if self.unit == nil then return nil end
+    if self.restart_since == nil then self.restart_since = now end
+    if restart_data == true then
+        if clear == true then
+            self.restart_pending = false
+            return "kept"
+        end
+        self.archive_pending = true
+        self.restart_pending = false
+        return "archived"
+    end
+    if now - self.restart_since >= M.RESTART_WAIT then
+        self.archive_pending = true
+        self.restart_pending = false
+        return "timeout"
+    end
+    return nil
+end
+
 -- take_archive() -> unit | nil. When an archive is pending and the unit is known: clears the flag, archives += 1 and
--- returns the unit, once. Otherwise nil and the flag stays (the load request that follows a RedoNewGame sets the unit).
+-- returns the unit, once. Otherwise nil and the flag stays.
 function Session:take_archive()
     if not self.archive_pending then return nil end
     local unit = self.unit -- one read: a hook may change it on another thread

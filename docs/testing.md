@@ -194,9 +194,11 @@ Use a test slot, never the real save's slot, for 21 and 22.
       with this build, so the backup has one) → `returning`, log `re-hired unseen`, restored.
 21. **New game** *(opportunistic)*: in a test slot with a roster, start a New Game over it and play to its first save.
     `slots/<n>/archive-<date-time>/` holds the old roster and backups; the slot starts empty. Giving up instead: close
-    the game in the prologue and load the old save: no archive, the roster and its members as before. A restart
-    (`RedoNewGame`, Change Save Slot, hold Shift) archives at once.
+    the game in the prologue and load the old save: no archive, the roster and its members as before. A restart over a
+    slot not cleared (`RedoNewGame`, Change Save Slot, hold Shift) archives at once.
 22. **NG+** *(opportunistic)*: over a cleared test slot, the roster is kept; members not in the party become away.
+    "Start from Beginning" over a cleared slot keeps the roster too (log line `restart over a cleared slot; the roster
+    stays (NG+)`).
 
 ### Damaged roster
 
