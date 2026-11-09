@@ -1,6 +1,7 @@
--- game/marks.lua against a fake sdk and log: the two hook groups' lookups (a missing member leaves only that group
+-- game/marks.lua against a fake sdk and log: the three hook groups' lookups (a missing member leaves only that group
 -- uninstalled), the Status marks (setupPawn, PawnInfo2Ref.setup, CharaChangeRef.updateName), the Previous Hires marks
--- (ResItem.updateDisp), idempotence, and the failure paths (a throwing set_Message, an unreadable CharaData).
+-- (ResItem.updateDisp), the Status exp flag (setupStatus, setupJob), idempotence, and the failure paths (a throwing
+-- set_Message, an unreadable CharaData, a post that never came).
 local logs, reports, hooked = {}, {}, {}
 local world
 local missing_name
@@ -9,6 +10,8 @@ local SETUP_PAWN = "setupPawn(app.GUIBase.CharaData)"
 local PAWN_INFO_SETUP = "setup(app.GUIBase.CharaData)"
 local UPDATE_NAME = "updateName()"
 local SELECTED = "get_SelectedCharaData()"
+local SETUP_STATUS = "setupStatus(app.GUIBase.CharaData)"
+local SETUP_JOB = "setupJob(app.GUIBase.CharaData)"
 local UPDATE_DISP = "updateDisp(app.ui041401.ResInfo)"
 local GET_MESSAGE = "get_Message()"
 local SET_MESSAGE = "set_Message(System.String)"
@@ -16,7 +19,7 @@ local IS_MAIN = "<IsMainPawn>k__BackingField"
 
 -- type name -> { methods = {sig}, fields = {name} }
 local TYPES = {
-    ["app.ui060601_01"] = { methods = { SETUP_PAWN }, fields = { "PawnInfo", "CharaTab" } },
+    ["app.ui060601_01"] = { methods = { SETUP_PAWN, SETUP_STATUS, SETUP_JOB }, fields = { "PawnInfo", "CharaTab" } },
     ["app.GUIBase.PawnInfo2Ref"] = { methods = { PAWN_INFO_SETUP }, fields = { "TxtName" } },
     ["app.GUIBase.CharaChangeRef"] = { methods = { UPDATE_NAME, SELECTED }, fields = { "TxtName" } },
     ["app.GUIBase.CharaData"] = { methods = {}, fields = { "CopyOwner", IS_MAIN } },
@@ -138,11 +141,11 @@ local function status_scene(msg)
     return info_text, tab_text
 end
 
--- everything present: both groups available, four hooks, nothing reported
+-- everything present: all three groups available, six hooks, nothing reported
 do
     reset()
     local m = make()
-    assert(m.status_available and m.rift_available and #m.missing == 0 and #hooked == 4 and #reports == 0)
+    assert(m.status_available and m.rift_available and m.exp_available and #m.missing == 0 and #hooked == 6 and #reports == 0)
 end
 
 -- the lookups: every type, method and field in turn missing
@@ -150,13 +153,16 @@ do
     local status_types = { ["app.ui060601_01"] = true, ["app.GUIBase.PawnInfo2Ref"] = true, ["app.GUIBase.CharaChangeRef"] = true,
         ["app.GUIBase.CharaData"] = true, ["app.PawnOwnerContext"] = true }
     local rift_types = { ["app.ui041401.ResItem"] = true, ["app.ui041401.ResInfo"] = true }
+    local exp_types = { ["app.ui060601_01"] = true, ["app.GUIBase.CharaData"] = true, ["app.PawnOwnerContext"] = true }
+    -- the exp group looks up only these members of the types it shares with the Status group
+    local exp_names = { [SETUP_STATUS] = true, [SETUP_JOB] = true, CopyOwner = true, [IS_MAIN] = true, _OfflineID = true }
     local cases = {}
     for type_name, t in pairs(TYPES) do
         cases[#cases + 1] = { name = type_name, type = type_name }
         for _, sig in ipairs(t.methods) do cases[#cases + 1] = { name = sig, type = type_name } end
         for _, f in ipairs(t.fields) do cases[#cases + 1] = { name = f, type = type_name } end
     end
-    assert(#cases == 8 + 7 + 9) -- 8 types, 7 methods, 9 fields
+    assert(#cases == 8 + 9 + 9) -- 8 types, 9 methods, 9 fields
     for _, c in ipairs(cases) do
         reset()
         missing_name = c.name
@@ -164,10 +170,15 @@ do
         missing_name = nil
         local shared = c.type == "via.gui.Text"
         local status_hit = shared or status_types[c.type]
+        if c.name == SETUP_STATUS or c.name == SETUP_JOB then status_hit = false end -- only the exp group looks these up
         local rift_hit = shared or rift_types[c.type]
+        -- a whole type that exp uses is missing for it too; a member only when exp looks that member up
+        local exp_hit = (c.name == c.type and exp_types[c.type]) or (c.name ~= c.type and exp_types[c.type] and exp_names[c.name])
+        exp_hit = exp_hit and true or false
         assert(m.status_available == not status_hit, c.name)
         assert(m.rift_available == not rift_hit, c.name)
-        assert(#hooked == (status_hit and 0 or 3) + (rift_hit and 0 or 1), c.name)
+        assert(m.exp_available == not exp_hit, c.name)
+        assert(#hooked == (status_hit and 0 or 3) + (rift_hit and 0 or 1) + (exp_hit and 0 or 2), c.name)
         assert(#m.missing >= 1, c.name)
         local named = false
         for _, n in ipairs(m.missing) do if n:find(c.name, 1, true) then named = true end end
@@ -179,7 +190,7 @@ do
         for _, r in ipairs(reports) do
             if r:find("unavailable, not found (game update?)", 1, true) then reported = reported + 1 end
         end
-        assert(reported == (status_hit and 1 or 0) + (rift_hit and 1 or 0), c.name)
+        assert(reported == (status_hit and 1 or 0) + (rift_hit and 1 or 0) + (exp_hit and 1 or 0), c.name)
     end
 end
 
@@ -466,6 +477,166 @@ do
     h.post(nil)
     h.post(nil)
     assert(inner_widget.msg == "Zed" and outer[1].msg == "\u{2605} Ana")
+end
+
+-- ---- Status exp: setupStatus and setupJob set IsMainPawn for the call, on a present member only ----
+
+-- A CharaData that records its set_field calls: sets = { {name, value} }, fail_value makes a set to that value throw.
+local function exp_data(offline_id, is_main)
+    local props = { CopyOwner = obj({ _OfflineID = offline_id }), [IS_MAIN] = is_main }
+    local cd = obj(props)
+    cd.sets, cd.fail_value = {}, nil
+    function cd:set_field(name, v)
+        if cd.fail_value ~= nil and v == cd.fail_value then error("set boom") end
+        cd.sets[#cd.sets + 1] = { name, v }
+        props[name] = v
+    end
+    function cd.flag() return props[IS_MAIN] end
+    return cd
+end
+
+for _, sig in ipairs({ SETUP_STATUS, SETUP_JOB }) do
+    -- a present member: true in the pre, false after the post, the log line once over two calls
+    reset()
+    local m = make()
+    assert(m.exp_available)
+    local cd = exp_data(PRESENT_ID, false)
+    world.by_addr[100], world.by_addr[103] = obj({}), cd
+    local h = hook_for(sig)
+    h.pre({ 0, 100, 103 })
+    assert(cd.flag() == true and #cd.sets == 1 and cd.sets[1][1] == IS_MAIN and cd.sets[1][2] == true, sig)
+    h.post(nil)
+    assert(cd.flag() == false and #cd.sets == 2 and cd.sets[2][2] == false, sig)
+    fire(sig, 100, 103)
+    assert(cd.flag() == false and #cd.sets == 4, sig)
+    assert(count_log("status exp: shown for member " .. PRESENT_ID) == 1, sig)
+    assert(#reports == 0, sig)
+
+    -- the main pawn (flag already true), the Arisen (no owner), a hired non-member, an away member: nothing is written
+    for name, data in pairs({
+        main = exp_data(PRESENT_ID, true),
+        arisen = (function() -- no CopyOwner
+            local d = exp_data(PRESENT_ID, false)
+            d.get_field = function(_, f) if f == IS_MAIN then return false end return nil end
+            return d
+        end)(),
+        non_member = exp_data(OTHER_ID, false),
+        away = exp_data(AWAY_ID, false),
+    }) do
+        reset()
+        make()
+        world.by_addr[103] = data
+        fire(sig, 100, 103)
+        assert(#data.sets == 0, sig .. " " .. name)
+        assert(#logs == 0 and #reports == 0, sig .. " " .. name)
+    end
+    -- the Arisen with a zero offline id
+    reset()
+    make()
+    local zero = exp_data("00000000-0000-0000-0000-000000000000", false)
+    world.by_addr[103] = zero
+    fire(sig, 100, 103)
+    assert(#zero.sets == 0 and #logs == 0 and #reports == 0, sig)
+
+    -- no roster: nobody is a member
+    reset("none")
+    make()
+    local nr = exp_data(PRESENT_ID, false)
+    world.by_addr[103] = nr
+    fire(sig, 100, 103)
+    assert(#nr.sets == 0 and #reports == 0, sig)
+
+    -- a pre with no post between: the second pre restores the first frame's flag and reports once
+    reset()
+    make()
+    local first, second = exp_data(PRESENT_ID, false), exp_data(PRESENT_ID, false)
+    world.by_addr[103], world.by_addr[104] = first, second
+    h = hook_for(sig)
+    h.pre({ 0, 100, 103 })
+    assert(first.flag() == true)
+    h.pre({ 0, 100, 104 })
+    assert(first.flag() == false and second.flag() == true, sig)
+    assert(#reports == 1 and reports[1]:find("a post did not run; flag restored", 1, true), sig)
+    h.post(nil)
+    assert(second.flag() == false and #reports == 1, sig)
+    h.post(nil) -- the stack is empty: nothing happens
+    assert(#reports == 1, sig)
+
+    -- a throwing set_field in the post is reported, not raised
+    reset()
+    make()
+    local bad = exp_data(PRESENT_ID, false)
+    world.by_addr[103] = bad
+    h = hook_for(sig)
+    h.pre({ 0, 100, 103 })
+    bad.fail_value = false
+    h.post(nil)
+    assert(#reports == 1 and reports[1]:find("restore failed", 1, true) and reports[1]:find("set boom", 1, true), sig)
+
+    -- a throwing set_field in the pre is reported, nothing escapes, and the post writes nothing
+    reset()
+    make()
+    local bad_pre = exp_data(PRESENT_ID, false)
+    bad_pre.fail_value = true
+    world.by_addr[103] = bad_pre
+    fire(sig, 100, 103)
+    assert(#bad_pre.sets == 0 and #reports == 1 and reports[1]:find("IsMainPawn set failed", 1, true), sig)
+
+    -- a throw after the set (the log line) is reported and the post still puts the flag back
+    reset()
+    make()
+    local after = exp_data(PRESENT_ID, false)
+    world.by_addr[103] = after
+    local real_log = log.error
+    log.error = function() error("log boom") end
+    fire(sig, 100, 103)
+    log.error = real_log
+    assert(after.flag() == false and #after.sets == 2 and #reports == 1 and reports[1]:find("log failed", 1, true), sig)
+
+    -- a nil CharaData argument writes nothing and raises nothing
+    reset()
+    make()
+    fire(sig, 100, 0)
+    fire(sig, 100, 999)
+    assert(#reports == 0 and #logs == 0, sig)
+
+    -- an unreadable CharaData (get_field throws) is reported, nothing is written
+    reset()
+    make()
+    local broken = exp_data(PRESENT_ID, false)
+    broken.get_field = function() error("read boom") end
+    world.by_addr[103] = broken
+    fire(sig, 100, 103)
+    assert(#broken.sets == 0 and #reports == 1 and reports[1]:find("read boom", 1, true), sig)
+end
+
+-- the exp group is independent: a missing setupJob signature leaves it unavailable and listed, the others stay
+do
+    reset()
+    missing_name = SETUP_JOB
+    local m = make()
+    missing_name = nil
+    assert(not m.exp_available and m.status_available and m.rift_available)
+    local listed = false
+    for _, n in ipairs(m.missing) do if n:find(SETUP_JOB, 1, true) then listed = true end end
+    assert(listed and #hooked == 4)
+    -- a missing Status-group-only member leaves exp available
+    reset()
+    missing_name = "PawnInfo"
+    m = make()
+    missing_name = nil
+    assert(m.exp_available and not m.status_available and m.rift_available and #hooked == 3)
+    -- an unavailable exp group leaves a live hook inert
+    reset()
+    local real = sdk.hook
+    sdk.hook = function(...) if #hooked >= 4 then error("hook boom") end return real(...) end
+    m = make()
+    sdk.hook = real
+    assert(not m.exp_available)
+    local cd = exp_data(PRESENT_ID, false)
+    world.by_addr[103] = cd
+    fire(SETUP_STATUS, 100, 103)
+    assert(#cd.sets == 0)
 end
 
 print("marks_glue_test ok")

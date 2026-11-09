@@ -69,7 +69,8 @@
 -- slot_hooks (the start, load and save request hooks behind the save slot, and the in-the-world signal), lifecycle_hooks
 -- (the dismiss and hire hooks; pawn_state also does the restore writes) and notice_screen (the notice dialog: show,
 -- hide, and the reads that say when it is safe), talk_menu (the row in a hired pawn's talk menu, the confirm, the
--- pick and the action) and marks (the hooks and widget writes behind the Status and Previous Hires marks).
+-- pick and the action) and marks (the hooks and widget writes behind the Status and Previous Hires marks, and the
+-- exp panel of a member on the Status page).
 -- Every hook body runs under pcall.
 
 local errlog = require("Retinue.errlog")

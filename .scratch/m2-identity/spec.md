@@ -263,6 +263,9 @@ From [Where does the player see the retinue's status in game?](issues/13-native-
 
 - **Status page**: the name header reads "<name> · Retinue" for a present member (after `ui060601_01.setupPawn`,
   writing `PawnInfo2Ref.TxtName` / `CharaChangeRef.TxtName`). Never for the Arisen or the main pawn.
+- **Exp on the Status page**: a present member shows its own exp / next level and discipline / next rank like the main
+  pawn. The game prints "-" for any CharaData without `<IsMainPawn>k__BackingField`, in `ui060601_01.setupStatus` and
+  `setupJob`; the mod sets the flag on the member's CharaData in their pre and clears it in their post (ticket 29 spike).
 - **Rift Previous Hires**: in `ui041401.ResItem.updateDisp(ResInfo)`, an entry whose `ResInfo.OfflineId` is a member
   shows "★ <name> · Lv N" in `TxtPawnName`, N the **backup's** level (no backup level: "★ <name>"). Ordinary pawns unmarked.
 - **Notices** through `GuiManager.requestNoButtonDialog(String, UInt32)`, centred, closed by the mod after 3 s with

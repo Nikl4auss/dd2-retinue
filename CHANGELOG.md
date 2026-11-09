@@ -48,6 +48,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Retinue marks (M2): a present member's name header on pause > Status reads "<name> · Retinue", and the Rift's
   Previous Hires lists every member as "★ <name> · Lv N" (the backup's level), matched by Offline ID. The Arisen, the
   main pawn and other pawns stay plain. A missing game method or field leaves that page vanilla (menu line, one log line).
+- Status page exp (M2): pause > Status shows a present member's own experience and next level (Status tab) and
+  discipline and next rank (Vocation tab), where the game showed "-". It sets the page's main-pawn flag on the member's
+  copy for `setupStatus` and `setupJob` only, then puts it back. Other hired pawns keep the "-"; a missing game method or
+  field leaves the page vanilla.
 - `deploy.sh --probe-only`: links the read-only probe without the mod, for the uninstall checks. `--remove` never
   touches `reframework/data/Retinue`.
 

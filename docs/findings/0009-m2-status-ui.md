@@ -103,6 +103,24 @@ panel up it did not show and the hide was clean.
 
 **Not reached**: a Rift NPC talk, a cutscene after the prologue, a dialog requested by the game itself rather than by script, a notice inside the Rift.
 
+## P7 — exp on the Status page (verified-game, 2026-11-09)
+
+Ticket 29 spike, log-only hooks plus three variants, headless. Script, log and screenshots:
+[data/2026-11-09-t29-exp-spike/](data/2026-11-09-t29-exp-spike/). Slot 2: Klauss (Arisen), Shaira (main pawn), Diamonds
+(member, Lv 24). No hired non-member in that save.
+
+- A member's Status tab reads "Experience -/ -" and its Vocation tab "Current Discipline -", "Next -". The main pawn's and
+  the Arisen's show numbers ("7875/ 14700", "5005 Dcp").
+- The texts come from `ui060601_01.setupStatus(CharaData)` and `setupJob(CharaData)`. On a character change the order is
+  `setupChara` { `setupStatus`, `setupJob`, `setupPawn`, `setupExp` { `setExp` } }; a tab change runs `setTabId` { `setupExp` }.
+- `PnlExp` / `setupExp` / `setExp(StSelData)` are the description box for the row under the cursor (StSelData.Value = row
+  index, TitleId/DetailId its title and help). `hideExp` never ran. `TxtExpName`, `TxtExpDetail`, `TxtNext` are null fields.
+- The gate is the CharaData's `<IsMainPawn>k__BackingField`: set true in the pre of both methods and back in their post, the
+  member shows its own numbers ("Experience 2960/ 17030", "Current Discipline 2078 Dcp", "Next 2922 Dcp"), and the main pawn
+  and the Arisen show theirs after a switch. `CopyOwner._OfflineID` := 0 changes nothing. Calling `setupExp` + `setExp` again
+  changes nothing.
+- Not checked: whether the two methods read the flag for anything beyond these texts.
+
 ## Conclusions
 
 1. Custom transient text works through `requestNoButtonDialog(String, UInt32)`; the mod must close it itself.
@@ -113,3 +131,4 @@ panel up it did not show and the hide was clean.
 4. A disabled talk row looks enabled: it cannot explain why it is disabled.
 5. The native dialog fits two lines; input leaks from the field include pawn commands on the d-pad.
 6. The notice is modal and shares its widget with the game's dialogs (P6): it may only be shown with nothing else up, and only closed if it is still ours.
+7. The Status page hides exp and discipline behind the main-pawn flag of the page's CharaData; setting it for `setupStatus` and `setupJob` alone shows a member's own numbers (P7).

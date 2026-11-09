@@ -10,7 +10,7 @@ Cross-review: skipped (unavailable, see memory); the Opus reviewer covers the pl
 Scope decision (orchestrator): present members only, the same rule as the header mark (`marks_logic.status_member`). A hired
 non-member keeps the vanilla "-" (it does not progress). Away members are not in the party, so not on the page.
 
-## Slice 1: show a member's exp on the Status page — implementer (Sonnet) — [ ]
+## Slice 1: show a member's exp on the Status page — implementer (Sonnet) — [x] (2 review rounds)
 
 **Goal**: pause > Status shows a present member's own exp / next level (Status tab) and discipline / next rank (Vocation tab),
 like the main pawn's. The Arisen, the main pawn and hired non-members are unchanged. A missing type, method or field leaves

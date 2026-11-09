@@ -2,12 +2,16 @@
 -- name widget gets) are Retinue/marks.lua, the texts Retinue/labels.lua, the roster game/roster_store.lua, the levels
 -- game/backup_store.lua.
 --
--- Two surfaces, each its own hook group, looked up and installed all or nothing (findings 0009 P3 and P4):
+-- Three surfaces, each its own hook group, looked up and installed all or nothing (findings 0009 P3, P4 and P7):
 --   Status (pause > Status): in the post of ui060601_01.setupPawn, PawnInfo2Ref.setup and CharaChangeRef.updateName, the name
 --     header of a present member (not the main pawn) is "<name> · Retinue", on both the page's PawnInfo.TxtName and
 --     CharaTab.TxtName. The member is the CharaData's CopyOwner._OfflineID in the roster with status present.
 --   Rift (Previous Hires): in the post of ui041401.ResItem.updateDisp, every roster member (any status) shows
 --     "★ <name> · Lv N" (N the backup's level; "★ <name>" without one), matched by the ResInfo's OfflineId.
+--   Status exp (pause > Status, Status and Vocation tabs): ui060601_01.setupStatus and setupJob show "-" for exp, discipline
+--     and next level unless the CharaData's <IsMainPawn> is true (findings 0009 P7). For a present member the pre
+--     sets that flag true and the post sets it back false, so only the call sees it and it is never left set. The Arisen,
+--     the main pawn and a hired non-member are untouched (the same member rule as the Status header mark).
 -- Every write starts from the shown text with our own mark stripped (marks.lua), so a refresh never stacks a mark and a reused
 -- widget loses a stale one. A hook's pre keeps `this` and the argument on a stack for its post (the hook has no other way to
 -- hand them over; the frame is pushed before it is filled, so a throwing read cannot leave the post with an older one). A missing type, method or field leaves that surface vanilla (menu line, one log line); an unreadable
@@ -31,6 +35,8 @@ local SETUP_PAWN_SIG = "setupPawn(app.GUIBase.CharaData)"
 local PAWN_INFO_SETUP_SIG = "setup(app.GUIBase.CharaData)"
 local UPDATE_NAME_SIG = "updateName()"
 local SELECTED_SIG = "get_SelectedCharaData()"
+local SETUP_STATUS_SIG = "setupStatus(app.GUIBase.CharaData)"
+local SETUP_JOB_SIG = "setupJob(app.GUIBase.CharaData)"
 local UPDATE_DISP_SIG = "updateDisp(app.ui041401.ResInfo)"
 local GET_MESSAGE_SIG = "get_Message()"
 local SET_MESSAGE_SIG = "set_Message(System.String)"
@@ -41,10 +47,10 @@ local STACK_MAX = 8 -- pending pre -> post frames per hook (a post that never ca
 
 -- M.new(report, deps) -> marks
 --   deps = { store = game/roster_store's (store.roster is read at each call), backups = game/backup_store's (optional: no level) }
---   marks.status_available, marks.rift_available  booleans: that group's lookups passed and its hooks are installed
+--   marks.status_available, marks.rift_available, marks.exp_available  booleans: that group's lookups passed and its hooks are installed
 --   marks.missing  { string }  "<type>.<member>" not found (or not hookable), for the menu's "unavailable" lines
 function M.new(report, deps)
-    local marks = { status_available = false, rift_available = false, missing = {} }
+    local marks = { status_available = false, rift_available = false, exp_available = false, missing = {} }
     local store, backups = deps.store, deps.backups
     local seen = {} -- "<group> <text>" -> true: the written texts already logged
 
@@ -251,6 +257,74 @@ function M.new(report, deps)
     }
 
     marks.status_available = finish("status marks", status_lookups, status_entries)
+
+    -- ---- Status exp (a member's exp and next level on the Status and Vocation tabs) ----
+
+    local exp_lookups = lookups()
+    do
+        local g = exp_lookups
+        local td_ui, td_data, td_owner = g.type_of(UI_STATUS), g.type_of(CHARA_DATA), g.type_of(OWNER_CONTEXT)
+        g.method_of(td_ui, UI_STATUS, SETUP_STATUS_SIG)
+        g.method_of(td_ui, UI_STATUS, SETUP_JOB_SIG)
+        g.field_of(td_data, CHARA_DATA, "CopyOwner")
+        g.field_of(td_data, CHARA_DATA, IS_MAIN_PAWN)
+        g.field_of(td_owner, OWNER_CONTEXT, "_OfflineID")
+    end
+
+    -- The flag back to false on a CharaData whose frame set it (a throw is reported, never raised).
+    local function restore_exp(frame)
+        if not frame.flipped then return end
+        local ok, err = pcall(function() frame.cd:set_field(IS_MAIN_PAWN, false) end)
+        if not ok then report("status exp", "restore failed: " .. tostring(err)) end
+    end
+
+    -- One hook of the group. The pre sets IsMainPawn true on a present member's CharaData and the post puts it back, so the
+    -- game's setup (which gates the numbers on that flag) sees it only for the call. status_member requires the flag false,
+    -- so the flag is only ever written back on a CharaData we set.
+    local function exp_entry(key, sig)
+        local stack = new_stack()
+        return { key = key, type = UI_STATUS, sig = sig,
+          pre = function(args)
+              if not marks.exp_available then return end
+              -- a post that never came: put its flag back before this call's frame goes on
+              local stale = stack.pop()
+              if stale ~= nil then
+                  while stale ~= nil do
+                      restore_exp(stale)
+                      stale = stack.pop()
+                  end
+                  report("status exp", "a post did not run; flag restored")
+              end
+              local frame = {}
+              stack.push(frame)
+              local step = "CharaData read"
+              local ok, err = pcall(function()
+                  frame.cd = hooks.to_managed(args[3])
+                  if frame.cd ~= nil and status_member(frame.cd) == true then
+                      step = "IsMainPawn set"
+                      frame.cd:set_field(IS_MAIN_PAWN, true)
+                      frame.flipped = true
+                      step = "log"
+                      local id = hooks.guid_str(frame.cd:get_field("CopyOwner"):get_field("_OfflineID"))
+                      local seen_key = "exp " .. tostring(id)
+                      if not seen[seen_key] then
+                          seen[seen_key] = true
+                          log.error(string.format("[Retinue] status exp: shown for member %s", tostring(id)))
+                      end
+                  end
+              end)
+              if not ok then report("status exp", step .. " failed: " .. tostring(err)) end
+          end,
+          post = function()
+              local frame = stack.pop()
+              if frame ~= nil then restore_exp(frame) end
+          end }
+    end
+
+    marks.exp_available = finish("status exp", exp_lookups, {
+        exp_entry("marks.setupStatus", SETUP_STATUS_SIG),
+        exp_entry("marks.setupJob", SETUP_JOB_SIG),
+    })
 
     -- ---- Rift (Previous Hires) ----
 
