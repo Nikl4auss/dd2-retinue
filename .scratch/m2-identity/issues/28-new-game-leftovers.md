@@ -7,9 +7,9 @@ they show. All three are checks in game; only the first may need code.
 
 **Blocked by:** [22: A new game archives the slot's roster; NG+ keeps it](22-new-game-archives-roster.md)
 
-**Status:** needs-triage
+**Status:** resolved
 
-- [ ] "Start from Beginning" on a cleared slot (new since findings 0010, offered after the difficulty choice): which `StartType`
+- [x] "Start from Beginning" on a cleared slot (new since findings 0010, offered after the difficulty choice): which `StartType`
   it sends. If `RedoNewGame`, the roster is archived at once: decide whether that is a new playthrough or the same one.
 - [x] NG+ with a member that has a valid backup: away, backup unchanged. Ticket 22's fixture read as damaged.
 - [x] A new game given up inside the session (back to the title, then a load): the line
@@ -43,3 +43,15 @@ they show. All three are checks in game; only the first may need code.
   Candidates from the dump: `app.GuiManager._IsGameClearData`, `_IsRestartData`, `IsGameClearData()`,
   `isGameClearOrRestartData()`, `makeLoopSaveData`. A log-only spike was sent to the peer session (runs: slot 1 Beginning,
   slot 2 restart, slot 1 Vernworth). Fail closed: if the signal cannot be read, keep archiving (the archive is never deleted).
+- Fixed in `1b8cdb4` (plan `plan-28.md`): a `RedoNewGame` waits in the session until `GuiManager._IsRestartData` is true, then
+  `_IsGameClearData` decides: cleared keeps the roster, otherwise archive; unreadable or no flag within 10 s archives.
+- In-game check of the fix passed 2026-11-09 (peer, headless, mod only). Slot 1, Start from Beginning, `FakeT23` fixture:
+  `slot: start RedoNewGame`, `Slot 1 (load request, global slot 3)`, 0.81 s later `slot: Slot 1 restart over a cleared slot; the
+  roster stays (NG+)`, `Slot 1: roster ok (1/2)`; no archive, roster and backup unchanged by hash at close, 3 min later at Fiska's
+  lines before the creator (the world needs the creator and its first save, not reached). Slot 2 restart, Folken's roster:
+  0.87 s to `slot: Slot 2 restart over a slot not cleared; the roster is archived`, then `archived 2 files to
+  Retinue/slots/2/archive-20261109-004943`, `roster ok (0/2)`; archive hashes equal the originals, originals 0 bytes. No
+  `no clear flag` or `unreadable` line. Backups `20261109-003730-t28-fix1`, `20261109-004535-t28-fix2`; both restored and verified.
+- Left for the user's manual pass: Start from Beginning played through the creator into the world, to see the kept roster
+  reconcile (members not in the party go away) and how it feels.
+- Closed 2026-11-09.
