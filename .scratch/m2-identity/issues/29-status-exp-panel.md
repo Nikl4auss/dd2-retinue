@@ -50,3 +50,20 @@ Reported by the user during the ticket 27 checklist run (2026-11-08).
     reopening the page, so not caused by it.
   - Not covered: a hired non-member (none in the save); side effects of (c) beyond the page, if `setupStatus`/`setupJob` read
     `IsMainPawn` for anything other than these texts.
+- 2026-11-09, `63af8d8`, in-game check (headless, by the test session; mod and probe, no spike; saves of backup
+  `20261108-122004-m2-t26-pre`: Slot 2, Klauss / Shaira (main pawn) / Diamonds (member, present)). Evidence in
+  `docs/findings/data/2026-11-09-t29-fix-check/`. Backup `20261109-022441-t29-fix` restored after; 7 saves and slots/1, slots/2
+  matched by sha256.
+  - 1 passes. Status tab: "Diamonds · Retinue", "Experience 2960/ 17030" (the spike's CopyStatus exp 2960). Vocation tab:
+    "Current Discipline 2078 Dcp", Mage Rank 6, "Next 2922 Dcp".
+  - 2 passes. Two C cycles on each tab: Klauss 7655/ 14700, 8929 / 4721 Dcp; Shaira 7875/ 14700, 8195 / 5005 Dcp; Diamonds
+    2960/ 17030, 2078 / 2922 Dcp, every time. Nothing stale, no "-" for Diamonds.
+  - 3 passes. Closed the page and reopened it: same values. `status exp: shown for member 89658ac1-…` logged once (02:30:09),
+    with no "status exp" report; the Retinue section of the REFramework menu has no "unavailable" line.
+  - 4 skipped: hiring a non-member means a trip to the Rift, too long for this run. Not covered.
+  - 5 passes. Three weak goblins spawned with Nick's devtools (Enemy spawner) in Vernworth and killed by the party. After:
+    Klauss 7982 (+327), 9028 Dcp (+99); Shaira 8187 (+312), 8294 Dcp (+99), Next 4906; Diamonds 3272 (+312), 2177 Dcp (+99),
+    Next 2823. Diamonds moves exactly like Shaira (vanilla).
+  - 6: no side effect seen. Diamonds' Pawn tab is the vanilla one (Arisen CAPCOM, Pawn Quest "Not Set"); no main-pawn rows or tabs
+    appear for her; Shaira's page and numbers are unchanged apart from the fight's gain; the party HUD in the world is normal
+    after closing the page.

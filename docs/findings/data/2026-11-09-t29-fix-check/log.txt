@@ -1,0 +1,7 @@
+[2026-11-09 02:25:48.267] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-09 02:26:58.112] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 5)
+[2026-11-09 02:26:58.116] [REFramework] [error] [Retinue] Slot 2: roster ok (2/2)
+[2026-11-09 02:28:26.864] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-09 02:28:30.015] [REFramework] [error] [Retinue] Anne: roster present, not in the save's party (backup Lv24) → away, backup kept
+[2026-11-09 02:30:09.271] [REFramework] [error] [Retinue] marked (status): Diamonds · Retinue
+[2026-11-09 02:30:09.271] [REFramework] [error] [Retinue] status exp: shown for member 89658ac1-ac9c-45cf-84a3-633cc46a8ab4
