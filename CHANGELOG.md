@@ -5,9 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-09
+
 ### Added
 - Project scaffold: docs, deploy script, dump query tools, read-only party probe (research tool, not part of the mod).
 - `tools/saves.sh`: verified backup and restore of the save folder and mod data for in-game tests.
+- `tools/release.sh`: builds the release zip (game-folder layout plus `modinfo.ini` for Fluffy Mod Manager). MIT licence.
 - Progression (M1): hired pawns in the party gain levels, discipline and vocation rank from any exp source through
   the game's own curve, by pre-hooking `ExpDispenser.checkLevelUp` and `addJobPoint`. The main pawn is never altered.
 - Level-up and rank-up notifications name the hired pawn (`dispLevelUpUI`, `GuiManager.reqJobRankUp`).
@@ -60,3 +63,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   checkbox reads *Adopted pawns gain levels and vocation ranks*.
 - `deploy.sh --experiments` links the experiments instead of the mod, and refuses to link one while the other is
   linked.
+
+[Unreleased]: https://github.com/Nikl4auss/dd2-retinue/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Nikl4auss/dd2-retinue/releases/tag/v0.1.0

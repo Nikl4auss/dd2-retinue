@@ -5,3 +5,6 @@ il2cpp_dump.json
 # Claude Code: per-machine settings and temporary agent worktrees
 .claude/settings.local.json
 .claude/worktrees/
+
+# Release zips (tools/release.sh)
+dist/

@@ -10,9 +10,20 @@ the restrictions placed on hired pawns at runtime. See [ADR 0001](docs/adr/0001-
 
 ## Status
 
-Nothing released yet (0.0.0). M0 (research) and M1 (progression, checklist:
-[findings 0005](docs/findings/0005-m1-checklist-run.md)) are done. M2 (identity and persistence) is done too (checklist:
-[findings 0011](docs/findings/0011-m2-checklist-run.md)). 0.1.0 will be M1 + M2. See [docs/roadmap.md](docs/roadmap.md).
+**0.1.0** is the first playable release: M1 (progression, checklist:
+[findings 0005](docs/findings/0005-m1-checklist-run.md)) and M2 (identity and persistence, checklist:
+[findings 0011](docs/findings/0011-m2-checklist-run.md)). Next is M3 (vocation). See [docs/roadmap.md](docs/roadmap.md).
+
+## Install
+
+1. Install [REFramework](https://github.com/praydog/REFramework) for Dragon's Dogma 2 (see Requirements below).
+2. Download `Retinue-<version>.zip` from the [releases](https://github.com/Nikl4auss/dd2-retinue/releases).
+3. With the game closed, either add the zip to Fluffy Mod Manager, or unpack it into the game folder (the one with
+   `DD2.exe`) so that `reframework/autorun/Retinue.lua` and `reframework/autorun/Retinue/` land there. `modinfo.ini`
+   and `LICENSE` at the zip's root can be left out when unpacking by hand.
+4. Start the game. The mod's menu is under *Retinue* in the REFramework overlay.
+
+Back up your saves before the first run: it is a 0.x release.
 
 ## What it does
 
@@ -114,6 +125,7 @@ Details: [findings 0004](docs/findings/0004-other-mods-on-exp-path.md).
 | `tools/probe/` | Read-only in-game inspectors used for research; not part of the mod |
 | `tools/dump/` | Scripts to query the game's `il2cpp_dump.json` |
 | `tools/saves.sh` | Back up and restore the save folder around in-game tests |
+| `tools/release.sh` | Build the release zip (`dist/Retinue-<version>.zip`) from the committed `src/autorun` |
 | `tests/` | Pure-Lua tests for logic that does not touch the game |
 | `docs/` | Roadmap, decisions (ADRs), research findings, in-game test checklists |
 | `CONTEXT.md` | Glossary of the domain terms used across code and docs |
@@ -125,6 +137,7 @@ Details: [findings 0004](docs/findings/0004-other-mods-on-exp-path.md).
 ./deploy.sh --probe-only  # the probe without the mod (uninstall checks)
 ./deploy.sh --remove      # remove those links; never touches reframework/data/Retinue
 tests/run.sh              # pure-Lua tests (lua5.4), exits non-zero on failure
+tools/release.sh 0.1.0    # release zip in dist/ (clean tree, tests passing)
 ```
 
 Game path defaults to `~/Documentos/Games/Dragon Dogma 2`; override with `DD2_DIR`.
