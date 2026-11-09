@@ -7,7 +7,7 @@ probably not the vocation rank's either. Members progress like the main pawn, so
 
 **Blocked by:** none (needs a short experiment first).
 
-**Status:** needs-info (spike running)
+**Status:** ready-for-agent
 
 Reported by the user during the ticket 27 checklist run (2026-11-08).
 
