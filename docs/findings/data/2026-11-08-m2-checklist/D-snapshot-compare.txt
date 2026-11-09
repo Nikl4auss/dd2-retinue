@@ -1,0 +1,28 @@
+m2-a t= 274.983  m2-b t= 1074.801
+DIFF character_id: 1601809365  ->  372209474
+SAME culmative_exp: ["0", "0", "0", "0", "11596", "0", "0", "0", "0", "0"]
+SAME current_job: "5 (Warrior)"
+SAME current_rank: 6
+SAME discipline: 2396
+SAME exp: 8860
+DIFF hire_time: 37991.99912477005  ->  39554.39071975555
+SAME in_dismissed_list: true
+SAME in_party: true
+DIFF is_restore: true  ->  false
+SAME is_store: true
+SAME job_ranks: [1, 1, 1, 1, 6, 1, 1, 1, 1, 1]
+SAME level: 28
+SAME name: "Folken"
+SAME offline_id: "426f7888-0cc8-44a4-86b2-1ed445367596"
+SAME owner: "capcom"
+SAME owner_level: 1
+SAME owner_name: "CAPCOM"
+SAME owner_offline_data: {"CharaID": 1857826560, "Job": 5, "Level": 23, "OfflineID": "426f7888-0cc8-44a4-86b2-1ed445367596", "job_name": "Warrior", "name": "Folken"}
+SAME owner_slot_id: "00000000-0000-0000-0000-000000000000"
+SAME owner_user_id: "00000000-0000-0000-0000-000000000000"
+DIFF record: {"by_charid": true, "by_uniqid": true}  ->  {"by_charid": false, "by_uniqid": false}
+SAME skills: {"equiped": [["None", "None", "None", "None", "None", "None"], ["None", "None", "None", "None", "None", "None"], ["None", "None", "None", "None", "Non
+SAME slot: 3
+SAME source: "actor"
+DIFF uniq_id: "00000000-0000-0000-0000-000000000000_1601809365"  ->  "00000000-0000-0000-0000-000000000000_372209474"
+SAME weapons: {"left": 0, "right": 4294852783}

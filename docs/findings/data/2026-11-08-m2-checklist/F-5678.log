@@ -1,0 +1,12 @@
+[2026-11-08 19:56:36.255] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 19:58:18.069] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 19:58:18.113] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 19:59:55.391] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 20:08:22.735] [REFramework] [error] [Retinue] talk menu: adopt Diamonds: picked
+[2026-11-08 20:08:28.651] [REFramework] [error] [Retinue] talk menu: adopt Diamonds: confirmed
+[2026-11-08 20:08:28.660] [REFramework] [error] [Retinue] Slot 2: adopted Diamonds (89658ac1-ac9c-45cf-84a3-633cc46a8ab4)
+[2026-11-08 20:08:28.660] [REFramework] [error] [Retinue] talk menu: adopt Diamonds: done
+[2026-11-08 20:13:50.594] [REFramework] [error] [Retinue] talk menu: release Diamonds: picked
+[2026-11-08 20:13:56.426] [REFramework] [error] [Retinue] talk menu: release Diamonds: confirmed
+[2026-11-08 20:13:56.431] [REFramework] [error] [Retinue] Slot 2: released Diamonds (backup emptied)
+[2026-11-08 20:13:56.431] [REFramework] [error] [Retinue] talk menu: release Diamonds: done

@@ -1,0 +1,27 @@
+RUN F — checks 5, 6, 8, 7, 19 (Grant exp only, no fights). Build 6eb6a43, --probe --lifecycle, headless. Pre-backup 20261108-195538-m2-t27-F-pre;
+fixture m2-adopted-folken (Folken member Lv 28 exp 8860, Diamonds not adopted Lv 24 exp 2960). Log: F-5678.log, F19.log.
+5  Grant exp 10000 on Folken 20:01:49.7: exp 18860, Lv 28 (not enough for a level); backup followed at 20:01:59.4 (9.7 s).
+   Grant exp 50000 on Folken 20:03:01.1: Lv 30 (two levels), his own "Folken Level Up 29" burst (F5-folken-levelup.png; HUD Folken Lv.30).
+   Backup 20:03:09.775 level 30 exp 23430 (8.6 s). Idle 20:03:10 -> 20:05:01 (~110 s): backup mtime unchanged.
+   Grant exp 50000 on Diamonds 20:04:30: exp 2960 -> 52960, Lv 24, no level-up in a 6-shot burst.
+   Log after the load: "in the world: yes" 19:59:55.391; the only "in the world: no" is the title line (phase 0) before the load. PASS.
+6  Unticked "Adopted pawns gain levels and vocation ranks" (config.json progression false; F6-unticked.png).
+   Grant exp 50000 on Folken 20:05:57: exp 23430 -> 73430, Lv 30 (no level, no Level Up); backup followed at 20:06:01.1 (exp 73430).
+   Re-ticked (progression true): no level change by itself in the next 12 s (banked exp waits for the next gain). PASS.
+8  Talk to Diamonds > Adopt (4th) > "Confirm adopt" / Cancel > Confirm adopt:
+   20:08:28.660 Slot 2: adopted Diamonds (89658ac1-...) ; talk menu: adopt Diamonds: done. Root then "Release (Retinue · Lv 24)" (F8-root-release-row.png).
+   Mod menu (F8-menu-two-members.png): "Applies to: Diamonds (Lv 24, Mage R6, Disc 2078), Folken (Lv 30, Warrior R6, ...)",
+   "Slot 2 · roster ok (2/2)", Folken present Lv 30 [Release], Diamonds present Lv 24 [Release]. PASS.
+7  Talk to Diamonds > "Release (Retinue · Lv 24)" > "Confirm release" / Cancel > Confirm release:
+   20:13:56.431 Slot 2: released Diamonds (backup emptied) ; talk menu: release Diamonds: done. Root then "Adopt" (F7-root-adopt-row.png).
+   Diamonds stays in the party Lv 24; his backup file 0 bytes; roster lists Folken only.
+   Grant exp 50000 on Diamonds: exp 52960 -> 102960, Lv 24, no Level Up. PASS.
+   Note: Diamonds was adopted with 52960 banked exp (from check 5) and showed no level-up while adopted (no exp gain happened then).
+19 Fixture restored, loaded, Save and Continue (data009 20:20:32, backup Lv 28 exp 8860).
+   Grant exp 50000 on Folken 20:21:29 -> backup 20:21:38.763 level 30 exp 13430 (F19-backup-lv30.json).
+   (A save prompt came up by mistake on the way to the title; answered No; data009 stayed 20:20:32.)
+   Return to Title Screen Without Saving, Load from Last Saved Data:
+   20:25:20.283 in the world: yes
+   20:25:33.342 Folken: save has Lv 28, backup had Lv 30 -> backup lowered, save wins
+   Backup level 28 exp 8860 at 20:25:33.34. Pause menu Folken Lv. 28 (F19-pause-lv28.png). PASS.
+End state: deploy --probe --lifecycle (Retinue, Retinue.lua, Retinue_Probe.lua, Retinue_Exp_Lifecycle.lua), fixture m2-adopted-folken restored.

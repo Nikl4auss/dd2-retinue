@@ -1,0 +1,16 @@
+RUN E / check 28 — away member, uninstall. Build 6eb6a43. Start state: backup 20261108-175342-m2-t27-folken-dismissed (from RUN C:
+m2-adopted-folken, Folken dismissed in the Rift via the lifecycle panel, saved; roster away, character_id 1601809365; backup Lv 28,
+hire_time 37991999 -> E-folken-backup-before-uninstall.json). Pre-backup 20261108-184143-m2-t27-E-pre.
+./deploy.sh --remove: removed Retinue/, Retinue.lua, Retinue_Probe.lua, Retinue_Exp_Lifecycle.lua.
+  reframework/data/Retinue sha256 (every file incl. probe/ and experiments/) identical before/after --remove (E28.before-remove / .after-remove).
+./deploy.sh --probe-only: linked Retinue_Probe.lua only. autorun: Retinue_Probe.lua is the only Retinue* entry.
+Load: world entered; zero "[Retinue" lines in re2_framework_log.txt for the whole session; no notice.
+Rift > Previous Hires: plain "Folken  Lv. 23" (E28-previous-hires-plain.png).
+Summon, Hire (31 RC): HUD Folken Lv.23 (E28-hired-lv23.png). Probe (E28-probe-folken.png, E28-probe_20261108_190336.json, Save snapshot
+  pressed 19:03:36): chara_id 372209474, level 23, exp 0, job 5 Warrior, job_rank 6, discipline 0, holder_level 23.
+Talk menu: Talk / Dismiss / Add to Favorites / Never mind (E28-talk-menu.png).
+Left the Rift, Save and Return to Title (data009 19:04:55), Load from Last Saved Data: world, Folken Lv.23 (E28-reload.png).
+Rift: works (Previous Hires, Summon, Hire). Not done: a fight.
+Retinue's slots/ files unchanged through the uninstalled session (E28.end vs E28.before-remove).
+State after: backup 20261108-*-m2-t27-E28-done.
+Result: PASS (dismiss before uninstall was via the panel, from the reused RUN C state).

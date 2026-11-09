@@ -1,0 +1,24 @@
+RUN B — check 18, per slot. Build 6eb6a43, deploy --probe --lifecycle, headless. Pre-backup 20261108-163244-m2-t27-B-pre; fixture m2-adopted-folken.
+
+1) Load slot 2 (Load from Last Saved Data):
+   16:35:42.356 slot: Slot 2 (load request, global slot 9)
+   16:35:42.394 Slot 2: roster ok (1/2)
+   16:37:00.408 in the world: yes
+   Menu (B-slot2-first.png): "Applies to: Folken (Lv 28, Warrior R6, Disc 2396)", "Slot 2 · roster ok (1/2)", "Folken: present, Lv 28 [Release]", Diamonds (Lv 24) [Adopt].
+   Title (Return to Title Screen Without Saving): menu showed "Slot 2 · roster ok (1/2)", "Folken: present, Lv 28, not in party".
+2) Change Save Slot -> slot 1 (Niklauss Lv 318, the fixture's copy) -> Load from Autosave (most recent):
+   16:39:46.006 slot: unknown (start request Latest)
+   16:39:46.039 slot: Slot 1 (load request, global slot 0)
+   16:39:46.079 Slot 1: roster ok (0/2)
+   16:40:25.761 in the world: yes
+   Menu (B-slot1.png): "No adopted pawns in party", "Slot 1 · roster ok (0/2)", Saga (Lv 298) [Adopt], Hinata (Lv 297) [Adopt]. No notice. Folken not listed or marked. No slots/1/ created (slots/ holds only 2).
+3) Title without saving -> Change Save Slot -> slot 2 -> Load from Last Interim Save (most recent):
+   16:43:12.073 slot: unknown (start request SystemMenuSave)
+   16:43:12.109 slot: Slot 2 (load request, global slot 9)
+   16:43:12.147 Slot 2: roster ok (1/2)
+   16:44:27.145 in the world: yes
+   Menu (B-slot2-again.png): Folken: present, Lv 28 [Release].
+Saves: the live win64_save is identical to the fixture's afterwards (diff -rq): nothing was saved in slot 1 or 2.
+Retinue files: roster.json unchanged. Folken's backup changed only by the added line "hire_time": 37991999 (the fixture predates hire_time); written 16:37:13.5, 13 s after in the world (the poll). CRLF kept.
+Result: PASS.
+Incidental: Right on the Change Save Slot screen moves to the empty slot 3 (offscreen); F there asks "No saved data found. This will overwrite the current slot..." -> answered No, nothing written.

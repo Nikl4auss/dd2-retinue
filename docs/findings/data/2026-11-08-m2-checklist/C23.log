@@ -1,0 +1,9 @@
+[2026-11-08 16:46:33.982] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 16:48:07.942] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 16:48:07.997] [REFramework] [error] [Retinue] Slot 2: roster locked: not valid JSON (fix roster.json by hand, then Reset scripts)
+[2026-11-08 16:49:23.219] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 16:49:43.230] [REFramework] [error] [Retinue] notice show: The Retinue roster is locked: not valid JSON
+[2026-11-08 16:49:46.290] [REFramework] [error] [Retinue] notice hide: The Retinue roster is locked: not valid JSON
+[2026-11-08 16:52:13.720] [REFramework] [error] [Retinue] talk menu: adopt Diamonds: refused (locked)
+[2026-11-08 16:52:15.559] [REFramework] [error] [Retinue] notice show: Cannot adopt Diamonds: the roster is locked (see the menu) | dialogGui=true mainFlow=true movie=false netErr=false talk=false demo=false D.disp=true D.noButton=true D.text=Cannot adopt Diam
+[2026-11-08 16:52:18.562] [REFramework] [error] [Retinue] notice hide: Cannot adopt Diamonds: the roster is locked (see the menu) | dialogGui=true mainFlow=false movie=false netErr=false talk=false demo=false D.disp=false D.noButton=true D.text=Cannot adopt Di

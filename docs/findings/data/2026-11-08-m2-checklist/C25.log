@@ -1,0 +1,11 @@
+[2026-11-08 17:24:32.644] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 17:25:50.509] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 17:25:50.523] [REFramework] [error] [Retinue] Slot 2: roster read-only: written by a newer Retinue (version 2)
+[2026-11-08 17:25:50.523] [REFramework] [error] [Retinue] Slot 2 roster.json: written by a newer Retinue (version 2); read-only
+[2026-11-08 17:27:16.189] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 17:27:23.725] [REFramework] [error] [Retinue] notice show: The Retinue roster is read-only: written by a newer Retinue (version 2) | dialogGui=true mainFlow=true movie=false netErr=false talk=false demo=false D.disp=true D.noButton=true D.text=The 
+[2026-11-08 17:27:26.864] [REFramework] [error] [Retinue] notice hide: The Retinue roster is read-only: written by a newer Retinue (version 2) | dialogGui=true mainFlow=false movie=false netErr=false talk=false demo=false D.disp=false D.noButton=true D.text=Th
+[2026-11-08 17:34:19.383] [REFramework] [error] [Retinue] talk menu: release Folken: refused (read_only)
+[2026-11-08 17:34:21.291] [REFramework] [error] [Retinue] notice show: Cannot release Folken: the roster is read-only (written by a newer Retinue) | dialogGui=true mainFlow=true movie=false netErr=false talk=false demo=false D.disp=true D.noButton=true D.text=
+[2026-11-08 17:34:24.291] [REFramework] [error] [Retinue] notice hide: Cannot release Folken: the roster is read-only (written by a newer Retinue) | dialogGui=true mainFlow=false movie=false netErr=false talk=false demo=false D.disp=false D.noButton=true D.tex
+[2026-11-08 17:39:10.726] [REFramework] [error] [Retinue] Folken: present→away (dismiss)

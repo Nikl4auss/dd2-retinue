@@ -1,0 +1,10 @@
+[2026-11-08 20:16:42.237] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 20:18:04.811] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 20:18:04.818] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 20:19:25.020] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 20:23:14.113] [REFramework] [error] [Retinue] in the world: no (phase 43, IsInGamePhase false)
+[2026-11-08 20:24:04.048] [REFramework] [error] [Retinue] slot: unknown (start request SystemMenuSave)
+[2026-11-08 20:24:04.084] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 20:24:04.121] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 20:25:20.283] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 20:25:33.342] [REFramework] [error] [Retinue] Folken: save has Lv 28, backup had Lv 30 -> backup lowered, save wins

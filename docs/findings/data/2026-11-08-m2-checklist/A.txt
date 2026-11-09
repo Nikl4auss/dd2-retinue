@@ -1,0 +1,14 @@
+RUN A — check 1, fresh install. Build 6eb6a43, deploy --probe --lifecycle, headless (gamescope, XTEST keys + XTEST mouse on the REFramework menu).
+Fixture 20261106-083816-m2-adopted-folken restored, slots/ moved aside (config.json kept). Pre-backup: 20261108-162052-m2-t27-A-pre.
+
+Log (A.log):
+  16:26:09.876 slot: Slot 2 (load request, global slot 9)
+  16:26:09.905 Slot 2: roster ok (0/2)
+  16:27:26.733 in the world: yes
+  no warning / notice line in >60 s in the world.
+slots/: not created (data/Retinue had config.json, experiments, probe only, before quitting). A.before == A.after (config.json sha256 unchanged).
+Mod menu (A-mod-menu.png): "No adopted pawns in party", "Slot 2 · roster ok (0/2)", Diamonds (Lv 24) [Adopt], Folken (Lv 28) [Adopt].
+Talk to Diamonds (A-talk-menu.png): Talk / Dismiss / Add to Favorites / Adopt / Never mind.  -> Adopt 4th of 5.
+  B (right click) put the cursor on Never mind; F ended the talk.
+Result: PASS.
+Notes: XTEST mouse works in headless gamescope (absolute MotionNotify + button 1): Input Passthrough ticked, menu scrolled with the wheel. Not persisted to re2_fw_config.txt.

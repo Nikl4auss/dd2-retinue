@@ -1,0 +1,14 @@
+[2026-11-08 16:33:37.495] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 16:35:42.356] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 16:35:42.394] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 16:37:00.408] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 16:38:13.459] [REFramework] [error] [Retinue] in the world: no (phase 43, IsInGamePhase false)
+[2026-11-08 16:39:46.006] [REFramework] [error] [Retinue] slot: unknown (start request Latest)
+[2026-11-08 16:39:46.039] [REFramework] [error] [Retinue] slot: Slot 1 (load request, global slot 0)
+[2026-11-08 16:39:46.079] [REFramework] [error] [Retinue] Slot 1: roster ok (0/2)
+[2026-11-08 16:40:25.761] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 16:41:19.149] [REFramework] [error] [Retinue] in the world: no (phase 43, IsInGamePhase false)
+[2026-11-08 16:43:12.073] [REFramework] [error] [Retinue] slot: unknown (start request SystemMenuSave)
+[2026-11-08 16:43:12.109] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 16:43:12.147] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 16:44:27.145] [REFramework] [error] [Retinue] in the world: yes

@@ -1,0 +1,5 @@
+[2026-11-08 18:06:54.807] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 18:08:13.194] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 18:08:13.228] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 18:08:13.228] [REFramework] [error] [Retinue] Slot 2 backup of Folken: damaged: not valid JSON
+[2026-11-08 18:09:33.433] [REFramework] [error] [Retinue] in the world: yes

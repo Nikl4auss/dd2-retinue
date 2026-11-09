@@ -1,0 +1,28 @@
+RUN C / check 23 — locked roster. Build 6eb6a43, deploy --probe --lifecycle, headless. Pre-backup 20261108-164539-m2-t27-C23-pre; fixture m2-adopted-folken.
+
+A) roster.json = "not json\r\n" (C23.log, C23.before/after)
+  16:48:07.997 Slot 2: roster locked: not valid JSON (fix roster.json by hand, then Reset scripts)   [16:48]
+  16:49:23.219 in the world: yes
+  16:49:43.230 notice show: The Retinue roster is locked: not valid JSON    (after the server-error dialog was closed)
+  16:49:46.290 notice hide: ...                                              -> once, 3 s; no repeat in the next ~10 min.
+  Menu: "Slot 2 · roster locked: not valid JSON (fix roster.json by hand, then Reset scripts)"; Diamonds [Adopt], Folken [Adopt].
+  Talk to Diamonds: Talk / Dismiss / Add to Favorites / Adopt / Never mind (C23-talk-row.png). Adopt picked:
+  16:52:13.720 talk menu: adopt Diamonds: refused (locked)
+  16:52:15.559 notice show: Cannot adopt Diamonds: the roster is locked (see the menu) | dialogGui=true mainFlow=true ... (new diagnostics suffix)
+  16:52:18.562 notice hide
+  The talk ended (no confirm sub-menu); notice centred (C23-refusal-notice.png).
+  Dismiss Folken: NOT at the Rift and not by talk. Hail never landed on Folken in 6 tries (he stays behind), so the lifecycle panel's
+  "Dismiss slot 3" (target 1601809365 Folken) was used, 16:57:5x (C23-dismiss-panel.png). Folken left the party; the game autosaved (data005 16:57:53).
+  No Retinue log line for the dismiss (locked). Save and Continue -> data009slot.bin 16:58:34.
+  sha256 of roster.json, Folken's backup and config.json: identical before and after (C23.before == C23.after).
+B) three members, valid JSON (Folken present + 2 made-up away members), CRLF (C23cap.log)
+  17:01:47.772 Slot 2: roster locked: more than 2 members (fix roster.json by hand, then Reset scripts)
+  17:03:10.210 notice show: The Retinue roster is locked: more than 2 members ; 17:03:13.300 notice hide
+  Menu (C23cap-menu.png): locked line; Folken listed with [Adopt] (not as a member).
+  ~40 s in the world: all files identical (C23cap.before == C23cap.after).
+C) roster.json restored from the fixture, ScriptRunner > Reset scripts:
+  17:04:09.346 slot: Slot 2 (fallback: LastLoadedSlot 9, UnitNumber 1)
+  17:04:09.346 Slot 2: roster ok (1/2)
+  17:04:09.347 in the world: yes
+Result: PASS (with the dismiss done through the lifecycle panel, not the Rift).
+Not checked here: "the adopted pawn does not level" (no exp given; brief did not ask).

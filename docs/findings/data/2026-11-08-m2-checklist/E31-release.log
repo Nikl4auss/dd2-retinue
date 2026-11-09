@@ -1,0 +1,7 @@
+[2026-11-08 19:20:33.741] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 19:20:33.777] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 19:21:52.927] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 19:33:26.095] [REFramework] [error] [Retinue] talk menu: release Folken: picked
+[2026-11-08 19:33:38.623] [REFramework] [error] [Retinue] talk menu: release Folken: confirmed
+[2026-11-08 19:33:38.627] [REFramework] [error] [Retinue] Slot 2: released Folken (backup emptied)
+[2026-11-08 19:33:38.627] [REFramework] [error] [Retinue] talk menu: release Folken: done

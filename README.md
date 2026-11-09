@@ -11,8 +11,8 @@ the restrictions placed on hired pawns at runtime. See [ADR 0001](docs/adr/0001-
 ## Status
 
 Nothing released yet (0.0.0). M0 (research) and M1 (progression, checklist:
-[findings 0005](docs/findings/0005-m1-checklist-run.md)) are done. M2 (identity and persistence) is implemented and its
-in-game checklist is being run. 0.1.0 will be M1 + M2. See [docs/roadmap.md](docs/roadmap.md).
+[findings 0005](docs/findings/0005-m1-checklist-run.md)) are done. M2 (identity and persistence) is done too (checklist:
+[findings 0011](docs/findings/0011-m2-checklist-run.md)). 0.1.0 will be M1 + M2. See [docs/roadmap.md](docs/roadmap.md).
 
 ## What it does
 

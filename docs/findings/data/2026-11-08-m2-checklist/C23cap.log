@@ -1,0 +1,9 @@
+[2026-11-08 17:00:15.174] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 17:01:47.753] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 17:01:47.772] [REFramework] [error] [Retinue] Slot 2: roster locked: more than 2 members (fix roster.json by hand, then Reset scripts)
+[2026-11-08 17:03:03.577] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 17:03:10.210] [REFramework] [error] [Retinue] notice show: The Retinue roster is locked: more than 2 members
+[2026-11-08 17:03:13.300] [REFramework] [error] [Retinue] notice hide: The Retinue roster is locked: more than 2 members
+[2026-11-08 17:04:09.346] [REFramework] [error] [Retinue] slot: Slot 2 (fallback: LastLoadedSlot 9, UnitNumber 1)
+[2026-11-08 17:04:09.346] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 17:04:09.347] [REFramework] [error] [Retinue] in the world: yes

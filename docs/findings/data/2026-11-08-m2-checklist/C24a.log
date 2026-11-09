@@ -1,0 +1,6 @@
+[2026-11-08 17:06:22.221] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 17:15:46.655] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 17:15:46.662] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 17:15:46.662] [REFramework] [error] [Retinue] Slot 2 roster.json: member 1: status is missing or invalid; using away
+[2026-11-08 17:17:15.216] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 17:17:18.245] [REFramework] [error] [Retinue] Folken: roster away, save has it Lv28 (backup Lv28) → present, save wins

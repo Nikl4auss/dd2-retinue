@@ -1,0 +1,132 @@
+{
+    "changed_job_bits": 16,
+    "culmative_exp": [
+        0,
+        0,
+        0,
+        0,
+        11596,
+        0,
+        0,
+        0,
+        0,
+        0
+    ],
+    "current_job": 5,
+    "discipline": 2396,
+    "exp": 8860,
+    "extra_status_boost": 0,
+    "hire_time": 40020926,
+    "increase_params": {
+        "attack": 1410,
+        "blow": 270,
+        "defence": 1152,
+        "hit_point": 8505,
+        "magic_attack": 594,
+        "magic_defence": 465,
+        "stamina": 2600,
+        "weight": 140
+    },
+    "item_ids": [
+        6009,
+        5018,
+        4122,
+        1203
+    ],
+    "level": 28,
+    "name": "Folken",
+    "offline_id": "426f7888-0cc8-44a4-86b2-1ed445367596",
+    "qualified_job_bits": 0,
+    "restored_from": 23,
+    "skills": [
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "Job05_HeavyRunningThrust",
+            "Job05_WarCry",
+            "Job05_IndomitableLash",
+            "Job05_Guts",
+            "Job05_LandSlide",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "None",
+            "None",
+            "None",
+            "None"
+        ]
+    ],
+    "version": 1
+}

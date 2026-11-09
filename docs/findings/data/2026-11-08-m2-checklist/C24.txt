@@ -1,0 +1,21 @@
+RUN C / check 24 — soft errors. Build 6eb6a43, deploy --probe --lifecycle, headless. Pre-backup 20261108-170531-m2-t27-C24-pre; fixture m2-adopted-folken (Folken in party).
+
+a) Folken "status": "banana" (sed, CRLF kept) (C24a.log, C24a.before/after)
+  17:15:46.662 Slot 2: roster ok (1/2)
+  17:15:46.662 Slot 2 roster.json: member 1: status is missing or invalid; using away
+  17:17:15.216 in the world: yes
+  17:17:18.245 Folken: roster away, save has it Lv28 (backup Lv28) → present, save wins
+  roster.json rewritten 17:17:18.244 with "status": "present", CRLF (10 CRs), byte-identical to the fixture's roster.
+  Menu after the load (C24a-menu.png): "Slot 2 · roster ok (1/2)", "Folken: present, Lv 28 [Release]". The warning is NOT shown in the menu
+  (only in the log); I did not look at the menu between the load request and the world.
+b) Folken "name": 5 (C24b.log)
+  17:20:43.445 Slot 2: roster ok (1/2)
+  17:20:43.445 Slot 2 roster.json: member 1: name is missing or invalid; using (unknown)
+  17:22:09.341 in the world: yes
+  roster.json rewritten 17:22:12.4 (3 s after in the world) with "name": "Folken"; byte-identical to the fixture's roster.
+  Menu at 17:22:31 (C24b-menu.png) already shows "Folken: present, Lv 28": the "(unknown)" phase was not caught on screen (it lasted
+  from the load request to the reconciliation 3 s after entering the world); no log line names "(unknown)" beyond the warning.
+  No separate log line for the refresh.
+Result: PASS on log and file; the menu side of the warning / "(unknown)" not observed (see above).
+Incidental: the title's menu list scrolls with the mouse wheel through Input Passthrough (a wheel over the REFramework window scrolled the
+title list to Quit once); my boot helper now keeps the pointer off the game until the world.

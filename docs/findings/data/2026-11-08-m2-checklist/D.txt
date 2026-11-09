@@ -1,0 +1,28 @@
+RUN D — checks 10, 11, 12. Build 6eb6a43, --probe --lifecycle, headless. Pre-backup 20261108-181130-m2-t27-D-pre; fixture m2-adopted-folken.
+Snapshots: lifecycle panel, run file D-lifecycle_20261108_181222.json. "m2'a" (a typo from the keyboard layout, t=249) and "m2-a" (t=275) taken
+in the world before the dismiss; "m2-b" (t=1075) after the restore. The snapshot's equipment slots carry a Lua error from the experiment
+(Retinue_Exp_Lifecycle.lua:448/449 'sd' nil); the other fields are fine. It has no _IncreaseParams field.
+
+10 Dismiss (REAL, by the game's route): inside the Rift, Hail on Folken > Dismiss > gift picker cancelled ("Cancel the gift?" Yes) >
+   rating None > farewell line.
+   18:22:18.891 Folken: present→away (dismiss)
+   roster: status away, character_id 1601809365 kept. Backup sha256 52ffa2d2... unchanged since 18:15:23 (the post-load poll; hire_time
+   added then), level 28. PASS.
+11 Previous Hires (D-previous-hires.png): "★ Folken · Lv 28" (Lv. 23 in the list's column), Diamonds/Clothilde/Alder/Francis/Tane plain.
+   18:27:14.310 marked (rift): ★ Folken · Lv 28. Only one other party member and it is not adopted, so no second mark. PASS.
+12 Return: Summon, Hail, Hire (31 RC):
+   18:28:52.589 Folken: away→returning (backup Lv 28)
+   18:28:52.618 Folken: returning→present restored Lv 23→28
+   18:28:56.709 notice show: Folken returned — Lv 28 restored | ... talk=false ...
+   18:28:59.791 notice hide (3.08 s)
+   Screenshots at ~1 s / ~4 s: MISSED (my burst started at 18:29:01). Centring not verified on screen this time.
+   m2-a vs m2-b for Folken (D-snapshot-compare.txt): SAME level 28, exp 8860, discipline 2396, culmative_exp (Warrior 11596),
+   current_job 5, rank 6, job_ranks, skills, weapons; DIFF character_id 1601809365→372209474, hire_time, uniq_id, is_restore, record
+   (all expected for a re-hire). _IncreaseParams: not in this snapshot; the backup file's increase_params is unchanged.
+   Menu after (D-menu-after-restore.png): "Folken: present, Lv 28", tracked 372209474 Folken Lv 28 Exp 8860 in party slot 3.
+   Pause menu (D-party-lv28.png): Folken Lv. 28.
+   Save: the first try found Save greyed out (I was still in the Rift: "Leave the rift?" had taken No). Left the Rift, Save and Return to
+   Title (data009 18:33:32). Reload: 18:34:44 slot 2 roster ok (1/2), in the world 18:35:52, no restore line. Full relaunch: 18:38:44 roster
+   ok, 18:40:08 in the world, no restore line; pause menu Folken Lv. 28 (D-relaunch-party.png). Backup after: level 28, exp 8860,
+   hire_time 39554390; roster present, character_id 372209474.
+Result: 10 PASS, 11 PASS, 12 PASS except the notice screenshots (log shows show/hide 3.08 s).

@@ -1,0 +1,14 @@
+RUN C / check 25 — read-only roster ("version": 2, CRLF kept). Build 6eb6a43, --probe --lifecycle, headless. Pre-backup 20261108-172339-m2-t27-C25-pre; fixture m2-adopted-folken.
+  17:25:50.523 Slot 2: roster read-only: written by a newer Retinue (version 2)
+  17:25:50.523 Slot 2 roster.json: written by a newer Retinue (version 2); read-only
+  17:27:16.189 in the world: yes
+  17:27:23.725 notice show: The Retinue roster is read-only: written by a newer Retinue (version 2) | ...   ; 17:27:26.864 hide  (once)
+  Talk to Folken (C25-talk-release.png): Talk / Dismiss / Add to Favorites / Release (Retinue · Lv 28) / Never mind. Release picked:
+  17:34:19.383 talk menu: release Folken: refused (read_only)
+  17:34:21.291 notice show: Cannot release Folken: the roster is read-only (written by a newer Retinue) ; 17:34:24.291 hide. Talk ended (C25-refusal-notice.png).
+  Adopt on Diamonds not tried this time (Hail kept missing); the Release refusal covers the read-only talk path.
+  Dismiss: lifecycle panel "Dismiss slot 3" (Folken); Hail would not land on Folken again. 17:39:10.726 Folken: present→away (dismiss)
+  (in memory only). Game autosave data005 17:39:10; Save and Continue data009 17:39:42.
+  ~45 s after the save: every file under slots/2/ identical (C25.before == C25.after); roster.json mtime 17:23:39 (my edit), backup mtime 08:35 (fixture).
+Result: PASS (dismiss via the lifecycle panel, not the Rift). Not exercised: a fight / levelling (brief did not ask).
+Note: the read-only roster still logs the state transition "present→away (dismiss)"; nothing is written.

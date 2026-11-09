@@ -1,0 +1,25 @@
+RUN E / checks 29, 29b — reinstall after a Return without the mod. Continues E28 (save with Folken re-hired at Lv 23, data009 19:04:55).
+./deploy.sh --remove && ./deploy.sh --probe --lifecycle. Load (E29.log):
+  19:10:57.842 Slot 2: roster ok (1/2)
+  19:12:26.066 in the world: yes
+  19:12:29.133 Folken: roster away, save has it Lv23 (backup Lv28) → returning, re-hired unseen
+  19:12:29.208 Folken: returning→present restored Lv 23→28
+  19:12:35.133 notice show: Folken returned — Lv 28 restored  (after the server dialog was closed) ; 19:12:38.220 hide (3.09 s)
+  Shots: E29-notice-1s.png at 19:12:36.0 (notice centred, no other UI), E29-notice-4s.png at 19:12:39.3 (gone; HUD Folken Lv.28).
+  Backup rewritten 19:12:29.212 (E29-folken-backup-after-restore.json) vs before the uninstall (E-folken-backup-before-uninstall.json):
+    SAME level 28, exp 8860, discipline 2396, culmative_exp (Warrior 11596), current_job 5, increase_params (attack 1410, blow 270,
+    defence 1152, hit_point 8505, magic_attack 594, magic_defence 465, stamina 2600, weight 140), skills, extra_status_boost, job bits.
+    DIFF hire_time 37991999 -> 40020926; item_ids (regenerated gear); restored_from null -> 23.
+  Not re-written by the poll in the next ~2 min (mtime stays 19:12:29.21).
+  Roster: present, character_id 372209474.
+>15 s in the world, no save, Return to Title Screen Without Saving, Load from Last Saved Data:
+  19:14:41.481 Slot 2: roster ok (1/2)
+  19:15:52.669 in the world: yes
+  19:15:55.966 Folken: roster present, save has it Lv23 (backup Lv28) → returning, re-hired unseen
+  19:15:55.982 Folken: returning→present restored Lv 23→28
+  19:16:51.859 notice show ; 19:16:54.920 hide (shots E29-reload-notice-1s/-4s.png)
+  Backup still level 28 (E29-folken-backup-after-reload.json, hire_time 40020926, mtime 19:15:55.98).
+  Note: the second load reads "roster present" (the roster kept present from the first load, which was not saved), not "roster away".
+29b: hire_time before the dismiss 37991999 (backup), after the re-hire without the mod and the restore 40020926: CHANGED.
+     character_id 1601809365 -> 372209474: CHANGED (the same id the RUN C re-hire got).
+Result: 29 PASS, 29b recorded.

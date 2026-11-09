@@ -1,0 +1,5 @@
+[2026-11-08 17:19:18.958] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 17:20:43.419] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 17:20:43.445] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 17:20:43.445] [REFramework] [error] [Retinue] Slot 2 roster.json: member 1: name is missing or invalid; using (unknown)
+[2026-11-08 17:22:09.341] [REFramework] [error] [Retinue] in the world: yes

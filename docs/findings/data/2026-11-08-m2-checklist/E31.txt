@@ -1,0 +1,13 @@
+RUN E / check 31 — released pawn, uninstall. Build 6eb6a43. Fixture m2-adopted-folken restored, deploy --probe --lifecycle.
+Talk to Folken in the field (Vernworth Pawn Guild): root "Release (Retinue · Lv 28)" > Talk sub-menu "Confirm release" / Cancel > Confirm:
+  19:33:38.627 Slot 2: released Folken (backup emptied) ; talk menu: release Folken: done. Root then read "Adopt".
+  roster.json {"members": null, "version": 1}; backups/426f7888-....json 0 bytes. (E31-release.log)
+Save and Continue (data009 19:35:05). Quit. --remove: data/Retinue sha256 identical before/after (E31.before-remove / .after-remove).
+--probe-only. Load: zero "[Retinue" lines; Folken in party Lv 28 (E31-loaded-lv28.png).
+  Talk menu: Talk / Dismiss / Add to Favorites / Never mind (E31-talk-menu.png).
+  Status page: header "Folken", Lv. 28, no "· Retinue" (E31-status-folken.png).
+  Save and Return to Title (data009 19:51:26), Load from Last Saved Data: world, Folken Lv.28 (E31-reload.png).
+  NOT checked: Previous Hires (could not get back to the stone headless this time; Folken is in the party). Not done: a fight.
+slots/ files untouched during the uninstalled session (E31.end vs E31.after-remove).
+Deploy restored to --probe --lifecycle afterwards.
+Result: PASS except the Previous Hires view (not reached).

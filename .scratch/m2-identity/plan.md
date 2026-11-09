@@ -11,8 +11,8 @@ Cross-review: skipped (Sol and Astra unavailable on this account); Opus `reviewe
   Compatibility) and 9 nits applied; skipped: rewording the M1 Added entries (the Changed entry covers it).
 - [x] Slice 3: notice diagnostics from ticket 23 (`83b4485`): the per-change `notice state` lines dropped; the per-action log
   line and the "Close notice (game stuck)" button kept. Tier: **Opus, inline** (12 lines removed).
-- [ ] Slice 4: the checklist run on the final build (peer headless + the user), recorded in `docs/findings/0011-m2-checklist-run.md`.
-- [ ] Slice 5: close ticket 27; README status and roadmap say M2 done.
+- [x] Slice 4: the checklist run on `32074a4` (peer runs A–F headless + the user), recorded in `docs/findings/0011-m2-checklist-run.md`.
+- [x] Slice 5: close ticket 27; README status and roadmap say M2 done.
 
 ## Slice 4: the run
 

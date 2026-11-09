@@ -1,0 +1,26 @@
+RUN C / check 26 — damaged backup. Build 6eb6a43, --probe --lifecycle, headless. Pre-backup 20261108-174050-m2-t27-C26-pre; fixture m2-adopted-folken.
+
+AWAY variant (C26away-1.log, C26away.log, C26away.before/after)
+  Setup: load, enter the Rift (Grand Riftstone of Vermund), Folken dismissed there with the lifecycle panel's "Dismiss slot 3" (Hail would
+  not land on him): 17:51:11.290 Folken: present→away (dismiss). Left the Rift, Save and Continue (data009 17:53:07). Quit.
+  Saved this state as backup 20261108-175342-m2-t27-folken-dismissed (roster away, backup Lv 28, hire_time 37991999).
+  Folken's backup -> "not json\r\n". Launch, load:
+  17:56:27.151 Slot 2: roster ok (1/2)
+  17:56:27.152 Slot 2 backup of Folken: damaged: not valid JSON        (only member; the warning names Folken only)
+  17:57:52.626 in the world: yes
+  Rift > Search for a Pawn > View Previously Hired Pawns: "★ Folken  Lv. 23" (no "· Lv N": no backup level), others plain
+  (C26away-previous-hires.png). 18:02:07.909 marked (rift): ★ Folken
+  Summon Pawn, Hail, Hire (31 RC):
+  18:04:43.721 Folken: away→returning (no backup)
+  18:04:43.732 Folken: returning→present skipped: no backup (damaged: not valid JSON)
+  Backup rewritten 18:04:48.23 (4.5 s later): level 23, exp 0, hire_time 39635410 (was 37991999), CRLF (129/129 lines)
+  (C26away-folken-backup-after.json). Roster: present, character_id 372209474 (was 1601809365).
+  Talk-screen header showed "Folken Lv. 23" before the hire.
+PRESENT variant (C26present.log, C26present-mtime.txt)
+  Fixture restored (Folken present), backup -> "not json\r\n". Load:
+  18:08:13.228 Slot 2 backup of Folken: damaged: not valid JSON
+  18:09:33.433 in the world: yes
+  backup mtime 18:09:46.627 -> rewritten 13.2 s after "in the world: yes" (level 28, hire_time 37991999).
+  Menu note: not caught (the REFramework menu was closed at start this time; when opened at ~18:10:40 the file was already rewritten and
+  the menu showed "Folken: present, Lv 28" with no note: C26present-menu-after.png).
+Result: PASS on log and files. Menu note not observed.

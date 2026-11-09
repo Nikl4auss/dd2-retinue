@@ -1,0 +1,4 @@
+[2026-11-08 16:21:57.416] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 16:26:09.876] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 16:26:09.905] [REFramework] [error] [Retinue] Slot 2: roster ok (0/2)
+[2026-11-08 16:27:26.733] [REFramework] [error] [Retinue] in the world: yes

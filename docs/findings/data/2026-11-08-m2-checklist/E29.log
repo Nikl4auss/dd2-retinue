@@ -1,0 +1,17 @@
+[2026-11-08 19:09:25.759] [REFramework] [error] [Retinue] in the world: no (phase 0, IsInGamePhase false)
+[2026-11-08 19:10:57.770] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 19:10:57.842] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 19:12:26.066] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 19:12:29.133] [REFramework] [error] [Retinue] Folken: roster away, save has it Lv23 (backup Lv28) → returning, re-hired unseen
+[2026-11-08 19:12:29.208] [REFramework] [error] [Retinue] Folken: returning→present restored Lv 23→28
+[2026-11-08 19:12:35.133] [REFramework] [error] [Retinue] notice show: Folken returned — Lv 28 restored | dialogGui=true mainFlow=true movie=false netErr=false talk=false demo=false D.disp=true D.noButton=true D.text=Folken returned — Lv 28 restored
+[2026-11-08 19:12:38.220] [REFramework] [error] [Retinue] notice hide: Folken returned — Lv 28 restored | dialogGui=true mainFlow=false movie=false netErr=false talk=false demo=false D.disp=false D.noButton=true D.text=Folken returned — Lv 28 restored
+[2026-11-08 19:13:48.450] [REFramework] [error] [Retinue] in the world: no (phase 43, IsInGamePhase false)
+[2026-11-08 19:14:41.413] [REFramework] [error] [Retinue] slot: unknown (start request SystemMenuSave)
+[2026-11-08 19:14:41.441] [REFramework] [error] [Retinue] slot: Slot 2 (load request, global slot 9)
+[2026-11-08 19:14:41.481] [REFramework] [error] [Retinue] Slot 2: roster ok (1/2)
+[2026-11-08 19:15:52.669] [REFramework] [error] [Retinue] in the world: yes
+[2026-11-08 19:15:55.966] [REFramework] [error] [Retinue] Folken: roster present, save has it Lv23 (backup Lv28) → returning, re-hired unseen
+[2026-11-08 19:15:55.982] [REFramework] [error] [Retinue] Folken: returning→present restored Lv 23→28
+[2026-11-08 19:16:51.859] [REFramework] [error] [Retinue] notice show: Folken returned — Lv 28 restored | dialogGui=true mainFlow=true movie=false netErr=false talk=false demo=false D.disp=true D.noButton=true D.text=Folken returned — Lv 28 restored
+[2026-11-08 19:16:54.920] [REFramework] [error] [Retinue] notice hide: Folken returned — Lv 28 restored | dialogGui=true mainFlow=false movie=false netErr=false talk=false demo=false D.disp=false D.noButton=true D.text=Folken returned — Lv 28 restored
