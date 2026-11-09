@@ -23,7 +23,7 @@ table); everything else was run here.
 
 | # | Result | Run | Evidence |
 |---|---|---|---|
-| 1 Fresh install | pass | A | `Slot 2: roster ok (0/2)`, no `slots/` created, no warning in 60 s; menu "Slot 2 · roster ok (0/2)" with Adopt per pawn; talk row Adopt 4th of 5, B on Never mind |
+| 1 Fresh install | pass | A | `Slot 2: roster ok (0/2)`, no `slots/` created, no warning in 60 s; menu "Slot 2 · roster ok (0/2)" with Adopt per pawn; talk row Adopt 4th of 5, B on Never mind. Non-member gains exp, no level: F (Diamonds 2960→52960, Lv 24); no fight |
 | 2 Talk menu | pass | A + user | Field (A) and at the Rift stone (user) |
 | 3 Adopt | pass | ticket 24/25, F | "Confirm adopt" / Cancel on `b81adc3`; Diamonds adopted in F |
 | 4 Adopted status | pass | ticket 26 | `1abfddc`, peer and user |
@@ -44,17 +44,17 @@ table); everything else was run here.
 | 19 Rollback | pass | F + user | `save has Lv 28, backup had Lv 30 -> backup lowered, save wins`. The user's death reload hit it too (an autosave from Lv 27) |
 | 20 Reconciliation | pass | ticket 21, E29 | `efdabec`; 20b's notice seen in E29 (same code path) |
 | 21 New game | pass | ticket 22 | `4636245`; leftovers in ticket 28 |
-| 22 NG+ | partial | ticket 22 | Roster kept over a cleared slot (slot 1, 2026-11-07); the valid-backup case is open in ticket 28 |
-| 23 Locked | pass | C23 | Notice once; talk row refuses and ends the talk; files unchanged after a dismiss and a save; 3 members locked; Reset scripts normal. Dismiss by the panel (Hail missed Folken) |
+| 22 NG+ | pass; valid-backup case not reached | ticket 22 | Roster kept over a cleared slot (slot 1, 2026-11-07); the valid-backup case is open in ticket 28 |
+| 23 Locked | pass | C23 | Notice once; talk row refuses and ends the talk; files unchanged after a dismiss and a save; 3 members locked; Reset scripts normal. Dismiss by the panel (Hail missed Folken). No levelling or fight here: ticket 23 run on `83b4485` (no level-up, files unchanged after a fight) |
 | 24 Soft error | pass | C24 | `banana` → away → `present, save wins`; `name: 5` → "(unknown)" → Folken 3 s in. Log only: the menu was not caught before the fix-up |
-| 25 Read-only | pass | C25 | Notice once; Release refused; nothing under `slots/2/` changed through a dismiss and two saves. Dismiss by the panel |
+| 25 Read-only | pass | C25 | Notice once; Release refused; nothing under `slots/2/` changed through a dismiss and two saves. Dismiss by the panel. No fight here: ticket 23 run on `83b4485` (Folken levelled while read-only) |
 | 26 Damaged backup | pass | C26 | Away: `skipped: no backup`, present at Lv 23, rewritten in 4.5 s; "★ Folken" without level. Present: rewritten 13.2 s after the world. Menu note not caught; one member only |
 | 27 Present member uninstall | pass | user, slot 1 | Hinata adopted Lv 318; `--probe-only`; no Retinue line; playable; ordinary (exp 6067→156123 at Lv 318, vanilla talk rows, plain Status). Data folder untouched |
-| 28 Away member uninstall | pass | E28 | `--remove` left the data folder byte-identical; no Retinue line; plain "Folken" in Previous Hires; re-hired Lv 23, exp 0, vanilla talk rows |
+| 28 Away member uninstall | pass | E28 | `--remove` left the data folder byte-identical; no Retinue line; plain "Folken" in Previous Hires; re-hired Lv 23, exp 0, vanilla talk rows; no fight |
 | 29 Reinstall after Return | pass | E29 | `re-hired unseen`, restored 23→28, notice centred; title without saving + load: restored again, backup still Lv 28 |
 | 29b Hire time | recorded | E29 | hire_time 37991999→40020926, character_id 1601809365→372209474. A same-ID re-hire was not seen |
 | 30 Returning member | covered | 20c + 28 | |
-| 31 Released pawn | pass | E31 | Released, roster `null`, backup 0 bytes; uninstalled: Lv 28, vanilla, playable. Previous Hires not reached (camera stuck) |
+| 31 Released pawn | pass | E31 | Released, roster `null`, backup 0 bytes; uninstalled: Lv 28, vanilla; save and reload work; no fight, Rift not reached (camera stuck) |
 | 32 New game uninstalled | not reached | — | |
 | 33 Notice deferral | pass | ticket 23 | `83b4485` |
 | 34 Guild Contracts | pass | user | Its talk options and Retinue's row together; no other mod's error while Retinue was loaded |
@@ -76,4 +76,4 @@ table); everything else was run here.
 - [Ticket 29](../../.scratch/m2-identity/issues/29-status-exp-panel.md) (user, during the run): the Status page shows no exp or
   next-level for a member. The page has its own exp panel (`setExp`, `hideExp`).
 - [Ticket 28](../../.scratch/m2-identity/issues/28-new-game-leftovers.md): NG+ with a valid backup, Start from Beginning.
-- Not reached: 9, 16, 32, 22's valid-backup case, natural lost, a same-ID re-hire.
+- Not reached: 9, 16, 32, 22's valid-backup case, natural lost, a same-ID re-hire, a fight in 28 and 31.

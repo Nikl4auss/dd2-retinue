@@ -163,8 +163,8 @@ Editor bookmarks). Optional but useful: the REFramework log (`re2_framework_log.
 1. **(a) Fixture.** Pick a hired pawn. In *Test actions* set its party slot and press **Grant exp** until its level is
    past the level it was hired at (`owner_offline_data.Level` in a snapshot; the live table shows `Lv`). Fight a bit if you
    also want discipline and rank. Snapshot `a-levelled`. Rest/save at an inn, quit, then
-   `tools/saves.sh backup fixture-levelled-pawn`. Other fixtures worth keeping: `fixture-2hired-at-rift` (two fresh
-   hired pawns beside a Rift stone), `fixture-1hired-1slot-free`. Backups are named `<timestamp>-<label>`: restore with
+   `tools/saves.sh backup fixture-levelled-pawn`. (The `fixture-2hired-at-rift` and `fixture-1hired-1slot-free`
+   saves of the early runs are gone; `m2-adopted-folken` replaces them in the M2 checklist.) Backups are named `<timestamp>-<label>`: restore with
    the name `tools/saves.sh list` shows (e.g. `<timestamp>-fixture-levelled-pawn`). Before each cycle below: quit,
    `tools/saves.sh backup m2-lifecycle-<step>` (so the cycle itself is undoable), then
    `tools/saves.sh restore <timestamp>-fixture-levelled-pawn`, launch, load. Each launch writes its own run file.

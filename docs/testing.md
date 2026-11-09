@@ -115,7 +115,7 @@ is entered, a fight, a save and a reload work, the Rift hires and dismisses, and
 
 ### Adopt and release
 
-1. **Fresh install**: load `fixture-2hired-at-rift`. The mod menu shows `Slot N` (matching the slot loaded), an empty
+1. **Fresh install**: load `m2-adopted-folken` with `slots/` moved aside (Setup 4). The mod menu shows `Slot N` (matching the slot loaded), an empty
    roster, no warnings; no `slots/` directory was created. In a fight neither hired pawn levels (ordinary again: M1 is
    narrowed). *Grant exp* on one: exp rises, level does not.
 2. **Talk menu**: talk to a hired party pawn, in the field and at a Rift stone. A row "Adopt" comes before Never mind

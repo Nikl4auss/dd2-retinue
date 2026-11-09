@@ -132,7 +132,7 @@ local function tick_notices(now)
         local text = labels.roster_problem(retinue.roster, tracker.session.unit)
         if text then queue:push(text) end
     end
-    -- One log line per show, hide and drop, with the game's dialog state (kept from the ticket 23 rerun diagnostics).
+    -- One log line per show, hide and gone, with the game's dialog state (kept from the ticket 23 rerun diagnostics).
     local action, text = notices.drive(queue, screen, now, state.in_world)
     if action then
         log.error("[Retinue] notice " .. action .. ": " .. text .. " | " .. screen.describe())
